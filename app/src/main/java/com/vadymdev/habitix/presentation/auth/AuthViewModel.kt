@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,26 +17,40 @@ class AuthViewModel(
     private val continueAsGuestUseCase: ContinueAsGuestUseCase
 ) : ViewModel() {
 
+    companion object {
+        private const val STEP_INITIAL = -1
+        private const val STEP_CONNECTION = 0
+        private const val STEP_PROFILE = 1
+        private const val STEP_SETUP = 2
+        private const val STEP_FINISH = 3
+        private const val STEP_ALL_COMPLETED = 4
+    }
+
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
     fun signInWithGoogleToken(idToken: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update {
+                it.copy(
+                    isLoading = true,
+                    error = null,
+                    isAuthorized = false,
+                    showLoadingFlow = true,
+                    loadingStepIndex = STEP_INITIAL
+                )
+            }
+
             val result = signInWithGoogleUseCase(idToken)
             result.onSuccess {
+                runPostAuthSequence()
+            }.onFailure { error ->
                 _state.update { current ->
                     current.copy(
                         isLoading = false,
-                        error = null,
-                        isAuthorized = true
-                    )
-                }
-            }.onFailure { error ->
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = error.message ?: "Не вдалося увійти через Google"
+                        error = error.message ?: "Не вдалося увійти через Google",
+                        showLoadingFlow = false,
+                        loadingStepIndex = -1
                     )
                 }
             }
@@ -52,12 +67,36 @@ class AuthViewModel(
             onDone()
         }
     }
+
+    private suspend fun runPostAuthSequence() {
+        delay(260)
+        _state.update { it.copy(loadingStepIndex = STEP_CONNECTION) }
+        delay(700)
+        _state.update { it.copy(loadingStepIndex = STEP_PROFILE) }
+        delay(700)
+        _state.update { it.copy(loadingStepIndex = STEP_SETUP) }
+        delay(700)
+        _state.update { it.copy(loadingStepIndex = STEP_FINISH) }
+        delay(700)
+        _state.update { it.copy(loadingStepIndex = STEP_ALL_COMPLETED) }
+        delay(600)
+        _state.update {
+            it.copy(
+                isLoading = false,
+                isAuthorized = true,
+                showLoadingFlow = false,
+                loadingStepIndex = -1
+            )
+        }
+    }
 }
 
 data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isAuthorized: Boolean = false
+    val isAuthorized: Boolean = false,
+    val showLoadingFlow: Boolean = false,
+    val loadingStepIndex: Int = -1
 )
 
 class AuthViewModelFactory(

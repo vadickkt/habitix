@@ -103,6 +103,11 @@ fun AuthScreen(
         }
     }
 
+    if (state.showLoadingFlow) {
+        AuthLoadingContent(currentStepIndex = state.loadingStepIndex)
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
