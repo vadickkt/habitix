@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">habitix</string>
+    <string name="app_name">Habitix</string>
+    <string name="google_web_client_id"></string>
+    <string name="auth_google_setup_error">Налаштуй Firebase: додай google-services.json або google_web_client_id.</string>
 </resources>
