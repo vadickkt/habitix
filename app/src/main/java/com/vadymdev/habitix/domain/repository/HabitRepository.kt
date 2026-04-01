@@ -1,0 +1,14 @@
+package com.vadymdev.habitix.domain.repository
+
+import com.vadymdev.habitix.domain.model.Habit
+import com.vadymdev.habitix.domain.model.HabitCreateDraft
+import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
+
+interface HabitRepository {
+    fun observeHabitsForDate(date: LocalDate): Flow<List<Habit>>
+    suspend fun toggleHabitCompletion(habitId: Long, date: LocalDate, completed: Boolean)
+    suspend fun createHabit(draft: HabitCreateDraft)
+    suspend fun seedOnboardingHabits(habitKeys: Set<String>)
+    suspend fun getIncompleteHabitsForDate(date: LocalDate): List<Habit>
+}

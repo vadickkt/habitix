@@ -15,7 +15,12 @@ import com.vadymdev.habitix.di.AppContainer
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
 import com.vadymdev.habitix.presentation.auth.AuthViewModelFactory
-import com.vadymdev.habitix.presentation.dashboard.DashboardPlaceholderScreen
+import com.vadymdev.habitix.presentation.dashboard.DashboardScreen
+import com.vadymdev.habitix.presentation.dashboard.DashboardViewModel
+import com.vadymdev.habitix.presentation.dashboard.DashboardViewModelFactory
+import com.vadymdev.habitix.presentation.habit.create.CreateHabitScreen
+import com.vadymdev.habitix.presentation.habit.create.CreateHabitViewModel
+import com.vadymdev.habitix.presentation.habit.create.CreateHabitViewModelFactory
 import com.vadymdev.habitix.presentation.navigation.AppRoute
 import com.vadymdev.habitix.presentation.onboarding.OnboardingViewModel
 import com.vadymdev.habitix.presentation.onboarding.OnboardingViewModelFactory
@@ -40,12 +45,26 @@ fun HabitixApp() {
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(
             signInWithGoogleUseCase = container.signInWithGoogleUseCase,
-            continueAsGuestUseCase = container.continueAsGuestUseCase
+            continueAsGuestUseCase = container.continueAsGuestUseCase,
+            syncUserHabitsUseCase = container.syncUserHabitsUseCase
         )
+    )
+
+    val dashboardViewModel: DashboardViewModel = viewModel(
+        factory = DashboardViewModelFactory(
+            observeHabitsForDateUseCase = container.observeHabitsForDateUseCase,
+            toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase
+        )
+    )
+
+    val createHabitViewModel: CreateHabitViewModel = viewModel(
+        factory = CreateHabitViewModelFactory(createHabitUseCase = container.createHabitUseCase)
     )
 
     val navController = rememberNavController()
     val onboardingState by onboardingViewModel.state.collectAsStateWithLifecycle()
+    val dashboardState by dashboardViewModel.state.collectAsStateWithLifecycle()
+    val createHabitState by createHabitViewModel.state.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController,
@@ -98,7 +117,30 @@ fun HabitixApp() {
         }
 
         composable(AppRoute.Dashboard) {
-            DashboardPlaceholderScreen()
+            DashboardScreen(
+                state = dashboardState,
+                onDateSelected = dashboardViewModel::onDateSelected,
+                onToggleHabit = dashboardViewModel::onToggleHabit,
+                onCreateHabit = { navController.navigate(AppRoute.CreateHabit) }
+            )
+        }
+
+        composable(AppRoute.CreateHabit) {
+            CreateHabitScreen(
+                state = createHabitState,
+                onBack = { navController.popBackStack() },
+                onTitle = createHabitViewModel::setTitle,
+                onIcon = createHabitViewModel::setIcon,
+                onColor = createHabitViewModel::setColor,
+                onFrequency = createHabitViewModel::setFrequency,
+                onToggleDay = createHabitViewModel::toggleCustomDay,
+                onToggleReminder = createHabitViewModel::toggleReminder,
+                onCreate = {
+                    createHabitViewModel.createHabit {
+                        navController.popBackStack()
+                    }
+                }
+            )
         }
     }
 }

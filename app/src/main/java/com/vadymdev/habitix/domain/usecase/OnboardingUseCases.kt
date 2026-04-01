@@ -17,5 +17,5 @@ class UpdateHabitsUseCase(private val repository: OnboardingRepository) {
 }
 
 class CompleteOnboardingUseCase(private val repository: OnboardingRepository) {
-    suspend operator fun invoke() = repository.completeOnboarding()
+    suspend operator fun invoke(selectedHabitKeys: Set<String>) = repository.completeOnboarding(selectedHabitKeys)
 }

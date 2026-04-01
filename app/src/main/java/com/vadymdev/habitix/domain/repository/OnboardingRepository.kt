@@ -7,5 +7,5 @@ interface OnboardingRepository {
     fun observeOnboardingState(): Flow<OnboardingState>
     suspend fun updateInterests(values: Set<String>)
     suspend fun updateHabits(values: Set<String>)
-    suspend fun completeOnboarding()
+    suspend fun completeOnboarding(selectedHabitKeys: Set<String>)
 }

@@ -7,4 +7,5 @@ object AppRoute {
     const val OnboardingHabits = "onboarding_habits"
     const val Auth = "auth"
     const val Dashboard = "dashboard"
+    const val CreateHabit = "create_habit"
 }

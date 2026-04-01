@@ -71,7 +71,7 @@ class OnboardingViewModel(
 
     fun completeOnboarding(onDone: () -> Unit) {
         viewModelScope.launch {
-            completeOnboardingUseCase()
+            completeOnboardingUseCase(_state.value.selectedHabitKeys)
             onDone()
         }
     }
