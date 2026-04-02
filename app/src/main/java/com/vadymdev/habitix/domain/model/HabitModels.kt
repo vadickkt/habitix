@@ -35,3 +35,28 @@ data class HabitDailySummary(
     val completed: Int,
     val total: Int
 )
+
+data class HabitCategoryStat(
+    val name: String,
+    val percent: Int,
+    val colorKey: String
+)
+
+data class HabitBadge(
+    val id: String,
+    val title: String,
+    val emoji: String,
+    val earned: Boolean
+)
+
+data class HabitStatsSnapshot(
+    val longestStreak: Int,
+    val earnedBadgesCount: Int,
+    val successRatePercent: Int,
+    val completedTasksCount: Int,
+    val heatmapLevels: List<Int>,
+    val heatmapCounts: List<Int>,
+    val heatmapStartEpochDay: Long,
+    val categoryStats: List<HabitCategoryStat>,
+    val badges: List<HabitBadge>
+)

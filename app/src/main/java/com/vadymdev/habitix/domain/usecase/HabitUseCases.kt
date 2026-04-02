@@ -2,12 +2,17 @@ package com.vadymdev.habitix.domain.usecase
 
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
+import com.vadymdev.habitix.domain.model.HabitStatsSnapshot
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
 class ObserveHabitsForDateUseCase(private val repository: HabitRepository) {
     operator fun invoke(date: LocalDate): Flow<List<Habit>> = repository.observeHabitsForDate(date)
+}
+
+class ObserveStatsUseCase(private val repository: HabitRepository) {
+    operator fun invoke(periodDays: Int): Flow<HabitStatsSnapshot> = repository.observeStats(periodDays)
 }
 
 class ToggleHabitCompletionUseCase(private val repository: HabitRepository) {

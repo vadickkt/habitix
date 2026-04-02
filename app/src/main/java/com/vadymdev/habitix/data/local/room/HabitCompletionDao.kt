@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 interface HabitCompletionDao {
 
     @Query("SELECT * FROM habit_completions")
+    fun observeAllCompletions(): Flow<List<HabitCompletionEntity>>
+
+    @Query("SELECT * FROM habit_completions")
     suspend fun getAllCompletions(): List<HabitCompletionEntity>
 
     @Query("SELECT * FROM habit_completions WHERE dateEpochDay = :dateEpochDay")

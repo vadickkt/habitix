@@ -44,10 +44,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -59,7 +55,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,13 +81,13 @@ import java.time.temporal.TemporalAdjusters
 import java.time.format.TextStyle
 import kotlin.math.abs
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
     onDateSelected: (LocalDate) -> Unit,
     onToggleHabit: (Habit) -> Unit,
+    vibrationEnabled: Boolean,
     onDeleteHabit: (Habit) -> Unit,
     onEditHabit: (Habit) -> Unit,
     onCreateHabit: () -> Unit,
@@ -101,8 +96,6 @@ fun DashboardScreen(
     onOpenProfile: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     val anchorWeekStart = remember { LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) }
     val initialPage = 10_000
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 20_000 })
@@ -116,39 +109,16 @@ fun DashboardScreen(
         }
     }
 
-    fun requestDeleteWithUndo(habit: Habit) {
-        scope.launch {
-            val result = snackbarHostState.showSnackbar(
-                message = "Звичка буде видалена з сьогодні і майбутнього",
-                actionLabel = "Undo",
-                withDismissAction = true
-            )
-            if (result != SnackbarResult.ActionPerformed) {
-                onDeleteHabit(habit)
-            }
-        }
-    }
-
-    Scaffold(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
-            .systemBarsPadding(),
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        bottomBar = {
-            BottomBar(
-                onHome = {},
-                onStats = onOpenStats,
-                onProfile = onOpenProfile,
-                onSettings = onOpenSettings,
-                activeTab = "home"
-            )
-        }
-    ) { contentPadding ->
+            .systemBarsPadding()
+    ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(contentPadding),
+                .weight(1f),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
         ) {
@@ -162,7 +132,9 @@ fun DashboardScreen(
                     anchorWeekStart = anchorWeekStart,
                     selected = state.selectedDate,
                     onSelect = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        if (vibrationEnabled) {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
                         onDateSelected(it)
                     }
                 )
@@ -194,15 +166,21 @@ fun DashboardScreen(
                     SwipeableHabitRow(
                         habit = habit,
                         onToggle = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            if (vibrationEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
                             onToggleHabit(habit)
                         },
                         onDelete = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            requestDeleteWithUndo(habit)
+                            if (vibrationEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                            onDeleteHabit(habit)
                         },
                         onEdit = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            if (vibrationEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
                             onEditHabit(habit)
                         }
                     )
@@ -213,6 +191,14 @@ fun DashboardScreen(
                 AddHabitButton(onCreateHabit = onCreateHabit)
             }
         }
+
+        BottomBar(
+            onHome = {},
+            onStats = onOpenStats,
+            onProfile = onOpenProfile,
+            onSettings = onOpenSettings,
+            activeTab = "home"
+        )
     }
 }
 

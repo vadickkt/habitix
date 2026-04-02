@@ -37,6 +37,9 @@ import com.vadymdev.habitix.presentation.settings.SettingsScreen
 import com.vadymdev.habitix.presentation.settings.SettingsViewModel
 import com.vadymdev.habitix.presentation.settings.SettingsViewModelFactory
 import com.vadymdev.habitix.presentation.settings.PrivacyPolicyScreen
+import com.vadymdev.habitix.presentation.stats.StatsScreen
+import com.vadymdev.habitix.presentation.stats.StatsViewModel
+import com.vadymdev.habitix.presentation.stats.StatsViewModelFactory
 import com.vadymdev.habitix.ui.theme.HabitixTheme
 
 @Composable
@@ -108,15 +111,22 @@ fun HabitixApp() {
         )
     )
 
+    val statsViewModel: StatsViewModel = viewModel(
+        factory = StatsViewModelFactory(
+            observeStatsUseCase = container.observeStatsUseCase
+        )
+    )
+
     val navController = rememberNavController()
     val onboardingState by onboardingViewModel.state.collectAsStateWithLifecycle()
     val dashboardState by dashboardViewModel.state.collectAsStateWithLifecycle()
     val createHabitState by createHabitViewModel.state.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
+    val statsState by statsViewModel.state.collectAsStateWithLifecycle()
     val startDestination by appViewModel.startDestination.collectAsStateWithLifecycle()
 
     HabitixTheme(
-        themeMode = settingsState.settings.themeMode,
+        themeMode = com.vadymdev.habitix.domain.model.ThemeMode.LIGHT,
         accentPalette = settingsState.settings.accentPalette
     ) {
         if (startDestination == AppRoute.Loading) {
@@ -186,6 +196,7 @@ fun HabitixApp() {
                     state = dashboardState,
                     onDateSelected = dashboardViewModel::onDateSelected,
                     onToggleHabit = dashboardViewModel::onToggleHabit,
+                    vibrationEnabled = settingsState.settings.vibrationEnabled,
                     onDeleteHabit = dashboardViewModel::deleteHabitFromToday,
                     onEditHabit = { habit ->
                         createHabitViewModel.startEditing(habit)
@@ -199,7 +210,21 @@ fun HabitixApp() {
             }
 
             composable(AppRoute.Stats) {
-                ComingSoonScreen("Статистика")
+                StatsScreen(
+                    state = statsState,
+                    onSelectPeriod = statsViewModel::setPeriod,
+                    onMetricClick = statsViewModel::openMetric,
+                    onMetricDismiss = statsViewModel::closeMetric,
+                    onCategoryClick = statsViewModel::openCategory,
+                    onCategoryDismiss = statsViewModel::closeCategory,
+                    onBadgeClick = statsViewModel::openBadge,
+                    onBadgeDismiss = statsViewModel::closeBadge,
+                    onHeatmapDayClick = statsViewModel::openHeatmapDay,
+                    onHeatmapDayDismiss = statsViewModel::closeHeatmapDay,
+                    onOpenDashboard = { navController.navigate(AppRoute.Dashboard) },
+                    onOpenProfile = { navController.navigate(AppRoute.Profile) },
+                    onOpenSettings = { navController.navigate(AppRoute.Settings) }
+                )
             }
 
             composable(AppRoute.Profile) {
@@ -210,7 +235,8 @@ fun HabitixApp() {
                 SettingsScreen(
                     state = settingsState,
                     onOpenDashboard = { navController.navigate(AppRoute.Dashboard) },
-                    onThemeToggle = { isDark -> settingsViewModel.setThemeMode(if (isDark) com.vadymdev.habitix.domain.model.ThemeMode.DARK else com.vadymdev.habitix.domain.model.ThemeMode.LIGHT) },
+                    onOpenStats = { navController.navigate(AppRoute.Stats) },
+                    onOpenProfile = { navController.navigate(AppRoute.Profile) },
                     onAccent = settingsViewModel::setAccentPalette,
                     onLanguage = settingsViewModel::setLanguage,
                     onPushToggle = settingsViewModel::setPushEnabled,

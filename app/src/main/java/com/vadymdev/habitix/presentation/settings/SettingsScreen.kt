@@ -1,6 +1,9 @@
 package com.vadymdev.habitix.presentation.settings
 
 import android.app.TimePickerDialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,7 +39,6 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material.icons.rounded.VolumeUp
-import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -63,7 +65,6 @@ import androidx.compose.ui.unit.dp
 import com.vadymdev.habitix.domain.model.AccentPalette
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.AppSettings
-import com.vadymdev.habitix.domain.model.ThemeMode
 import com.vadymdev.habitix.ui.theme.AppBackground
 import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
@@ -74,7 +75,8 @@ import com.vadymdev.habitix.ui.theme.TextSecondary
 fun SettingsScreen(
     state: SettingsUiState,
     onOpenDashboard: () -> Unit,
-    onThemeToggle: (Boolean) -> Unit,
+    onOpenStats: () -> Unit,
+    onOpenProfile: () -> Unit,
     onAccent: (AccentPalette) -> Unit,
     onLanguage: (AppLanguage) -> Unit,
     onPushToggle: (Boolean) -> Unit,
@@ -95,6 +97,26 @@ fun SettingsScreen(
     val isUk = settings.language == AppLanguage.UK
     fun t(uk: String, en: String): String = if (isUk) uk else en
 
+    fun openContact() {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:support@habitix.app")
+            putExtra(Intent.EXTRA_SUBJECT, "Habitix support")
+        }
+        context.startActivity(intent)
+    }
+
+    fun openRateApp() {
+        val appPackage = context.packageName
+        val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$appPackage"))
+        val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$appPackage"))
+
+        try {
+            context.startActivity(marketIntent)
+        } catch (_: ActivityNotFoundException) {
+            context.startActivity(webIntent)
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -114,13 +136,6 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(6.dp))
             DividerTitle(t("ВИГЛЯД", "APPEARANCE"))
             SettingsCard {
-                SwitchRow(
-                    title = t("Темна тема", "Dark theme"),
-                    subtitle = if (settings.themeMode == ThemeMode.DARK) t("Увімкнено", "Enabled") else t("Вимкнено", "Disabled"),
-                    icon = Icons.Rounded.WbSunny,
-                    checked = settings.themeMode == ThemeMode.DARK,
-                    onChecked = onThemeToggle
-                )
                 ClickRow(t("Кольорова тема", "Color theme"), paletteName(settings.accentPalette, isUk), Icons.Rounded.Palette) { showColorSheet = true }
                 ClickRow(t("Мова", "Language"), languageName(settings.language), Icons.Rounded.Language) { showLanguageSheet = true }
             }
@@ -156,8 +171,8 @@ fun SettingsScreen(
         item {
             DividerTitle(t("ПІДТРИМКА", "SUPPORT"))
             SettingsCard {
-                ClickRow(t("Зв'язатися з нами", "Contact us"), t("Підтримка та пропозиції", "Support and ideas"), Icons.Rounded.ContactSupport, onClick = {})
-                ClickRow(t("Оцінити додаток", "Rate app"), t("Залиште відгук", "Leave feedback"), Icons.Rounded.RateReview, onClick = {})
+                ClickRow(t("Зв'язатися з нами", "Contact us"), t("Підтримка та пропозиції", "Support and ideas"), Icons.Rounded.ContactSupport, onClick = ::openContact)
+                ClickRow(t("Оцінити додаток", "Rate app"), t("Залиште відгук", "Leave feedback"), Icons.Rounded.RateReview, onClick = ::openRateApp)
             }
         }
 
@@ -178,7 +193,13 @@ fun SettingsScreen(
         }
 
         item {
-            ModernBottomBar(onSettings = {}, onHome = onOpenDashboard, isUk = isUk)
+            ModernBottomBar(
+                onSettings = {},
+                onHome = onOpenDashboard,
+                onStats = onOpenStats,
+                onProfile = onOpenProfile,
+                isUk = isUk
+            )
         }
     }
 
@@ -350,7 +371,13 @@ private fun LanguageItem(flag: String, title: String, selected: Boolean, onClick
 }
 
 @Composable
-private fun ModernBottomBar(onSettings: () -> Unit, onHome: () -> Unit, isUk: Boolean) {
+private fun ModernBottomBar(
+    onSettings: () -> Unit,
+    onHome: () -> Unit,
+    onStats: () -> Unit,
+    onProfile: () -> Unit,
+    isUk: Boolean
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -360,8 +387,8 @@ private fun ModernBottomBar(onSettings: () -> Unit, onHome: () -> Unit, isUk: Bo
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         BottomItem(Modifier.weight(1f), Icons.Rounded.Home, if (isUk) "Головна" else "Home", false, onHome)
-        BottomItem(Modifier.weight(1f), Icons.Rounded.Analytics, if (isUk) "Статистика" else "Stats", false, {})
-        BottomItem(Modifier.weight(1f), Icons.Rounded.Person, if (isUk) "Профіль" else "Profile", false, {})
+        BottomItem(Modifier.weight(1f), Icons.Rounded.Analytics, if (isUk) "Статистика" else "Stats", false, onStats)
+        BottomItem(Modifier.weight(1f), Icons.Rounded.Person, if (isUk) "Профіль" else "Profile", false, onProfile)
         BottomItem(Modifier.weight(1f), Icons.Rounded.Settings, if (isUk) "Налаштування" else "Settings", true, onSettings)
     }
 }

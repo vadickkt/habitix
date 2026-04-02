@@ -31,6 +31,7 @@ import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveGuestModeUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveOnboardingUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
 import com.vadymdev.habitix.domain.usecase.SetAutoSyncEnabledUseCase
@@ -111,6 +112,7 @@ class AppContainer(context: Context) {
     val updateHabitsUseCase by lazy { UpdateHabitsUseCase(onboardingRepository) }
     val completeOnboardingUseCase by lazy { CompleteOnboardingUseCase(onboardingRepository) }
     val observeHabitsForDateUseCase by lazy { ObserveHabitsForDateUseCase(habitRepository) }
+    val observeStatsUseCase by lazy { ObserveStatsUseCase(habitRepository) }
     val toggleHabitCompletionUseCase by lazy { ToggleHabitCompletionUseCase(habitRepository) }
     val hideHabitForDateUseCase by lazy { HideHabitForDateUseCase(habitRepository) }
     val deactivateHabitFromDateUseCase by lazy { DeactivateHabitFromDateUseCase(habitRepository) }
