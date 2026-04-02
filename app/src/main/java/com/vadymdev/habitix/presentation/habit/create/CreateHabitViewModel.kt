@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
+import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.CreateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateHabitUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +19,7 @@ import java.time.DayOfWeek
 
 class CreateHabitViewModel(
     private val createHabitUseCase: CreateHabitUseCase,
+    private val updateHabitUseCase: UpdateHabitUseCase,
     observeAuthSessionUseCase: ObserveAuthSessionUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModel() {
@@ -62,31 +65,55 @@ class CreateHabitViewModel(
         _state.update { it.copy(reminderEnabled = !it.reminderEnabled) }
     }
 
-    fun createHabit(onCreated: () -> Unit) {
+    fun startEditing(habit: Habit) {
+        _state.value = CreateHabitUiState(
+            editingHabitId = habit.id,
+            title = habit.title,
+            selectedIconKey = habit.iconKey,
+            selectedColorKey = habit.colorKey,
+            frequency = habit.frequencyType,
+            customDays = habit.customDays,
+            reminderEnabled = habit.reminderEnabled
+        )
+    }
+
+    fun resetDraft() {
+        _state.value = CreateHabitUiState()
+    }
+
+    fun saveHabit(onSaved: () -> Unit) {
         val snapshot = _state.value
         if (snapshot.title.isBlank()) return
         if (snapshot.frequency == HabitFrequencyType.CUSTOM && snapshot.customDays.isEmpty()) return
 
+        val draft = HabitCreateDraft(
+            title = snapshot.title.trim(),
+            iconKey = snapshot.selectedIconKey,
+            colorKey = snapshot.selectedColorKey,
+            frequencyType = snapshot.frequency,
+            customDays = snapshot.customDays,
+            reminderEnabled = snapshot.reminderEnabled
+        )
+
         viewModelScope.launch {
-            createHabitUseCase(
-                HabitCreateDraft(
-                    title = snapshot.title.trim(),
-                    iconKey = snapshot.selectedIconKey,
-                    colorKey = snapshot.selectedColorKey,
-                    frequencyType = snapshot.frequency,
-                    customDays = snapshot.customDays,
-                    reminderEnabled = snapshot.reminderEnabled
-                )
-            )
+            val editingId = snapshot.editingHabitId
+            if (editingId == null) {
+                createHabitUseCase(draft)
+            } else {
+                updateHabitUseCase(editingId, draft)
+            }
+
             currentUserId.value?.let { uid ->
                 runCatching { syncUserHabitsUseCase(uid) }
             }
-            onCreated()
+            resetDraft()
+            onSaved()
         }
     }
 }
 
 data class CreateHabitUiState(
+    val editingHabitId: Long? = null,
     val title: String = "",
     val selectedIconKey: String = "water",
     val selectedColorKey: String = "mint",
@@ -97,6 +124,7 @@ data class CreateHabitUiState(
 
 class CreateHabitViewModelFactory(
     private val createHabitUseCase: CreateHabitUseCase,
+    private val updateHabitUseCase: UpdateHabitUseCase,
     private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModelProvider.Factory {
@@ -105,6 +133,7 @@ class CreateHabitViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return CreateHabitViewModel(
                 createHabitUseCase = createHabitUseCase,
+                updateHabitUseCase = updateHabitUseCase,
                 observeAuthSessionUseCase = observeAuthSessionUseCase,
                 syncUserHabitsUseCase = syncUserHabitsUseCase
             ) as T

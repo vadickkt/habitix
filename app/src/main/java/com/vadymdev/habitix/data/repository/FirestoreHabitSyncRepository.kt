@@ -5,6 +5,8 @@ import com.vadymdev.habitix.data.local.room.HabitCompletionDao
 import com.vadymdev.habitix.data.local.room.HabitCompletionEntity
 import com.vadymdev.habitix.data.local.room.HabitDao
 import com.vadymdev.habitix.data.local.room.HabitEntity
+import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
+import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
@@ -12,7 +14,8 @@ import java.util.UUID
 class FirestoreHabitSyncRepository(
     private val firestore: FirebaseFirestore,
     private val habitDao: HabitDao,
-    private val completionDao: HabitCompletionDao
+    private val completionDao: HabitCompletionDao,
+    private val hiddenDayDao: HiddenHabitDayDao
 ) : HabitSyncRepository {
 
     override suspend fun syncUserHabits(userId: String) {
@@ -20,10 +23,12 @@ class FirestoreHabitSyncRepository(
         downloadCloudHabits(userId)
         uploadLocalCompletions(userId)
         downloadCloudCompletions(userId)
+        uploadLocalHiddenDays(userId)
+        downloadCloudHiddenDays(userId)
     }
 
     private suspend fun uploadLocalHabits(userId: String) {
-        val habits = habitDao.getActiveHabits()
+        val habits = habitDao.getAllHabits()
         habits.forEach { habit ->
             val cloudId = habit.cloudId.ifBlank {
                 UUID.randomUUID().toString().also { generated ->
@@ -45,6 +50,7 @@ class FirestoreHabitSyncRepository(
                         "reminderEnabled" to habit.reminderEnabled,
                         "reminderHour" to habit.reminderHour,
                         "reminderMinute" to habit.reminderMinute,
+                        "activeUntilEpochDay" to habit.activeUntilEpochDay,
                         "isArchived" to habit.isArchived,
                         "source" to habit.source,
                         "updatedAt" to System.currentTimeMillis()
@@ -71,6 +77,7 @@ class FirestoreHabitSyncRepository(
             val reminderEnabled = doc.getBoolean("reminderEnabled") ?: true
             val reminderHour = (doc.getLong("reminderHour") ?: 20L).toInt()
             val reminderMinute = (doc.getLong("reminderMinute") ?: 0L).toInt()
+            val activeUntilEpochDay = doc.getLong("activeUntilEpochDay")
             val isArchived = doc.getBoolean("isArchived") ?: false
 
             val existingCloud = habitDao.findByCloudId(cloudId)
@@ -85,6 +92,7 @@ class FirestoreHabitSyncRepository(
                     reminderEnabled = reminderEnabled,
                     reminderHour = reminderHour,
                     reminderMinute = reminderMinute,
+                    activeUntilEpochDay = activeUntilEpochDay,
                     isArchived = isArchived
                 )
                 return@forEach
@@ -103,6 +111,7 @@ class FirestoreHabitSyncRepository(
                     reminderEnabled = reminderEnabled,
                     reminderHour = reminderHour,
                     reminderMinute = reminderMinute,
+                    activeUntilEpochDay = activeUntilEpochDay,
                     isArchived = isArchived
                 )
                 return@forEach
@@ -120,6 +129,7 @@ class FirestoreHabitSyncRepository(
                     reminderHour = reminderHour,
                     reminderMinute = reminderMinute,
                     createdAt = System.currentTimeMillis(),
+                    activeUntilEpochDay = activeUntilEpochDay,
                     isArchived = isArchived,
                     source = doc.getString("source") ?: "cloud"
                 )
@@ -128,7 +138,7 @@ class FirestoreHabitSyncRepository(
     }
 
     private suspend fun uploadLocalCompletions(userId: String) {
-        val habits = habitDao.getActiveHabits().associateBy { it.id }
+        val habits = habitDao.getAllHabits().associateBy { it.id }
         val completions = completionDao.getAllCompletions()
 
         completions.forEach { completion ->
@@ -174,6 +184,55 @@ class FirestoreHabitSyncRepository(
                     habitId = localHabit.id,
                     dateEpochDay = dateEpochDay,
                     completedAtMillis = completedAt
+                )
+            )
+        }
+    }
+
+    private suspend fun uploadLocalHiddenDays(userId: String) {
+        val habits = habitDao.getAllHabits().associateBy { it.id }
+        val hiddenDays = hiddenDayDao.getAllHiddenDays()
+
+        hiddenDays.forEach { hidden ->
+            val habit = habits[hidden.habitId] ?: return@forEach
+            val cloudId = habit.cloudId.ifBlank {
+                UUID.randomUUID().toString().also { generated ->
+                    habitDao.updateCloudId(habit.id, generated)
+                }
+            }
+            val docId = "${cloudId}_${hidden.dateEpochDay}"
+
+            firestore.collection("users")
+                .document(userId)
+                .collection("habit_hidden_days")
+                .document(docId)
+                .set(
+                    mapOf(
+                        "cloudId" to cloudId,
+                        "dateEpochDay" to hidden.dateEpochDay
+                    )
+                )
+                .await()
+        }
+    }
+
+    private suspend fun downloadCloudHiddenDays(userId: String) {
+        val docs = firestore.collection("users")
+            .document(userId)
+            .collection("habit_hidden_days")
+            .get()
+            .await()
+            .documents
+
+        docs.forEach { doc ->
+            val cloudId = doc.getString("cloudId") ?: return@forEach
+            val dateEpochDay = doc.getLong("dateEpochDay") ?: return@forEach
+            val localHabit = habitDao.findByCloudId(cloudId) ?: return@forEach
+
+            hiddenDayDao.upsert(
+                HiddenHabitDayEntity(
+                    habitId = localHabit.id,
+                    dateEpochDay = dateEpochDay
                 )
             )
         }

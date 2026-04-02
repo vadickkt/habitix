@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.model.Habit
+import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
@@ -21,6 +22,7 @@ import java.time.LocalDate
 class DashboardViewModel(
     private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
+    private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     observeAuthSessionUseCase: ObserveAuthSessionUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModel() {
@@ -64,9 +66,20 @@ class DashboardViewModel(
                 date = state.value.selectedDate,
                 completed = !habit.isCompletedForSelectedDate
             )
-            currentUserId.value?.let { uid ->
-                runCatching { syncUserHabitsUseCase(uid) }
-            }
+            syncIfAuthorized()
+        }
+    }
+
+    fun deleteHabitFromToday(habit: Habit) {
+        viewModelScope.launch {
+            deactivateHabitFromDateUseCase(habit.id, state.value.selectedDate)
+            syncIfAuthorized()
+        }
+    }
+
+    private suspend fun syncIfAuthorized() {
+        currentUserId.value?.let { uid ->
+            runCatching { syncUserHabitsUseCase(uid) }
         }
     }
 }
@@ -81,6 +94,7 @@ data class DashboardUiState(
 class DashboardViewModelFactory(
     private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
+    private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModelProvider.Factory {
@@ -90,6 +104,7 @@ class DashboardViewModelFactory(
             return DashboardViewModel(
                 observeHabitsForDateUseCase = observeHabitsForDateUseCase,
                 toggleHabitCompletionUseCase = toggleHabitCompletionUseCase,
+                deactivateHabitFromDateUseCase = deactivateHabitFromDateUseCase,
                 observeAuthSessionUseCase = observeAuthSessionUseCase,
                 syncUserHabitsUseCase = syncUserHabitsUseCase
             ) as T

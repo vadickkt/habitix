@@ -1,6 +1,20 @@
 package com.vadymdev.habitix.presentation.habit
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Book
+import androidx.compose.material.icons.rounded.DirectionsRun
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.LocalCafe
+import androidx.compose.material.icons.rounded.MenuBook
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.NightsStay
+import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.Restaurant
+import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material.icons.rounded.Edit
 
 fun habitColor(colorKey: String): Color {
     return when (colorKey) {
@@ -28,5 +42,23 @@ fun habitIcon(iconKey: String): String {
         "cup" -> "☕"
         "steps" -> "⌕"
         else -> "◔"
+    }
+}
+
+fun habitIconVector(iconKey: String): ImageVector {
+    return when (iconKey) {
+        "water" -> Icons.Rounded.WaterDrop
+        "book" -> Icons.Rounded.Book
+        "fitness" -> Icons.Rounded.DirectionsRun
+        "moon" -> Icons.Rounded.NightsStay
+        "mind" -> Icons.Rounded.Psychology
+        "heart" -> Icons.Rounded.FavoriteBorder
+        "fork" -> Icons.Rounded.Restaurant
+        "music" -> Icons.Rounded.MusicNote
+        "pen" -> Icons.Rounded.Edit
+        "sun" -> Icons.Rounded.WbSunny
+        "cup" -> Icons.Rounded.LocalCafe
+        "steps" -> Icons.Rounded.MenuBook
+        else -> Icons.Rounded.WaterDrop
     }
 }

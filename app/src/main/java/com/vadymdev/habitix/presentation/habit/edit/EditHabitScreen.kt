@@ -1,7 +1,13 @@
-package com.vadymdev.habitix.presentation.habit.create
+package com.vadymdev.habitix.presentation.habit.edit
 
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,13 +37,19 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
+import com.vadymdev.habitix.presentation.habit.create.CreateHabitUiState
 import com.vadymdev.habitix.presentation.habit.habitColor
 import com.vadymdev.habitix.presentation.habit.habitIconVector
 import com.vadymdev.habitix.ui.theme.AppBackground
@@ -47,7 +59,7 @@ import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.time.DayOfWeek
 
 @Composable
-fun CreateHabitScreen(
+fun EditHabitScreen(
     state: CreateHabitUiState,
     onBack: () -> Unit,
     onTitle: (String) -> Unit,
@@ -60,6 +72,27 @@ fun CreateHabitScreen(
 ) {
     val iconKeys = listOf("water", "book", "fitness", "moon", "mind", "heart", "fork", "music", "pen", "sun", "cup", "steps")
     val colorKeys = listOf("mint", "orange", "purple", "blue", "pink")
+    var heroEntered by remember(state.editingHabitId) { mutableStateOf(false) }
+
+    LaunchedEffect(state.editingHabitId) {
+        heroEntered = true
+    }
+
+    val previewCardColor by animateColorAsState(
+        targetValue = habitColor(state.selectedColorKey),
+        animationSpec = spring(dampingRatio = 0.75f, stiffness = 260f),
+        label = "edit_preview_color"
+    )
+    val heroScale by animateFloatAsState(
+        targetValue = if (heroEntered) 1f else 0.72f,
+        animationSpec = spring(dampingRatio = 0.73f, stiffness = 300f),
+        label = "edit_hero_scale"
+    )
+    val heroAlpha by animateFloatAsState(
+        targetValue = if (heroEntered) 1f else 0.35f,
+        animationSpec = tween(260),
+        label = "edit_hero_alpha"
+    )
 
     LazyColumn(
         modifier = Modifier
@@ -83,33 +116,51 @@ fun CreateHabitScreen(
                     Text("←", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(modifier = Modifier.size(10.dp))
-                Text(
-                    if (state.editingHabitId == null) "Нова звичка" else "Редагувати звичку",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Редагувати звичку", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
 
         item {
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        scaleX = heroScale
+                        scaleY = heroScale
+                        alpha = heroAlpha
+                    }
+                    .background(Color.White, RoundedCornerShape(18.dp))
+                    .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(18.dp))
+                    .padding(14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                Text("Live preview", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 Box(
                     modifier = Modifier
-                        .size(74.dp)
-                        .background(habitColor(state.selectedColorKey), RoundedCornerShape(16.dp)),
+                        .size(76.dp)
+                        .background(previewCardColor, RoundedCornerShape(18.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = habitIconVector(state.selectedIconKey),
-                        contentDescription = null,
-                        tint = TextPrimary,
-                        modifier = Modifier.size(34.dp)
-                    )
+                    AnimatedContent(
+                        targetState = state.selectedIconKey,
+                        transitionSpec = { fadeIn(animationSpec = tween(180)) togetherWith fadeOut(animationSpec = tween(180)) },
+                        label = "edit_preview_icon"
+                    ) { iconKey ->
+                        Icon(
+                            imageVector = habitIconVector(iconKey),
+                            contentDescription = null,
+                            tint = TextPrimary,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
                 }
+                Text(
+                    text = if (state.title.isBlank()) "Ваша звичка" else state.title,
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
@@ -162,17 +213,13 @@ fun CreateHabitScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 colorKeys.forEach { key ->
                     val active = state.selectedColorKey == key
-                    val border by animateColorAsState(if (active) BrandGreen else Color.Transparent, label = "color_pick")
                     Box(
                         modifier = Modifier
                             .size(44.dp)
-                            .border(2.dp, border, CircleShape)
+                            .border(2.dp, if (active) BrandGreen else Color.Transparent, CircleShape)
                             .background(habitColor(key), CircleShape)
-                            .clickable { onColor(key) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (active) Text("✓", color = Color.White)
-                    }
+                            .clickable { onColor(key) }
+                    )
                 }
             }
         }
@@ -186,31 +233,29 @@ fun CreateHabitScreen(
                 FrequencyChip("Обрати дні", state.frequency == HabitFrequencyType.CUSTOM) { onFrequency(HabitFrequencyType.CUSTOM) }
             }
 
-            Column(modifier = Modifier.animateContentSize()) {
-                if (state.frequency == HabitFrequencyType.CUSTOM) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    val days = listOf(
-                        DayOfWeek.MONDAY to "Пн",
-                        DayOfWeek.TUESDAY to "Вт",
-                        DayOfWeek.WEDNESDAY to "Ср",
-                        DayOfWeek.THURSDAY to "Чт",
-                        DayOfWeek.FRIDAY to "Пт",
-                        DayOfWeek.SATURDAY to "Сб",
-                        DayOfWeek.SUNDAY to "Нд"
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        days.forEach { (day, label) ->
-                            val active = state.customDays.contains(day)
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .background(if (active) BrandGreen else Color.White, CircleShape)
-                                    .border(1.dp, if (active) BrandGreen else Color(0xFFD7D7D7), CircleShape)
-                                    .clickable { onToggleDay(day) },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(label, color = if (active) Color.White else TextPrimary, fontWeight = FontWeight.SemiBold)
-                            }
+            if (state.frequency == HabitFrequencyType.CUSTOM) {
+                Spacer(modifier = Modifier.height(10.dp))
+                val days = listOf(
+                    DayOfWeek.MONDAY to "Пн",
+                    DayOfWeek.TUESDAY to "Вт",
+                    DayOfWeek.WEDNESDAY to "Ср",
+                    DayOfWeek.THURSDAY to "Чт",
+                    DayOfWeek.FRIDAY to "Пт",
+                    DayOfWeek.SATURDAY to "Сб",
+                    DayOfWeek.SUNDAY to "Нд"
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    days.forEach { (day, label) ->
+                        val active = state.customDays.contains(day)
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .background(if (active) BrandGreen else Color.White, CircleShape)
+                                .border(1.dp, if (active) BrandGreen else Color(0xFFD7D7D7), CircleShape)
+                                .clickable { onToggleDay(day) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(label, color = if (active) Color.White else TextPrimary, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -257,7 +302,7 @@ fun CreateHabitScreen(
                     disabledContainerColor = BrandGreen.copy(alpha = 0.45f)
                 )
             ) {
-                Text(if (state.editingHabitId == null) "Створити звичку ✓" else "Зберегти зміни ✓", fontWeight = FontWeight.Bold)
+                Text("Зберегти зміни ✓", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(14.dp))
         }

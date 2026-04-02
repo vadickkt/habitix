@@ -8,7 +8,9 @@ object AppRoute {
     const val Auth = "auth"
     const val Dashboard = "dashboard"
     const val CreateHabit = "create_habit"
+    const val EditHabit = "edit_habit"
     const val Stats = "stats"
     const val Profile = "profile"
     const val Settings = "settings"
+    const val PrivacyPolicy = "privacy_policy"
 }

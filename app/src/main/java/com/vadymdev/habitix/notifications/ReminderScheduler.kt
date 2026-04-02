@@ -12,6 +12,9 @@ import java.util.concurrent.TimeUnit
 
 object ReminderScheduler {
 
+    private const val PERIODIC_WORK_NAME = "habitix_periodic_reminders"
+    private const val IMMEDIATE_WORK_NAME = "habitix_immediate_reminder_check"
+
     fun schedule(context: Context) {
         val workManager = WorkManager.getInstance(context)
 
@@ -24,16 +27,22 @@ object ReminderScheduler {
             .build()
 
         workManager.enqueueUniquePeriodicWork(
-            "habitix_periodic_reminders",
+            PERIODIC_WORK_NAME,
             ExistingPeriodicWorkPolicy.UPDATE,
             periodic
         )
 
         val immediate = OneTimeWorkRequestBuilder<HabitReminderWorker>().build()
         workManager.enqueueUniqueWork(
-            "habitix_immediate_reminder_check",
+            IMMEDIATE_WORK_NAME,
             ExistingWorkPolicy.REPLACE,
             immediate
         )
+    }
+
+    fun cancel(context: Context) {
+        val workManager = WorkManager.getInstance(context)
+        workManager.cancelUniqueWork(IMMEDIATE_WORK_NAME)
+        workManager.cancelUniqueWork(PERIODIC_WORK_NAME)
     }
 }

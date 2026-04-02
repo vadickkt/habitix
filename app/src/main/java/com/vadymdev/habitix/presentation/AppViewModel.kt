@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveGuestModeUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveOnboardingUseCase
 import com.vadymdev.habitix.presentation.navigation.AppRoute
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
@@ -14,16 +14,18 @@ import kotlinx.coroutines.flow.SharingStarted
 
 class AppViewModel(
     observeOnboardingUseCase: ObserveOnboardingUseCase,
-    observeAuthSessionUseCase: ObserveAuthSessionUseCase
+    observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    observeGuestModeUseCase: ObserveGuestModeUseCase
 ) : ViewModel() {
 
     val startDestination: StateFlow<String> = combine(
         observeOnboardingUseCase(),
-        observeAuthSessionUseCase()
-    ) { onboarding, session ->
+        observeAuthSessionUseCase(),
+        observeGuestModeUseCase()
+    ) { onboarding, session, isGuest ->
         when {
             !onboarding.completed -> AppRoute.OnboardingIntro
-            session == null -> AppRoute.Auth
+            session == null && !isGuest -> AppRoute.Auth
             else -> AppRoute.Dashboard
         }
     }.stateIn(
@@ -35,14 +37,16 @@ class AppViewModel(
 
 class AppViewModelFactory(
     private val observeOnboardingUseCase: ObserveOnboardingUseCase,
-    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase
+    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val observeGuestModeUseCase: ObserveGuestModeUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return AppViewModel(
                 observeOnboardingUseCase = observeOnboardingUseCase,
-                observeAuthSessionUseCase = observeAuthSessionUseCase
+                observeAuthSessionUseCase = observeAuthSessionUseCase,
+                observeGuestModeUseCase = observeGuestModeUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

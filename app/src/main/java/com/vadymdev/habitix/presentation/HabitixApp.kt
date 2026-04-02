@@ -1,11 +1,15 @@
 package com.vadymdev.habitix.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -22,6 +26,7 @@ import com.vadymdev.habitix.presentation.dashboard.DashboardViewModelFactory
 import com.vadymdev.habitix.presentation.habit.create.CreateHabitScreen
 import com.vadymdev.habitix.presentation.habit.create.CreateHabitViewModel
 import com.vadymdev.habitix.presentation.habit.create.CreateHabitViewModelFactory
+import com.vadymdev.habitix.presentation.habit.edit.EditHabitScreen
 import com.vadymdev.habitix.presentation.navigation.AppRoute
 import com.vadymdev.habitix.presentation.onboarding.OnboardingViewModel
 import com.vadymdev.habitix.presentation.onboarding.OnboardingViewModelFactory
@@ -31,6 +36,7 @@ import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingIntroScree
 import com.vadymdev.habitix.presentation.settings.SettingsScreen
 import com.vadymdev.habitix.presentation.settings.SettingsViewModel
 import com.vadymdev.habitix.presentation.settings.SettingsViewModelFactory
+import com.vadymdev.habitix.presentation.settings.PrivacyPolicyScreen
 import com.vadymdev.habitix.ui.theme.HabitixTheme
 
 @Composable
@@ -53,6 +59,14 @@ fun HabitixApp() {
             continueAsGuestUseCase = container.continueAsGuestUseCase,
             syncUserHabitsUseCase = container.syncUserHabitsUseCase,
             syncSettingsUseCase = container.syncSettingsUseCase
+        )
+    )
+
+    val appViewModel: AppViewModel = viewModel(
+        factory = AppViewModelFactory(
+            observeOnboardingUseCase = container.observeOnboardingUseCase,
+            observeAuthSessionUseCase = container.observeAuthSessionUseCase,
+            observeGuestModeUseCase = container.observeGuestModeUseCase
         )
     )
 
@@ -79,6 +93,7 @@ fun HabitixApp() {
         factory = DashboardViewModelFactory(
             observeHabitsForDateUseCase = container.observeHabitsForDateUseCase,
             toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase,
+            deactivateHabitFromDateUseCase = container.deactivateHabitFromDateUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
             syncUserHabitsUseCase = container.syncUserHabitsUseCase
         )
@@ -87,6 +102,7 @@ fun HabitixApp() {
     val createHabitViewModel: CreateHabitViewModel = viewModel(
         factory = CreateHabitViewModelFactory(
             createHabitUseCase = container.createHabitUseCase,
+            updateHabitUseCase = container.updateHabitUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
             syncUserHabitsUseCase = container.syncUserHabitsUseCase
         )
@@ -97,14 +113,27 @@ fun HabitixApp() {
     val dashboardState by dashboardViewModel.state.collectAsStateWithLifecycle()
     val createHabitState by createHabitViewModel.state.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
+    val startDestination by appViewModel.startDestination.collectAsStateWithLifecycle()
 
     HabitixTheme(
         themeMode = settingsState.settings.themeMode,
         accentPalette = settingsState.settings.accentPalette
     ) {
+        if (startDestination == AppRoute.Loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(com.vadymdev.habitix.ui.theme.AppBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = com.vadymdev.habitix.ui.theme.BrandGreen)
+            }
+            return@HabitixTheme
+        }
+
         NavHost(
             navController = navController,
-            startDestination = AppRoute.OnboardingIntro
+            startDestination = startDestination
         ) {
             composable(AppRoute.OnboardingIntro) {
                 OnboardingIntroScreen(
@@ -157,6 +186,11 @@ fun HabitixApp() {
                     state = dashboardState,
                     onDateSelected = dashboardViewModel::onDateSelected,
                     onToggleHabit = dashboardViewModel::onToggleHabit,
+                    onDeleteHabit = dashboardViewModel::deleteHabitFromToday,
+                    onEditHabit = { habit ->
+                        createHabitViewModel.startEditing(habit)
+                        navController.navigate(AppRoute.EditHabit)
+                    },
                     onCreateHabit = { navController.navigate(AppRoute.CreateHabit) },
                     onOpenSettings = { navController.navigate(AppRoute.Settings) },
                     onOpenStats = { navController.navigate(AppRoute.Stats) },
@@ -183,8 +217,8 @@ fun HabitixApp() {
                     onTimePicked = settingsViewModel::setReminderTime,
                     onSoundsToggle = settingsViewModel::setSoundsEnabled,
                     onVibrationToggle = settingsViewModel::setVibrationEnabled,
-                    onBiometricToggle = settingsViewModel::setBiometricEnabled,
                     onAutoSyncToggle = settingsViewModel::setAutoSyncEnabled,
+                    onOpenPrivacyPolicy = { navController.navigate(AppRoute.PrivacyPolicy) },
                     onSignOut = {
                         settingsViewModel.signOut {
                             navController.navigate(AppRoute.Auth) {
@@ -205,18 +239,46 @@ fun HabitixApp() {
                 )
             }
 
+            composable(AppRoute.PrivacyPolicy) {
+                PrivacyPolicyScreen(onBack = { navController.popBackStack() })
+            }
+
             composable(AppRoute.CreateHabit) {
                 CreateHabitScreen(
                     state = createHabitState,
-                    onBack = { navController.popBackStack() },
+                    onBack = {
+                        createHabitViewModel.resetDraft()
+                        navController.popBackStack()
+                    },
                     onTitle = createHabitViewModel::setTitle,
                     onIcon = createHabitViewModel::setIcon,
                     onColor = createHabitViewModel::setColor,
                     onFrequency = createHabitViewModel::setFrequency,
                     onToggleDay = createHabitViewModel::toggleCustomDay,
                     onToggleReminder = createHabitViewModel::toggleReminder,
-                    onCreate = {
-                        createHabitViewModel.createHabit {
+                    onSave = {
+                        createHabitViewModel.saveHabit {
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            }
+
+            composable(AppRoute.EditHabit) {
+                EditHabitScreen(
+                    state = createHabitState,
+                    onBack = {
+                        createHabitViewModel.resetDraft()
+                        navController.popBackStack()
+                    },
+                    onTitle = createHabitViewModel::setTitle,
+                    onIcon = createHabitViewModel::setIcon,
+                    onColor = createHabitViewModel::setColor,
+                    onFrequency = createHabitViewModel::setFrequency,
+                    onToggleDay = createHabitViewModel::toggleCustomDay,
+                    onToggleReminder = createHabitViewModel::toggleReminder,
+                    onSave = {
+                        createHabitViewModel.saveHabit {
                             navController.popBackStack()
                         }
                     }

@@ -15,11 +15,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.ContactSupport
+import androidx.compose.material.icons.rounded.DeleteForever
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Policy
+import androidx.compose.material.icons.rounded.RateReview
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.material.icons.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
@@ -33,8 +53,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vadymdev.habitix.domain.model.AccentPalette
 import com.vadymdev.habitix.domain.model.AppLanguage
@@ -57,8 +81,8 @@ fun SettingsScreen(
     onTimePicked: (Int, Int) -> Unit,
     onSoundsToggle: (Boolean) -> Unit,
     onVibrationToggle: (Boolean) -> Unit,
-    onBiometricToggle: (Boolean) -> Unit,
     onAutoSyncToggle: (Boolean) -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit
 ) {
@@ -76,75 +100,79 @@ fun SettingsScreen(
             .fillMaxSize()
             .background(AppBackground)
             .systemBarsPadding()
-            .padding(horizontal = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(horizontal = 14.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Text(t("Налаштування", "Settings"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp, start = 4.dp))
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                t("Налаштування", "Settings"),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 12.dp, start = 2.dp)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             DividerTitle(t("ВИГЛЯД", "APPEARANCE"))
             SettingsCard {
                 SwitchRow(
                     title = t("Темна тема", "Dark theme"),
                     subtitle = if (settings.themeMode == ThemeMode.DARK) t("Увімкнено", "Enabled") else t("Вимкнено", "Disabled"),
-                    icon = "☼",
+                    icon = Icons.Rounded.WbSunny,
                     checked = settings.themeMode == ThemeMode.DARK,
                     onChecked = onThemeToggle
                 )
-                ClickRow(t("Кольорова тема", "Color theme"), paletteName(settings.accentPalette, isUk), "◍") { showColorSheet = true }
-                ClickRow(t("Мова", "Language"), languageName(settings.language), "◎") { showLanguageSheet = true }
+                ClickRow(t("Кольорова тема", "Color theme"), paletteName(settings.accentPalette, isUk), Icons.Rounded.Palette) { showColorSheet = true }
+                ClickRow(t("Мова", "Language"), languageName(settings.language), Icons.Rounded.Language) { showLanguageSheet = true }
             }
         }
 
         item {
             DividerTitle(t("СПОВІЩЕННЯ", "NOTIFICATIONS"))
             SettingsCard {
-                SwitchRow(t("Push-сповіщення", "Push notifications"), t("Нагадування про звички", "Habit reminders"), "◔", settings.pushEnabled, onPushToggle)
-                ClickRow(t("Час нагадувань", "Reminder time"), "%02d:%02d".format(settings.reminderHour, settings.reminderMinute), "◷") {
-                    TimePickerDialog(
-                        context,
-                        { _, hour, minute -> onTimePicked(hour, minute) },
-                        settings.reminderHour,
-                        settings.reminderMinute,
-                        true
-                    ).show()
+                SwitchRow(t("Push-сповіщення", "Push notifications"), t("Нагадування про звички", "Habit reminders"), Icons.Rounded.NotificationsActive, settings.pushEnabled, onPushToggle)
+                if (settings.pushEnabled) {
+                    ClickRow(t("Час нагадувань", "Reminder time"), "%02d:%02d".format(settings.reminderHour, settings.reminderMinute), Icons.Rounded.Schedule) {
+                        TimePickerDialog(
+                            context,
+                            { _, hour, minute -> onTimePicked(hour, minute) },
+                            settings.reminderHour,
+                            settings.reminderMinute,
+                            true
+                        ).show()
+                    }
+                    SwitchRow(t("Звуки", "Sounds"), t("Звуки при виконанні", "Completion sounds"), Icons.Rounded.VolumeUp, settings.soundsEnabled, onSoundsToggle)
+                    SwitchRow(t("Вібрація", "Vibration"), t("Тактильний відгук", "Haptic feedback"), Icons.Rounded.Vibration, settings.vibrationEnabled, onVibrationToggle)
                 }
-                SwitchRow(t("Звуки", "Sounds"), t("Звуки при виконанні", "Completion sounds"), "◍", settings.soundsEnabled, onSoundsToggle)
-                SwitchRow(t("Вібрація", "Vibration"), t("Тактильний відгук", "Haptic feedback"), "◉", settings.vibrationEnabled, onVibrationToggle)
             }
         }
 
         item {
             DividerTitle(t("АКАУНТ ТА БЕЗПЕКА", "ACCOUNT & SECURITY"))
             SettingsCard {
-                SwitchRow("Біометрія", "Face ID / Touch ID", "⌂", settings.biometricEnabled, onBiometricToggle)
-                ClickRow(t("Змінити пароль", "Change password"), "", "⌘", onClick = {})
-                SwitchRow(t("Синхронізація", "Sync"), t("Автоматично синхронізувати", "Sync automatically"), "☁", settings.autoSyncEnabled, onAutoSyncToggle)
+                SwitchRow(t("Синхронізація", "Sync"), t("Автоматично синхронізувати", "Sync automatically"), Icons.Rounded.Sync, settings.autoSyncEnabled, onAutoSyncToggle)
             }
         }
 
         item {
             DividerTitle(t("ПІДТРИМКА", "SUPPORT"))
             SettingsCard {
-                ClickRow(t("Довідка", "Help"), t("FAQ та інструкції", "FAQ and guides"), "?", onClick = {})
-                ClickRow(t("Зв'язатися з нами", "Contact us"), t("Підтримка та пропозиції", "Support and ideas"), "◫", onClick = {})
-                ClickRow(t("Оцінити додаток", "Rate app"), t("Залиште відгук", "Leave feedback"), "☆", onClick = {})
+                ClickRow(t("Зв'язатися з нами", "Contact us"), t("Підтримка та пропозиції", "Support and ideas"), Icons.Rounded.ContactSupport, onClick = {})
+                ClickRow(t("Оцінити додаток", "Rate app"), t("Залиште відгук", "Leave feedback"), Icons.Rounded.RateReview, onClick = {})
             }
         }
 
         item {
             DividerTitle(t("ПРАВОВА ІНФОРМАЦІЯ", "LEGAL"))
             SettingsCard {
-                ClickRow(t("Умови використання", "Terms of use"), "", "◬", onClick = {})
-                ClickRow(t("Політика конфіденційності", "Privacy policy"), "", "◯", onClick = {})
+                ClickRow(t("Політика конфіденційності", "Privacy policy"), t("Як ми обробляємо дані", "How we process your data"), Icons.Rounded.Policy, onClick = onOpenPrivacyPolicy)
             }
         }
 
         item {
             DividerTitle(t("НЕБЕЗПЕЧНА ЗОНА", "DANGER ZONE"))
             SettingsCard {
-                ClickRow(t("Вийти", "Sign out"), "", "⇥", titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
-                ClickRow(t("Видалити акаунт", "Delete account"), t("Це видалить всі ваші дані", "This will remove all your data"), "⌦", titleColor = Color(0xFFE24949)) { showDangerDialog = "delete" }
+                ClickRow(t("Вийти", "Sign out"), "", Icons.Rounded.Logout, titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
+                ClickRow(t("Видалити акаунт", "Delete account"), t("Це видалить всі ваші дані", "This will remove all your data"), Icons.Rounded.DeleteForever, titleColor = Color(0xFFE24949)) { showDangerDialog = "delete" }
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -221,7 +249,13 @@ fun SettingsScreen(
 
 @Composable
 private fun DividerTitle(text: String) {
-    Text(text, color = TextSecondary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp))
+    Text(
+        text,
+        color = TextSecondary,
+        style = MaterialTheme.typography.bodySmall,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 4.dp)
+    )
 }
 
 @Composable
@@ -237,50 +271,64 @@ private fun SettingsCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SwitchRow(title: String, subtitle: String, icon: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
+private fun SwitchRow(title: String, subtitle: String, icon: ImageVector, checked: Boolean, onChecked: (Boolean) -> Unit) {
+    val haptic = LocalHapticFeedback.current
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconBubble(icon)
-        Spacer(modifier = Modifier.size(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            if (subtitle.isNotBlank()) Text(subtitle, color = TextSecondary)
+            Text(title, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle.isNotBlank()) {
+                Text(subtitle, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
-        Switch(checked = checked, onCheckedChange = onChecked)
+        Switch(
+            checked = checked,
+            onCheckedChange = {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onChecked(it)
+            }
+        )
     }
 }
 
 @Composable
-private fun ClickRow(title: String, subtitle: String, icon: String, titleColor: Color = TextPrimary, onClick: () -> Unit) {
+private fun ClickRow(title: String, subtitle: String, icon: ImageVector, titleColor: Color = TextPrimary, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconBubble(icon)
-        Spacer(modifier = Modifier.size(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = titleColor, fontWeight = FontWeight.SemiBold)
-            if (subtitle.isNotBlank()) Text(subtitle, color = TextSecondary)
+            Text(title, color = titleColor, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (subtitle.isNotBlank()) {
+                Text(subtitle, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
-        Text(if (subtitle.isNotBlank()) subtitle else "›", color = TextSecondary)
+        Text("›", color = TextSecondary)
     }
 }
 
 @Composable
-private fun IconBubble(icon: String) {
+private fun IconBubble(icon: ImageVector) {
     Box(
         modifier = Modifier
             .size(36.dp)
             .background(Color(0xFFF0EFEC), CircleShape),
         contentAlignment = Alignment.Center
-    ) { Text(icon, color = TextSecondary) }
+    ) {
+        Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+    }
 }
 
 @Composable
@@ -307,28 +355,35 @@ private fun ModernBottomBar(onSettings: () -> Unit, onHome: () -> Unit, isUk: Bo
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .border(1.dp, Color(0xFFE8E8E8))
-            .padding(vertical = 8.dp, horizontal = 10.dp),
+            .border(1.dp, Color(0xFFE8E8E8), RoundedCornerShape(14.dp))
+            .padding(vertical = 8.dp, horizontal = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        BottomItem("⌂", if (isUk) "Головна" else "Home", false, onHome)
-        BottomItem("⌁", if (isUk) "Статистика" else "Stats", false, {})
-        BottomItem("◡", if (isUk) "Профіль" else "Profile", false, {})
-        BottomItem("⚙", if (isUk) "Налаштування" else "Settings", true, onSettings)
+        BottomItem(Modifier.weight(1f), Icons.Rounded.Home, if (isUk) "Головна" else "Home", false, onHome)
+        BottomItem(Modifier.weight(1f), Icons.Rounded.Analytics, if (isUk) "Статистика" else "Stats", false, {})
+        BottomItem(Modifier.weight(1f), Icons.Rounded.Person, if (isUk) "Профіль" else "Profile", false, {})
+        BottomItem(Modifier.weight(1f), Icons.Rounded.Settings, if (isUk) "Налаштування" else "Settings", true, onSettings)
     }
 }
 
 @Composable
-private fun BottomItem(icon: String, label: String, active: Boolean, onClick: () -> Unit) {
+private fun BottomItem(modifier: Modifier, icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
     Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
+            .then(modifier)
             .background(if (active) Color(0xFFE7F8EF) else Color.Transparent, RoundedCornerShape(18.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
-        Text(icon, color = if (active) BrandGreen else TextSecondary)
-        Text(label, color = if (active) BrandGreen else TextSecondary)
+        Icon(icon, contentDescription = label, tint = if (active) BrandGreen else TextSecondary, modifier = Modifier.size(21.dp))
+        Text(
+            text = label,
+            color = if (active) BrandGreen else TextSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 

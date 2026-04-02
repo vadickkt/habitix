@@ -16,6 +16,30 @@ class ToggleHabitCompletionUseCase(private val repository: HabitRepository) {
     }
 }
 
+class UpdateHabitUseCase(private val repository: HabitRepository) {
+    suspend operator fun invoke(habitId: Long, draft: HabitCreateDraft) {
+        repository.updateHabit(habitId, draft)
+    }
+}
+
+class HideHabitForDateUseCase(private val repository: HabitRepository) {
+    suspend operator fun invoke(habitId: Long, date: LocalDate) {
+        repository.hideHabitForDate(habitId, date)
+    }
+}
+
+class DeactivateHabitFromDateUseCase(private val repository: HabitRepository) {
+    suspend operator fun invoke(habitId: Long, date: LocalDate) {
+        repository.deactivateHabitFromDate(habitId, date)
+    }
+}
+
+class DeleteAllHabitsUseCase(private val repository: HabitRepository) {
+    suspend operator fun invoke() {
+        repository.deleteAllHabits()
+    }
+}
+
 class CreateHabitUseCase(private val repository: HabitRepository) {
     suspend operator fun invoke(draft: HabitCreateDraft) = repository.createHabit(draft)
 }

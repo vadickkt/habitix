@@ -23,7 +23,11 @@ class HabitReminderWorker(
 
     override suspend fun doWork(): Result {
         val database = HabitixDatabase.get(applicationContext)
-        val repository = HabitRepositoryImpl(database.habitDao(), database.habitCompletionDao())
+        val repository = HabitRepositoryImpl(
+            habitDao = database.habitDao(),
+            completionDao = database.habitCompletionDao(),
+            hiddenDayDao = database.hiddenHabitDayDao()
+        )
 
         val incomplete = repository.getIncompleteHabitsForDate(LocalDate.now())
         if (incomplete.isEmpty()) return Result.success()

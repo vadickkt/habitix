@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
     fun observeSession(): Flow<UserSession?>
+    fun observeGuestMode(): Flow<Boolean>
     suspend fun signInWithGoogle(idToken: String): Result<UserSession>
     suspend fun continueAsGuest()
     fun getCurrentSession(): UserSession?

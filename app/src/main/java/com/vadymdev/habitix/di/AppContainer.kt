@@ -22,9 +22,13 @@ import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
 import com.vadymdev.habitix.domain.usecase.CompleteOnboardingUseCase
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.CreateHabitUseCase
+import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
+import com.vadymdev.habitix.domain.usecase.DeleteAllHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.DeleteAccountUseCase
 import com.vadymdev.habitix.domain.usecase.GetIncompleteHabitsForDateUseCase
+import com.vadymdev.habitix.domain.usecase.HideHabitForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveGuestModeUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveOnboardingUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
@@ -42,6 +46,7 @@ import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncSettingsUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateInterestsUseCase
 
@@ -70,7 +75,8 @@ class AppContainer(context: Context) {
     private val habitRepository: HabitRepository by lazy {
         HabitRepositoryImpl(
             habitDao = database.habitDao(),
-            completionDao = database.habitCompletionDao()
+            completionDao = database.habitCompletionDao(),
+            hiddenDayDao = database.hiddenHabitDayDao()
         )
     }
 
@@ -78,7 +84,8 @@ class AppContainer(context: Context) {
         FirestoreHabitSyncRepository(
             firestore = firestore,
             habitDao = database.habitDao(),
-            completionDao = database.habitCompletionDao()
+            completionDao = database.habitCompletionDao(),
+            hiddenDayDao = database.hiddenHabitDayDao()
         )
     }
 
@@ -94,6 +101,7 @@ class AppContainer(context: Context) {
     }
 
     val observeAuthSessionUseCase by lazy { ObserveAuthSessionUseCase(authRepository) }
+    val observeGuestModeUseCase by lazy { ObserveGuestModeUseCase(authRepository) }
     val signInWithGoogleUseCase by lazy { SignInWithGoogleUseCase(authRepository) }
     val continueAsGuestUseCase by lazy { ContinueAsGuestUseCase(authRepository) }
     val signOutUseCase by lazy { SignOutUseCase(authRepository) }
@@ -104,7 +112,11 @@ class AppContainer(context: Context) {
     val completeOnboardingUseCase by lazy { CompleteOnboardingUseCase(onboardingRepository) }
     val observeHabitsForDateUseCase by lazy { ObserveHabitsForDateUseCase(habitRepository) }
     val toggleHabitCompletionUseCase by lazy { ToggleHabitCompletionUseCase(habitRepository) }
+    val hideHabitForDateUseCase by lazy { HideHabitForDateUseCase(habitRepository) }
+    val deactivateHabitFromDateUseCase by lazy { DeactivateHabitFromDateUseCase(habitRepository) }
+    val deleteAllHabitsUseCase by lazy { DeleteAllHabitsUseCase(habitRepository) }
     val createHabitUseCase by lazy { CreateHabitUseCase(habitRepository) }
+    val updateHabitUseCase by lazy { UpdateHabitUseCase(habitRepository) }
     val getIncompleteHabitsForDateUseCase by lazy { GetIncompleteHabitsForDateUseCase(habitRepository) }
     val syncUserHabitsUseCase by lazy { SyncUserHabitsUseCase(habitSyncRepository) }
     val observeSettingsUseCase by lazy { ObserveSettingsUseCase(settingsRepository) }

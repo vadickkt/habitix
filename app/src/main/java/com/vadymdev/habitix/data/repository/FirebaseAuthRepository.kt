@@ -24,6 +24,8 @@ class FirebaseAuthRepository(
         awaitClose { auth.removeAuthStateListener(listener) }
     }
 
+    override fun observeGuestMode(): Flow<Boolean> = authLocal.observeIsGuestAuth()
+
     override suspend fun signInWithGoogle(idToken: String): Result<UserSession> = runCatching {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val user = auth.signInWithCredential(credential).await().user
@@ -42,12 +44,14 @@ class FirebaseAuthRepository(
 
     override suspend fun signOut() {
         auth.signOut()
+        authLocal.clearAuthMethod()
     }
 
     override suspend fun deleteAccount(): Result<Unit> = runCatching {
         val user = auth.currentUser ?: return@runCatching
         user.delete().await()
         auth.signOut()
+        authLocal.clearAuthMethod()
     }
 
     private fun com.google.firebase.auth.FirebaseUser.toSession(): UserSession {

@@ -16,6 +16,7 @@ data class HabitEntity(
     val reminderHour: Int,
     val reminderMinute: Int,
     val createdAt: Long,
+    val activeUntilEpochDay: Long?,
     val isArchived: Boolean,
     val source: String
 )

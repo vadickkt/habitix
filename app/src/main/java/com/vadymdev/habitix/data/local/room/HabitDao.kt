@@ -9,8 +9,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HabitDao {
 
+    @Query("SELECT * FROM habits ORDER BY createdAt DESC")
+    fun observeAllHabits(): Flow<List<HabitEntity>>
+
     @Query("SELECT * FROM habits WHERE isArchived = 0 ORDER BY createdAt DESC")
     fun observeActiveHabits(): Flow<List<HabitEntity>>
+
+    @Query("SELECT * FROM habits")
+    suspend fun getAllHabits(): List<HabitEntity>
 
     @Query("SELECT * FROM habits WHERE isArchived = 0")
     suspend fun getActiveHabits(): List<HabitEntity>
@@ -24,8 +30,30 @@ interface HabitDao {
     @Query("UPDATE habits SET cloudId = :cloudId WHERE id = :id")
     suspend fun updateCloudId(id: Long, cloudId: String)
 
+    @Query("UPDATE habits SET activeUntilEpochDay = :activeUntilEpochDay WHERE id = :id")
+    suspend fun updateActiveUntil(id: Long, activeUntilEpochDay: Long?)
+
     @Query(
-        "UPDATE habits SET title = :title, iconKey = :iconKey, colorKey = :colorKey, frequencyType = :frequencyType, customDaysCsv = :customDaysCsv, reminderEnabled = :reminderEnabled, reminderHour = :reminderHour, reminderMinute = :reminderMinute, isArchived = :isArchived WHERE id = :id"
+        "UPDATE habits SET title = :title, iconKey = :iconKey, colorKey = :colorKey, frequencyType = :frequencyType, customDaysCsv = :customDaysCsv, reminderEnabled = :reminderEnabled, activeUntilEpochDay = NULL WHERE id = :id"
+    )
+    suspend fun updateHabit(
+        id: Long,
+        title: String,
+        iconKey: String,
+        colorKey: String,
+        frequencyType: String,
+        customDaysCsv: String,
+        reminderEnabled: Boolean
+    )
+
+    @Query("DELETE FROM habits WHERE id = :id")
+    suspend fun deleteHabitById(id: Long)
+
+    @Query("DELETE FROM habits")
+    suspend fun deleteAllHabits()
+
+    @Query(
+        "UPDATE habits SET title = :title, iconKey = :iconKey, colorKey = :colorKey, frequencyType = :frequencyType, customDaysCsv = :customDaysCsv, reminderEnabled = :reminderEnabled, reminderHour = :reminderHour, reminderMinute = :reminderMinute, activeUntilEpochDay = :activeUntilEpochDay, isArchived = :isArchived WHERE id = :id"
     )
     suspend fun updateFromCloud(
         id: Long,
@@ -37,6 +65,7 @@ interface HabitDao {
         reminderEnabled: Boolean,
         reminderHour: Int,
         reminderMinute: Int,
+        activeUntilEpochDay: Long?,
         isArchived: Boolean
     )
 
