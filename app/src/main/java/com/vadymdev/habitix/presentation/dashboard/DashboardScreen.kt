@@ -57,7 +57,10 @@ fun DashboardScreen(
     state: DashboardUiState,
     onDateSelected: (LocalDate) -> Unit,
     onToggleHabit: (Habit) -> Unit,
-    onCreateHabit: () -> Unit
+    onCreateHabit: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenStats: () -> Unit,
+    onOpenProfile: () -> Unit
 ) {
     val calendarDays = remember(state.selectedDate) {
         (-3..3).map { state.selectedDate.plusDays(it.toLong()) }
@@ -115,7 +118,13 @@ fun DashboardScreen(
             }
         }
 
-        BottomBar()
+        BottomBar(
+            onHome = {},
+            onStats = onOpenStats,
+            onProfile = onOpenProfile,
+            onSettings = onOpenSettings,
+            activeTab = "home"
+        )
     }
 }
 
@@ -276,7 +285,13 @@ private fun AddHabitButton(onCreateHabit: () -> Unit) {
 }
 
 @Composable
-private fun BottomBar() {
+private fun BottomBar(
+    onHome: () -> Unit,
+    onStats: () -> Unit,
+    onProfile: () -> Unit,
+    onSettings: () -> Unit,
+    activeTab: String
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,16 +305,16 @@ private fun BottomBar() {
                 .padding(vertical = 8.dp, horizontal = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            BottomTab(icon = "⌂", label = "Головна", active = true)
-            BottomTab(icon = "⌁", label = "Статистика", active = false)
-            BottomTab(icon = "◡", label = "Профіль", active = false)
-            BottomTab(icon = "⚙", label = "Налаштування", active = false)
+            BottomTab(icon = "⌂", label = "Головна", active = activeTab == "home", onClick = onHome)
+            BottomTab(icon = "⌁", label = "Статистика", active = activeTab == "stats", onClick = onStats)
+            BottomTab(icon = "◡", label = "Профіль", active = activeTab == "profile", onClick = onProfile)
+            BottomTab(icon = "⚙", label = "Налаштування", active = activeTab == "settings", onClick = onSettings)
         }
     }
 }
 
 @Composable
-private fun BottomTab(icon: String, label: String, active: Boolean) {
+private fun BottomTab(icon: String, label: String, active: Boolean, onClick: () -> Unit) {
     val pillColor by animateColorAsState(
         targetValue = if (active) Color(0xFFE7F8EF) else Color.Transparent,
         animationSpec = tween(220),
@@ -316,6 +331,7 @@ private fun BottomTab(icon: String, label: String, active: Boolean) {
         modifier = Modifier
             .clip(RoundedCornerShape(18.dp))
             .background(pillColor)
+            .clickable(onClick = onClick)
             .padding(horizontal = horizontalPadding, vertical = 6.dp)
     ) {
         Text(icon, color = if (active) BrandGreen else TextSecondary)

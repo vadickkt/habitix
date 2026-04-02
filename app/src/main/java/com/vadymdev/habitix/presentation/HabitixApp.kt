@@ -15,6 +15,7 @@ import com.vadymdev.habitix.di.AppContainer
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
 import com.vadymdev.habitix.presentation.auth.AuthViewModelFactory
+import com.vadymdev.habitix.presentation.common.ComingSoonScreen
 import com.vadymdev.habitix.presentation.dashboard.DashboardScreen
 import com.vadymdev.habitix.presentation.dashboard.DashboardViewModel
 import com.vadymdev.habitix.presentation.dashboard.DashboardViewModelFactory
@@ -27,6 +28,10 @@ import com.vadymdev.habitix.presentation.onboarding.OnboardingViewModelFactory
 import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingHabitsScreen
 import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingInterestsScreen
 import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingIntroScreen
+import com.vadymdev.habitix.presentation.settings.SettingsScreen
+import com.vadymdev.habitix.presentation.settings.SettingsViewModel
+import com.vadymdev.habitix.presentation.settings.SettingsViewModelFactory
+import com.vadymdev.habitix.ui.theme.HabitixTheme
 
 @Composable
 fun HabitixApp() {
@@ -46,101 +51,177 @@ fun HabitixApp() {
         factory = AuthViewModelFactory(
             signInWithGoogleUseCase = container.signInWithGoogleUseCase,
             continueAsGuestUseCase = container.continueAsGuestUseCase,
-            syncUserHabitsUseCase = container.syncUserHabitsUseCase
+            syncUserHabitsUseCase = container.syncUserHabitsUseCase,
+            syncSettingsUseCase = container.syncSettingsUseCase
+        )
+    )
+
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModelFactory(
+            observeSettingsUseCase = container.observeSettingsUseCase,
+            observeAuthSessionUseCase = container.observeAuthSessionUseCase,
+            setThemeModeUseCase = container.setThemeModeUseCase,
+            setAccentPaletteUseCase = container.setAccentPaletteUseCase,
+            setLanguageUseCase = container.setLanguageUseCase,
+            setPushEnabledUseCase = container.setPushEnabledUseCase,
+            setReminderTimeUseCase = container.setReminderTimeUseCase,
+            setSoundsEnabledUseCase = container.setSoundsEnabledUseCase,
+            setVibrationEnabledUseCase = container.setVibrationEnabledUseCase,
+            setBiometricEnabledUseCase = container.setBiometricEnabledUseCase,
+            setAutoSyncEnabledUseCase = container.setAutoSyncEnabledUseCase,
+            syncSettingsUseCase = container.syncSettingsUseCase,
+            signOutUseCase = container.signOutUseCase,
+            deleteAccountUseCase = container.deleteAccountUseCase
         )
     )
 
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = DashboardViewModelFactory(
             observeHabitsForDateUseCase = container.observeHabitsForDateUseCase,
-            toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase
+            toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase,
+            observeAuthSessionUseCase = container.observeAuthSessionUseCase,
+            syncUserHabitsUseCase = container.syncUserHabitsUseCase
         )
     )
 
     val createHabitViewModel: CreateHabitViewModel = viewModel(
-        factory = CreateHabitViewModelFactory(createHabitUseCase = container.createHabitUseCase)
+        factory = CreateHabitViewModelFactory(
+            createHabitUseCase = container.createHabitUseCase,
+            observeAuthSessionUseCase = container.observeAuthSessionUseCase,
+            syncUserHabitsUseCase = container.syncUserHabitsUseCase
+        )
     )
 
     val navController = rememberNavController()
     val onboardingState by onboardingViewModel.state.collectAsStateWithLifecycle()
     val dashboardState by dashboardViewModel.state.collectAsStateWithLifecycle()
     val createHabitState by createHabitViewModel.state.collectAsStateWithLifecycle()
+    val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
 
-    NavHost(
-        navController = navController,
-        startDestination = AppRoute.OnboardingIntro
+    HabitixTheme(
+        themeMode = settingsState.settings.themeMode,
+        accentPalette = settingsState.settings.accentPalette
     ) {
-        composable(AppRoute.OnboardingIntro) {
-            OnboardingIntroScreen(
-                onContinue = { navController.navigate(AppRoute.OnboardingInterests) }
-            )
-        }
+        NavHost(
+            navController = navController,
+            startDestination = AppRoute.OnboardingIntro
+        ) {
+            composable(AppRoute.OnboardingIntro) {
+                OnboardingIntroScreen(
+                    onContinue = { navController.navigate(AppRoute.OnboardingInterests) }
+                )
+            }
 
-        composable(AppRoute.OnboardingInterests) {
-            OnboardingInterestsScreen(
-                interests = onboardingState.interests,
-                selectedKeys = onboardingState.selectedInterestKeys,
-                onToggle = onboardingViewModel::toggleInterest,
-                onContinue = { navController.navigate(AppRoute.OnboardingHabits) }
-            )
-        }
+            composable(AppRoute.OnboardingInterests) {
+                OnboardingInterestsScreen(
+                    interests = onboardingState.interests,
+                    selectedKeys = onboardingState.selectedInterestKeys,
+                    onToggle = onboardingViewModel::toggleInterest,
+                    onContinue = { navController.navigate(AppRoute.OnboardingHabits) }
+                )
+            }
 
-        composable(AppRoute.OnboardingHabits) {
-            OnboardingHabitsScreen(
-                habits = onboardingState.habits,
-                selected = onboardingState.selectedHabitKeys,
-                onToggle = onboardingViewModel::toggleHabit,
-                onComplete = {
-                    onboardingViewModel.completeOnboarding {
-                        navController.navigate(AppRoute.Auth) {
-                            popUpTo(AppRoute.OnboardingIntro) { inclusive = true }
+            composable(AppRoute.OnboardingHabits) {
+                OnboardingHabitsScreen(
+                    habits = onboardingState.habits,
+                    selected = onboardingState.selectedHabitKeys,
+                    onToggle = onboardingViewModel::toggleHabit,
+                    onComplete = {
+                        onboardingViewModel.completeOnboarding {
+                            navController.navigate(AppRoute.Auth) {
+                                popUpTo(AppRoute.OnboardingIntro) { inclusive = true }
+                            }
                         }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        composable(AppRoute.Auth) {
-            AuthScreen(
-                viewModel = authViewModel,
-                onAuthorized = {
-                    navController.navigate(AppRoute.Dashboard) {
-                        popUpTo(AppRoute.Auth) { inclusive = true }
+            composable(AppRoute.Auth) {
+                AuthScreen(
+                    viewModel = authViewModel,
+                    onAuthorized = {
+                        navController.navigate(AppRoute.Dashboard) {
+                            popUpTo(AppRoute.Auth) { inclusive = true }
+                        }
+                    },
+                    onContinueAsGuest = {
+                        navController.navigate(AppRoute.Dashboard) {
+                            popUpTo(AppRoute.Auth) { inclusive = true }
+                        }
                     }
-                },
-                onContinueAsGuest = {
-                    navController.navigate(AppRoute.Dashboard) {
-                        popUpTo(AppRoute.Auth) { inclusive = true }
-                    }
-                }
-            )
-        }
+                )
+            }
 
-        composable(AppRoute.Dashboard) {
-            DashboardScreen(
-                state = dashboardState,
-                onDateSelected = dashboardViewModel::onDateSelected,
-                onToggleHabit = dashboardViewModel::onToggleHabit,
-                onCreateHabit = { navController.navigate(AppRoute.CreateHabit) }
-            )
-        }
+            composable(AppRoute.Dashboard) {
+                DashboardScreen(
+                    state = dashboardState,
+                    onDateSelected = dashboardViewModel::onDateSelected,
+                    onToggleHabit = dashboardViewModel::onToggleHabit,
+                    onCreateHabit = { navController.navigate(AppRoute.CreateHabit) },
+                    onOpenSettings = { navController.navigate(AppRoute.Settings) },
+                    onOpenStats = { navController.navigate(AppRoute.Stats) },
+                    onOpenProfile = { navController.navigate(AppRoute.Profile) }
+                )
+            }
 
-        composable(AppRoute.CreateHabit) {
-            CreateHabitScreen(
-                state = createHabitState,
-                onBack = { navController.popBackStack() },
-                onTitle = createHabitViewModel::setTitle,
-                onIcon = createHabitViewModel::setIcon,
-                onColor = createHabitViewModel::setColor,
-                onFrequency = createHabitViewModel::setFrequency,
-                onToggleDay = createHabitViewModel::toggleCustomDay,
-                onToggleReminder = createHabitViewModel::toggleReminder,
-                onCreate = {
-                    createHabitViewModel.createHabit {
-                        navController.popBackStack()
+            composable(AppRoute.Stats) {
+                ComingSoonScreen("Статистика")
+            }
+
+            composable(AppRoute.Profile) {
+                ComingSoonScreen("Профіль")
+            }
+
+            composable(AppRoute.Settings) {
+                SettingsScreen(
+                    state = settingsState,
+                    onOpenDashboard = { navController.navigate(AppRoute.Dashboard) },
+                    onThemeToggle = { isDark -> settingsViewModel.setThemeMode(if (isDark) com.vadymdev.habitix.domain.model.ThemeMode.DARK else com.vadymdev.habitix.domain.model.ThemeMode.LIGHT) },
+                    onAccent = settingsViewModel::setAccentPalette,
+                    onLanguage = settingsViewModel::setLanguage,
+                    onPushToggle = settingsViewModel::setPushEnabled,
+                    onTimePicked = settingsViewModel::setReminderTime,
+                    onSoundsToggle = settingsViewModel::setSoundsEnabled,
+                    onVibrationToggle = settingsViewModel::setVibrationEnabled,
+                    onBiometricToggle = settingsViewModel::setBiometricEnabled,
+                    onAutoSyncToggle = settingsViewModel::setAutoSyncEnabled,
+                    onSignOut = {
+                        settingsViewModel.signOut {
+                            navController.navigate(AppRoute.Auth) {
+                                popUpTo(AppRoute.Dashboard) { inclusive = true }
+                            }
+                        }
+                    },
+                    onDeleteAccount = {
+                        settingsViewModel.deleteAccount(
+                            onDone = {
+                                navController.navigate(AppRoute.Auth) {
+                                    popUpTo(AppRoute.Dashboard) { inclusive = true }
+                                }
+                            },
+                            onError = {}
+                        )
                     }
-                }
-            )
+                )
+            }
+
+            composable(AppRoute.CreateHabit) {
+                CreateHabitScreen(
+                    state = createHabitState,
+                    onBack = { navController.popBackStack() },
+                    onTitle = createHabitViewModel::setTitle,
+                    onIcon = createHabitViewModel::setIcon,
+                    onColor = createHabitViewModel::setColor,
+                    onFrequency = createHabitViewModel::setFrequency,
+                    onToggleDay = createHabitViewModel::toggleCustomDay,
+                    onToggleReminder = createHabitViewModel::toggleReminder,
+                    onCreate = {
+                        createHabitViewModel.createHabit {
+                            navController.popBackStack()
+                        }
+                    }
+                )
+            }
         }
     }
 }

@@ -9,4 +9,5 @@ interface AuthRepository {
     suspend fun continueAsGuest()
     fun getCurrentSession(): UserSession?
     suspend fun signOut()
+    suspend fun deleteAccount(): Result<Unit>
 }

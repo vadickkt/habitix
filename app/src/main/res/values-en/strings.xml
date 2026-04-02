@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Habitix</string>
+    <string name="google_web_client_id"></string>
+    <string name="auth_google_setup_error">Set up Firebase: add google-services.json or google_web_client_id.</string>
+</resources>

@@ -15,3 +15,11 @@ class SignInWithGoogleUseCase(private val authRepository: AuthRepository) {
 class ContinueAsGuestUseCase(private val authRepository: AuthRepository) {
     suspend operator fun invoke() = authRepository.continueAsGuest()
 }
+
+class SignOutUseCase(private val authRepository: AuthRepository) {
+    suspend operator fun invoke() = authRepository.signOut()
+}
+
+class DeleteAccountUseCase(private val authRepository: AuthRepository) {
+    suspend operator fun invoke(): Result<Unit> = authRepository.deleteAccount()
+}

@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.vadymdev.habitix.notifications.ReminderScheduler
 import com.vadymdev.habitix.presentation.HabitixApp
-import com.vadymdev.habitix.ui.theme.HabitixTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,9 +13,7 @@ class MainActivity : ComponentActivity() {
         ReminderScheduler.schedule(this)
         enableEdgeToEdge()
         setContent {
-            HabitixTheme {
-                HabitixApp()
-            }
+            HabitixApp()
         }
     }
 }

@@ -3,8 +3,10 @@ package com.vadymdev.habitix.presentation.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
+import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,10 +20,21 @@ import java.time.LocalDate
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DashboardViewModel(
     private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
-    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase
+    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
+    observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModel() {
 
     private val selectedDate = MutableStateFlow(LocalDate.now())
+    private val currentUserId = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            observeAuthSessionUseCase().collect { session ->
+                currentUserId.value = session?.uid
+            }
+        }
+    }
 
     private val habitsForDate = selectedDate
         .flatMapLatest { date -> observeHabitsForDateUseCase(date) }
@@ -51,6 +64,9 @@ class DashboardViewModel(
                 date = state.value.selectedDate,
                 completed = !habit.isCompletedForSelectedDate
             )
+            currentUserId.value?.let { uid ->
+                runCatching { syncUserHabitsUseCase(uid) }
+            }
         }
     }
 }
@@ -64,14 +80,18 @@ data class DashboardUiState(
 
 class DashboardViewModelFactory(
     private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
-    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase
+    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
+    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return DashboardViewModel(
                 observeHabitsForDateUseCase = observeHabitsForDateUseCase,
-                toggleHabitCompletionUseCase = toggleHabitCompletionUseCase
+                toggleHabitCompletionUseCase = toggleHabitCompletionUseCase,
+                observeAuthSessionUseCase = observeAuthSessionUseCase,
+                syncUserHabitsUseCase = syncUserHabitsUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

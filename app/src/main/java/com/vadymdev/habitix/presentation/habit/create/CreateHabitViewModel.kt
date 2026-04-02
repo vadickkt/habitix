@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.domain.usecase.CreateHabitUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
+import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,11 +16,22 @@ import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 
 class CreateHabitViewModel(
-    private val createHabitUseCase: CreateHabitUseCase
+    private val createHabitUseCase: CreateHabitUseCase,
+    observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CreateHabitUiState())
     val state: StateFlow<CreateHabitUiState> = _state.asStateFlow()
+    private val currentUserId = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            observeAuthSessionUseCase().collect { session ->
+                currentUserId.value = session?.uid
+            }
+        }
+    }
 
     fun setTitle(value: String) {
         _state.update { it.copy(title = value) }
@@ -65,6 +78,9 @@ class CreateHabitViewModel(
                     reminderEnabled = snapshot.reminderEnabled
                 )
             )
+            currentUserId.value?.let { uid ->
+                runCatching { syncUserHabitsUseCase(uid) }
+            }
             onCreated()
         }
     }
@@ -80,12 +96,18 @@ data class CreateHabitUiState(
 )
 
 class CreateHabitViewModelFactory(
-    private val createHabitUseCase: CreateHabitUseCase
+    private val createHabitUseCase: CreateHabitUseCase,
+    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(CreateHabitViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return CreateHabitViewModel(createHabitUseCase = createHabitUseCase) as T
+            return CreateHabitViewModel(
+                createHabitUseCase = createHabitUseCase,
+                observeAuthSessionUseCase = observeAuthSessionUseCase,
+                syncUserHabitsUseCase = syncUserHabitsUseCase
+            ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")
     }

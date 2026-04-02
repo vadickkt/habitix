@@ -44,6 +44,12 @@ class FirebaseAuthRepository(
         auth.signOut()
     }
 
+    override suspend fun deleteAccount(): Result<Unit> = runCatching {
+        val user = auth.currentUser ?: return@runCatching
+        user.delete().await()
+        auth.signOut()
+    }
+
     private fun com.google.firebase.auth.FirebaseUser.toSession(): UserSession {
         return UserSession(
             uid = uid,
