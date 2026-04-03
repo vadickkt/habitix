@@ -35,6 +35,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vadymdev.habitix.domain.model.AppLanguage
@@ -42,7 +44,6 @@ import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.presentation.habit.habitColor
 import com.vadymdev.habitix.presentation.habit.habitIconVector
 import com.vadymdev.habitix.ui.theme.AppBackground
-import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
 import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.time.DayOfWeek
@@ -58,9 +59,12 @@ fun CreateHabitScreen(
     onFrequency: (HabitFrequencyType) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
     onToggleReminder: () -> Unit,
+    vibrationEnabled: Boolean,
     onSave: () -> Unit
 ) {
     val isUk = language == AppLanguage.UK
+    val haptic = LocalHapticFeedback.current
+    val primary = MaterialTheme.colorScheme.primary
     val iconKeys = listOf("water", "book", "fitness", "moon", "mind", "heart", "fork", "music", "pen", "sun", "cup", "steps")
     val colorKeys = listOf("mint", "orange", "purple", "blue", "pink")
 
@@ -138,18 +142,19 @@ fun CreateHabitScreen(
             Text(t(isUk, "Іконка", "Icon"), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             LazyVerticalGrid(
-                columns = GridCells.Fixed(6),
+                columns = GridCells.Fixed(4),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(94.dp)
+                userScrollEnabled = false,
+                modifier = Modifier.height(164.dp)
             ) {
                 items(iconKeys) { key ->
                     val active = state.selectedIconKey == key
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .border(1.dp, if (active) BrandGreen else Color(0xFFD7D7D7), RoundedCornerShape(18.dp))
-                            .background(if (active) Color(0xFFE8F8EF) else Color.White, RoundedCornerShape(18.dp))
+                            .border(1.dp, if (active) primary else Color(0xFFD7D7D7), RoundedCornerShape(18.dp))
+                            .background(if (active) primary.copy(alpha = 0.14f) else Color.White, RoundedCornerShape(18.dp))
                             .clickable { onIcon(key) },
                         contentAlignment = Alignment.Center
                     ) {
@@ -170,7 +175,7 @@ fun CreateHabitScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 colorKeys.forEach { key ->
                     val active = state.selectedColorKey == key
-                    val border by animateColorAsState(if (active) BrandGreen else Color.Transparent, label = "color_pick")
+                    val border by animateColorAsState(if (active) primary else Color.Transparent, label = "color_pick")
                     Box(
                         modifier = Modifier
                             .size(44.dp)
@@ -212,8 +217,8 @@ fun CreateHabitScreen(
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
-                                    .background(if (active) BrandGreen else Color.White, CircleShape)
-                                    .border(1.dp, if (active) BrandGreen else Color(0xFFD7D7D7), CircleShape)
+                                    .background(if (active) primary else Color.White, CircleShape)
+                                    .border(1.dp, if (active) primary else Color(0xFFD7D7D7), CircleShape)
                                     .clickable { onToggleDay(day) },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -240,10 +245,10 @@ fun CreateHabitScreen(
                 Box(
                     modifier = Modifier
                         .size(34.dp)
-                        .background(Color(0xFFE8F8EF), CircleShape),
+                        .background(primary.copy(alpha = 0.14f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("◔", color = BrandGreen)
+                    Text("◔", color = primary)
                 }
                 Spacer(modifier = Modifier.size(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -257,16 +262,21 @@ fun CreateHabitScreen(
         item {
             Spacer(modifier = Modifier.height(10.dp))
             Button(
-                onClick = onSave,
+                onClick = {
+                    if (vibrationEnabled) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                    onSave()
+                },
                 enabled = !state.isSaving && state.title.trim().length >= 2 && (state.frequency != HabitFrequencyType.CUSTOM || state.customDays.isNotEmpty()),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = BrandGreen,
+                    containerColor = primary,
                     contentColor = Color.White,
-                    disabledContainerColor = BrandGreen.copy(alpha = 0.45f)
+                    disabledContainerColor = primary.copy(alpha = 0.45f)
                 )
             ) {
                 val saveLabel = if (state.editingHabitId == null) t(isUk, "Створити звичку ✓", "Create habit ✓") else t(isUk, "Зберегти зміни ✓", "Save changes ✓")
@@ -281,10 +291,11 @@ private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else
 
 @Composable
 private fun FrequencyChip(text: String, active: Boolean, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     Box(
         modifier = Modifier
-            .background(if (active) Color(0xFFE8F8EF) else Color.White, RoundedCornerShape(22.dp))
-            .border(1.dp, if (active) BrandGreen else Color(0xFFD9D9D9), RoundedCornerShape(22.dp))
+            .background(if (active) primary.copy(alpha = 0.14f) else Color.White, RoundedCornerShape(22.dp))
+            .border(1.dp, if (active) primary else Color(0xFFD9D9D9), RoundedCornerShape(22.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {

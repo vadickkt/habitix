@@ -207,7 +207,12 @@ fun DashboardScreen(
                             }
                             onToggleHabit(habit)
                         },
-                        onDelete = { onDeleteHabit(habit) },
+                        onDelete = {
+                            if (vibrationEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                            onDeleteHabit(habit)
+                        },
                         onEdit = { onEditHabit(habit) }
                     )
                 }

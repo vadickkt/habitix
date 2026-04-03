@@ -355,6 +355,7 @@ fun HabitixApp() {
                     onFrequency = createHabitViewModel::setFrequency,
                     onToggleDay = createHabitViewModel::toggleCustomDay,
                     onToggleReminder = createHabitViewModel::toggleReminder,
+                    vibrationEnabled = settingsState.settings.vibrationEnabled,
                     onSave = {
                         createHabitViewModel.saveHabit {
                             navController.popBackStack()

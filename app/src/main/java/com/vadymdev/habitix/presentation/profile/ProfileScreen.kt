@@ -340,11 +340,12 @@ private fun ProfileHeader(
         state.identity.avatarUri.isNullOrBlank() -> t(isUk, "Аватар не встановлено", "Avatar not set")
         else -> t(isUk, "Аватар збережено локально", "Avatar saved locally")
     }
+    val primary = MaterialTheme.colorScheme.primary
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE8F4EE), RoundedCornerShape(20.dp))
+            .background(primary.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
             .padding(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -352,7 +353,7 @@ private fun ProfileHeader(
         Box(
             modifier = Modifier
                 .size(100.dp)
-                .background(Color(0xFFC6E8DA), CircleShape)
+                .background(primary.copy(alpha = 0.26f), CircleShape)
                 .border(3.dp, Color.White, CircleShape)
                 .clickable(onClick = onEditAvatar),
             contentAlignment = Alignment.Center
@@ -421,7 +422,7 @@ private fun ProfileHeader(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(999.dp))
-                .background(Color(0xFFD5F0E2))
+                .background(primary.copy(alpha = 0.2f))
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -434,7 +435,7 @@ private fun ProfileHeader(
                     .width(70.dp)
                     .height(6.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFAEDFC8))
+                    .background(primary.copy(alpha = 0.35f))
             ) {
                 Box(
                     modifier = Modifier
@@ -515,7 +516,7 @@ private fun AchievementCard(achievement: ProfileAchievement, compact: Boolean) {
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
-                                .background(Color(0xFFDDF3E8), RoundedCornerShape(99.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), RoundedCornerShape(99.dp))
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         )
                     }
@@ -585,7 +586,7 @@ private fun MonthActivityCard(state: ProfileUiState) {
                         .weight(1f)
                         .height((24 + (value * 60 / max)).dp)
                         .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                        .background(Color(0xFFB9E3D2))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
                 )
             }
         }
@@ -790,7 +791,7 @@ private fun BottomItem(icon: ImageVector, label: String, active: Boolean, onClic
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(18.dp))
-            .background(if (active) Color(0xFFE7F8EF) else Color.Transparent)
+            .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f) else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {

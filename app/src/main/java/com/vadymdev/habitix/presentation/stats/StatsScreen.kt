@@ -46,7 +46,6 @@ import com.vadymdev.habitix.domain.model.HabitBadge
 import com.vadymdev.habitix.domain.model.HabitCategoryStat
 import com.vadymdev.habitix.domain.model.HabitStatsSnapshot
 import com.vadymdev.habitix.ui.theme.AppBackground
-import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
 import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.time.format.DateTimeFormatter
@@ -153,6 +152,7 @@ fun StatsScreen(
 
 @Composable
 private fun StatsPeriodSelector(selectedDays: Int, isUk: Boolean, onSelectPeriod: (Int) -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     val options = listOf(7, 30, 90)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { days ->
@@ -160,8 +160,8 @@ private fun StatsPeriodSelector(selectedDays: Int, isUk: Boolean, onSelectPeriod
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(999.dp))
-                    .background(if (active) BrandGreen else Color.White)
-                    .border(1.dp, if (active) BrandGreen else Color(0xFFDCDCDC), RoundedCornerShape(999.dp))
+                    .background(if (active) primary else Color.White)
+                    .border(1.dp, if (active) primary else Color(0xFFDCDCDC), RoundedCornerShape(999.dp))
                     .clickable { onSelectPeriod(days) }
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
@@ -202,6 +202,7 @@ private fun QuickStatsGrid(snapshot: HabitStatsSnapshot, onMetricClick: (StatsMe
 
 @Composable
 private fun StatCard(modifier: Modifier, card: StatCardData, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     Column(
         modifier = modifier
             .background(Color.White, RoundedCornerShape(16.dp))
@@ -213,7 +214,7 @@ private fun StatCard(modifier: Modifier, card: StatCardData, onClick: () -> Unit
         Box(
             modifier = Modifier
                 .size(34.dp)
-                .background(Color(0xFFDDF2E8), CircleShape),
+                .background(primary.copy(alpha = 0.16f), CircleShape),
             contentAlignment = Alignment.Center
         ) { Text(card.emoji) }
         Text(card.value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -223,6 +224,7 @@ private fun StatCard(modifier: Modifier, card: StatCardData, onClick: () -> Unit
 
 @Composable
 private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -238,13 +240,7 @@ private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> U
                     repeat(7) { day ->
                         val index = week * 7 + day
                         val level = levels.getOrElse(index) { 0 }
-                        val color = when (level) {
-                            0 -> Color(0xFFE6E3DF)
-                            1 -> Color(0xFFCFEFE2)
-                            2 -> Color(0xFFA7E3CA)
-                            3 -> Color(0xFF67D09E)
-                            else -> BrandGreen
-                        }
+                        val color = heatmapColor(level, primary)
                         Box(
                             modifier = Modifier
                                 .size(13.dp)
@@ -262,7 +258,7 @@ private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> U
         ) {
             Text(t(isUk, "Менше", "Less"), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.width(6.dp))
-            listOf(Color(0xFFE6E3DF), Color(0xFFCFEFE2), Color(0xFFA7E3CA), Color(0xFF67D09E), BrandGreen).forEach { c ->
+            listOf(0, 1, 2, 3, 4).map { heatmapColor(it, primary) }.forEach { c ->
                 Box(modifier = Modifier.padding(horizontal = 1.dp).size(9.dp).background(c, CircleShape))
             }
             Spacer(modifier = Modifier.width(6.dp))
@@ -273,6 +269,7 @@ private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> U
 
 @Composable
 private fun CategoryCard(categories: List<HabitCategoryStat>, isUk: Boolean, onCategoryClick: (HabitCategoryStat) -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -286,11 +283,11 @@ private fun CategoryCard(categories: List<HabitCategoryStat>, isUk: Boolean, onC
 
         categories.forEach { cat ->
             val fillColor = when (cat.colorKey) {
-                "mint" -> Color(0xFF67D09E)
+                "mint" -> primary
                 "orange" -> Color(0xFFE6B07A)
                 "blue" -> Color(0xFF6FC8E7)
                 "purple" -> Color(0xFFB5AEEF)
-                else -> BrandGreen
+                else -> primary
             }
             Column(
                 modifier = Modifier
@@ -319,6 +316,7 @@ private fun CategoryCard(categories: List<HabitCategoryStat>, isUk: Boolean, onC
 
 @Composable
 private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (HabitBadge) -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -338,7 +336,7 @@ private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (H
             items(badges) { badge ->
                 Column(
                     modifier = Modifier
-                        .background(if (badge.earned) Color(0xFFEAF5EF) else Color(0xFFF0EFEC), RoundedCornerShape(14.dp))
+                        .background(if (badge.earned) primary.copy(alpha = 0.12f) else Color(0xFFF0EFEC), RoundedCornerShape(14.dp))
                         .clickable { onBadgeClick(badge) }
                         .padding(vertical = 10.dp, horizontal = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -461,16 +459,27 @@ private fun StatsBottomBar(
 
 @Composable
 private fun BottomItem(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(18.dp))
-            .background(if (active) Color(0xFFE7F8EF) else Color.Transparent)
+            .background(if (active) primary.copy(alpha = 0.14f) else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Icon(icon, contentDescription = label, tint = if (active) MaterialTheme.colorScheme.primary else TextSecondary)
         Text(label, color = if (active) MaterialTheme.colorScheme.primary else TextSecondary, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+private fun heatmapColor(level: Int, primary: Color): Color {
+    return when (level) {
+        0 -> Color(0xFFE6E3DF)
+        1 -> primary.copy(alpha = 0.25f)
+        2 -> primary.copy(alpha = 0.45f)
+        3 -> primary.copy(alpha = 0.7f)
+        else -> primary
     }
 }
 
