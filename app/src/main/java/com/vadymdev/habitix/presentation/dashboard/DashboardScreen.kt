@@ -71,11 +71,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.presentation.habit.habitColor
 import com.vadymdev.habitix.presentation.habit.habitIcon
 import com.vadymdev.habitix.ui.theme.AppBackground
-import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
 import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.time.DayOfWeek
@@ -88,6 +88,7 @@ import java.util.Locale
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
+    language: AppLanguage,
     onDateSelected: (LocalDate) -> Unit,
     onToggleHabit: (Habit) -> Unit,
     vibrationEnabled: Boolean,
@@ -104,6 +105,8 @@ fun DashboardScreen(
     val anchorWeekStart = remember { LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) }
     val initialPage = 10_000
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 20_000 })
+    val isUk = language == AppLanguage.UK
+    val locale = remember(language) { if (isUk) Locale.forLanguageTag("uk") else Locale.ENGLISH }
 
     LaunchedEffect(pagerState.currentPage) {
         val weekOffset = pagerState.currentPage - initialPage
@@ -119,7 +122,13 @@ fun DashboardScreen(
         if (vibrationEnabled) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
-        snackbarHostState.showSnackbar("Досягнення відкрито: ${event.title} (+${event.xpReward} XP)")
+        snackbarHostState.showSnackbar(
+            if (isUk) {
+                "Досягнення відкрито: ${event.title} (+${event.xpReward} XP)"
+            } else {
+                "Achievement unlocked: ${event.title} (+${event.xpReward} XP)"
+            }
+        )
         onConsumeAchievementEvent(event.id)
     }
 
@@ -136,6 +145,7 @@ fun DashboardScreen(
                 onStats = onOpenStats,
                 onProfile = onOpenProfile,
                 onSettings = onOpenSettings,
+                isUk = isUk,
                 activeTab = "home"
             )
         }
@@ -156,6 +166,7 @@ fun DashboardScreen(
                     pagerState = pagerState,
                     anchorWeekStart = anchorWeekStart,
                     selected = state.selectedDate,
+                    locale = locale,
                     onSelect = {
                         if (vibrationEnabled) {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -171,7 +182,11 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Звички на сьогодні", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isUk) "Звички на сьогодні" else "Habits for today",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(
                         text = "+",
                         style = MaterialTheme.typography.titleLarge,
@@ -190,6 +205,7 @@ fun DashboardScreen(
                 ) {
                     SwipeableHabitRow(
                         habit = habit,
+                        isUk = isUk,
                         onToggle = {
                             if (vibrationEnabled) {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -213,7 +229,7 @@ fun DashboardScreen(
             }
 
             item {
-                AddHabitButton(onCreateHabit = onCreateHabit)
+                AddHabitButton(onCreateHabit = onCreateHabit, isUk = isUk)
             }
         }
     }
@@ -222,6 +238,7 @@ fun DashboardScreen(
 @Composable
 private fun SwipeableHabitRow(
     habit: Habit,
+    isUk: Boolean,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit
@@ -247,11 +264,12 @@ private fun SwipeableHabitRow(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
-            SwipeBackground(dismissState = dismissState)
+            SwipeBackground(dismissState = dismissState, isUk = isUk)
         },
         content = {
             HabitRowCard(
                 habit = habit,
+                isUk = isUk,
                 onToggle = onToggle,
                 onDelete = onDelete,
                 onEdit = onEdit
@@ -261,7 +279,7 @@ private fun SwipeableHabitRow(
 }
 
 @Composable
-private fun SwipeBackground(dismissState: SwipeToDismissBoxState) {
+private fun SwipeBackground(dismissState: SwipeToDismissBoxState, isUk: Boolean) {
     val direction = dismissState.dismissDirection
     val bgColor by animateColorAsState(
         targetValue = when (direction) {
@@ -282,8 +300,8 @@ private fun SwipeBackground(dismissState: SwipeToDismissBoxState) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Rounded.Edit, contentDescription = null, tint = Color(0xFF1F8A5B))
-        Text("Видалити", color = Color(0xFFD44747), fontWeight = FontWeight.SemiBold)
+        Icon(Icons.Rounded.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Text(if (isUk) "Видалити" else "Delete", color = Color(0xFFD44747), fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -307,7 +325,7 @@ private fun HeaderBlock(state: DashboardUiState) {
         ) {
             Text(
                 text = "${state.completedCount}/${if (state.totalCount == 0) 1 else state.totalCount}",
-                color = BrandGreen,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -319,6 +337,7 @@ private fun CalendarStrip(
     pagerState: androidx.compose.foundation.pager.PagerState,
     anchorWeekStart: LocalDate,
     selected: LocalDate,
+    locale: Locale,
     onSelect: (LocalDate) -> Unit
 ) {
     Box(
@@ -346,7 +365,7 @@ private fun CalendarStrip(
                     val date = weekStart.plusDays(index.toLong())
                     val active = date == selected
                     val bg by animateColorAsState(
-                        targetValue = if (active) BrandGreen else Color.Transparent,
+                        targetValue = if (active) MaterialTheme.colorScheme.primary else Color.Transparent,
                         animationSpec = tween(220),
                         label = "calendar_bg"
                     )
@@ -367,7 +386,7 @@ private fun CalendarStrip(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.forLanguageTag("uk")),
+                            text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, locale),
                             color = if (active) Color.White else TextSecondary,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -387,6 +406,7 @@ private fun CalendarStrip(
 @Composable
 private fun HabitRowCard(
     habit: Habit,
+    isUk: Boolean,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit
@@ -428,7 +448,7 @@ private fun HabitRowCard(
                 textDecoration = if (done) TextDecoration.LineThrough else TextDecoration.None
             )
             Text(
-                text = "🔥 ${habit.streakDays} днів",
+                text = if (isUk) "🔥 ${habit.streakDays} днів" else "🔥 ${habit.streakDays} days",
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextSecondary
             )
@@ -445,7 +465,7 @@ private fun HabitRowCard(
             )
             DropdownMenu(expanded = menuOpened, onDismissRequest = { menuOpened = false }) {
                 DropdownMenuItem(
-                    text = { Text("Редагувати") },
+                    text = { Text(if (isUk) "Редагувати" else "Edit") },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Rounded.Edit,
@@ -458,7 +478,7 @@ private fun HabitRowCard(
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Видалити") },
+                    text = { Text(if (isUk) "Видалити" else "Delete") },
                     onClick = {
                         menuOpened = false
                         onDelete()
@@ -473,8 +493,8 @@ private fun HabitRowCard(
                 .scale(toggleScale)
                 .size(40.dp)
                 .clip(CircleShape)
-                .border(1.dp, if (done) BrandGreen else Color(0xFFCFCFCF), CircleShape)
-                .background(if (done) BrandGreen else Color.Transparent, CircleShape)
+                .border(1.dp, if (done) MaterialTheme.colorScheme.primary else Color(0xFFCFCFCF), CircleShape)
+                .background(if (done) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
                 .clickable(onClick = onToggle),
             contentAlignment = Alignment.Center
         ) {
@@ -496,7 +516,7 @@ private fun HabitRowCard(
 }
 
 @Composable
-private fun AddHabitButton(onCreateHabit: () -> Unit) {
+private fun AddHabitButton(onCreateHabit: () -> Unit, isUk: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -506,7 +526,12 @@ private fun AddHabitButton(onCreateHabit: () -> Unit) {
             .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text("+   Додати нову звичку", color = TextSecondary, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+        Text(
+            "+   ${if (isUk) "Додати нову звичку" else "Add a new habit"}",
+            color = TextSecondary,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -516,6 +541,7 @@ private fun BottomBar(
     onStats: () -> Unit,
     onProfile: () -> Unit,
     onSettings: () -> Unit,
+    isUk: Boolean,
     activeTab: String
 ) {
     Surface(
@@ -531,10 +557,10 @@ private fun BottomBar(
                 .padding(vertical = 8.dp, horizontal = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            BottomTab(icon = Icons.Rounded.Home, label = "Головна", active = activeTab == "home", onClick = onHome)
-            BottomTab(icon = Icons.Rounded.Analytics, label = "Статистика", active = activeTab == "stats", onClick = onStats)
-            BottomTab(icon = Icons.Rounded.Person, label = "Профіль", active = activeTab == "profile", onClick = onProfile)
-            BottomTab(icon = Icons.Rounded.Settings, label = "Налаштування", active = activeTab == "settings", onClick = onSettings)
+            BottomTab(icon = Icons.Rounded.Home, label = if (isUk) "Головна" else "Home", active = activeTab == "home", onClick = onHome)
+            BottomTab(icon = Icons.Rounded.Analytics, label = if (isUk) "Статистика" else "Stats", active = activeTab == "stats", onClick = onStats)
+            BottomTab(icon = Icons.Rounded.Person, label = if (isUk) "Профіль" else "Profile", active = activeTab == "profile", onClick = onProfile)
+            BottomTab(icon = Icons.Rounded.Settings, label = if (isUk) "Налаштування" else "Settings", active = activeTab == "settings", onClick = onSettings)
         }
     }
 }
@@ -560,11 +586,11 @@ private fun BottomTab(icon: ImageVector, label: String, active: Boolean, onClick
             .clickable(onClick = onClick)
             .padding(horizontal = horizontalPadding, vertical = 6.dp)
     ) {
-        Icon(icon, contentDescription = label, tint = if (active) BrandGreen else TextSecondary, modifier = Modifier.size(22.dp))
+        Icon(icon, contentDescription = label, tint = if (active) MaterialTheme.colorScheme.primary else TextSecondary, modifier = Modifier.size(22.dp))
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
-            color = if (active) BrandGreen else TextSecondary,
+            color = if (active) MaterialTheme.colorScheme.primary else TextSecondary,
             fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
         )
     }

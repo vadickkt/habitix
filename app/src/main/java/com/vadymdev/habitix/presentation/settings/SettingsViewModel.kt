@@ -58,6 +58,7 @@ class SettingsViewModel(
             ) { settings, session ->
                 settings to session?.uid
             }.collect { (settings, uid) ->
+                applyLanguage(settings.language)
                 _state.update {
                     it.copy(
                         settings = settings,

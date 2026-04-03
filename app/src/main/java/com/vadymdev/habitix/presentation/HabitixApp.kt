@@ -144,7 +144,7 @@ fun HabitixApp() {
     val startDestination by appViewModel.startDestination.collectAsStateWithLifecycle()
 
     HabitixTheme(
-        themeMode = com.vadymdev.habitix.domain.model.ThemeMode.LIGHT,
+        themeMode = settingsState.settings.themeMode,
         accentPalette = settingsState.settings.accentPalette
     ) {
         if (startDestination == AppRoute.Loading) {
@@ -212,6 +212,7 @@ fun HabitixApp() {
             composable(AppRoute.Dashboard) {
                 DashboardScreen(
                     state = dashboardState,
+                    language = settingsState.settings.language,
                     onDateSelected = dashboardViewModel::onDateSelected,
                     onToggleHabit = dashboardViewModel::onToggleHabit,
                     vibrationEnabled = settingsState.settings.vibrationEnabled,
