@@ -14,6 +14,15 @@ class FirestoreSettingsSyncRepository(
     private val settingsRepository: SettingsRepository
 ) : SettingsSyncRepository {
 
+    override suspend fun clearUserData(userId: String) {
+        firestore.collection("users")
+            .document(userId)
+            .collection("meta")
+            .document("settings")
+            .delete()
+            .await()
+    }
+
     override suspend fun sync(userId: String) {
         val local = settingsRepository.getCurrentSettings()
         val docRef = firestore.collection("users").document(userId).collection("meta").document("settings")

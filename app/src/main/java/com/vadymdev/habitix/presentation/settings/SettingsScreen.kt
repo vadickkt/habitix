@@ -86,7 +86,8 @@ fun SettingsScreen(
     onAutoSyncToggle: (Boolean) -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
     onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit
+    onDeleteData: () -> Unit,
+    onResetDeleteDataState: () -> Unit
 ) {
     val context = LocalContext.current
     var showColorSheet by remember { mutableStateOf(false) }
@@ -96,6 +97,11 @@ fun SettingsScreen(
     val settings = state.settings
     val isUk = settings.language == AppLanguage.UK
     fun t(uk: String, en: String): String = if (isUk) uk else en
+
+    if (state.deleteData.phase == DeleteDataPhase.RUNNING) {
+        DeleteDataProgressContent(isUk = isUk, stepIndex = state.deleteData.stepIndex)
+        return
+    }
 
     fun openContact() {
         val intent = Intent(Intent.ACTION_SENDTO).apply {
@@ -187,7 +193,7 @@ fun SettingsScreen(
             DividerTitle(t("НЕБЕЗПЕЧНА ЗОНА", "DANGER ZONE"))
             SettingsCard {
                 ClickRow(t("Вийти", "Sign out"), "", Icons.Rounded.Logout, titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
-                ClickRow(t("Видалити акаунт", "Delete account"), t("Це видалить всі ваші дані", "This will remove all your data"), Icons.Rounded.DeleteForever, titleColor = Color(0xFFE24949)) { showDangerDialog = "delete" }
+                ClickRow(t("Видалити дані", "Delete data"), t("Очистити локальні та хмарні дані", "Clear local and cloud data"), Icons.Rounded.DeleteForever, titleColor = Color(0xFFE24949)) { showDangerDialog = "delete" }
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -252,17 +258,54 @@ fun SettingsScreen(
     if (showDangerDialog != null) {
         AlertDialog(
             onDismissRequest = { showDangerDialog = null },
-            title = { Text(if (showDangerDialog == "logout") t("Вийти?", "Sign out?") else t("Видалити акаунт?", "Delete account?")) },
-            text = { Text(if (showDangerDialog == "logout") t("Ви зможете увійти знову через Google.", "You can sign in again with Google.") else t("Цю дію неможливо скасувати.", "This action cannot be undone.")) },
+            title = { Text(if (showDangerDialog == "logout") t("Вийти?", "Sign out?") else t("Видалити всі дані?", "Delete all data?")) },
+            text = {
+                Text(
+                    if (showDangerDialog == "logout") {
+                        t("Ви зможете увійти знову через Google.", "You can sign in again with Google.")
+                    } else {
+                        t(
+                            "Буде очищено локальні та хмарні дані. Акаунт залишиться активним.",
+                            "Local and cloud data will be removed. Your account will remain active."
+                        )
+                    }
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     val action = showDangerDialog
                     showDangerDialog = null
-                    if (action == "logout") onSignOut() else onDeleteAccount()
+                    if (action == "logout") onSignOut() else onDeleteData()
                 }) { Text(t("Підтвердити", "Confirm")) }
             },
             dismissButton = {
                 TextButton(onClick = { showDangerDialog = null }) { Text(t("Скасувати", "Cancel")) }
+            }
+        )
+    }
+
+    if (state.deleteData.phase == DeleteDataPhase.SUCCESS) {
+        AlertDialog(
+            onDismissRequest = onResetDeleteDataState,
+            title = { Text(t("Готово", "Done")) },
+            text = { Text(t("Дані успішно очищено.", "Data was successfully cleared.")) },
+            confirmButton = {
+                TextButton(onClick = onResetDeleteDataState) {
+                    Text(t("Добре", "OK"))
+                }
+            }
+        )
+    }
+
+    if (state.deleteData.phase == DeleteDataPhase.ERROR) {
+        AlertDialog(
+            onDismissRequest = onResetDeleteDataState,
+            title = { Text(t("Помилка", "Error")) },
+            text = { Text(state.deleteData.errorMessage ?: t("Не вдалося видалити дані", "Failed to delete data")) },
+            confirmButton = {
+                TextButton(onClick = onResetDeleteDataState) {
+                    Text(t("Закрити", "Close"))
+                }
             }
         )
     }

@@ -91,7 +91,8 @@ fun HabitixApp() {
             setAutoSyncEnabledUseCase = container.setAutoSyncEnabledUseCase,
             syncSettingsUseCase = container.syncSettingsUseCase,
             signOutUseCase = container.signOutUseCase,
-            deleteAccountUseCase = container.deleteAccountUseCase
+            deleteAccountUseCase = container.deleteAccountUseCase,
+            deleteDataUseCase = container.deleteDataUseCase
         )
     )
 
@@ -296,16 +297,8 @@ fun HabitixApp() {
                             }
                         }
                     },
-                    onDeleteAccount = {
-                        settingsViewModel.deleteAccount(
-                            onDone = {
-                                navController.navigate(AppRoute.Auth) {
-                                    popUpTo(AppRoute.Dashboard) { inclusive = true }
-                                }
-                            },
-                            onError = {}
-                        )
-                    }
+                    onDeleteData = settingsViewModel::deleteData,
+                    onResetDeleteDataState = settingsViewModel::dismissDeleteDataState
                 )
             }
 

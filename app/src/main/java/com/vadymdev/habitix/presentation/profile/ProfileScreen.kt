@@ -61,6 +61,7 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -174,6 +175,7 @@ fun ProfileScreen(
             item {
                 ProfileHeader(
                     state = state,
+                    isUk = isUk,
                     onEditAvatar = { showAvatarActions = true },
                     onEditName = { editName = true },
                     onEditBio = { editBio = true }
@@ -316,10 +318,13 @@ fun ProfileScreen(
 @Composable
 private fun ProfileHeader(
     state: ProfileUiState,
+    isUk: Boolean,
     onEditAvatar: () -> Unit,
     onEditName: () -> Unit,
     onEditBio: () -> Unit
 ) {
+    var avatarLoadFailed by remember(state.identity.avatarUri) { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -336,14 +341,17 @@ private fun ProfileHeader(
                 .clickable(onClick = onEditAvatar),
             contentAlignment = Alignment.Center
         ) {
-            if (state.identity.avatarUri != null) {
+            if (state.identity.avatarUri != null && !avatarLoadFailed) {
                 AsyncImage(
                     model = state.identity.avatarUri,
-                    contentDescription = "Аватар",
+                    contentDescription = t(isUk, "Аватар", "Avatar"),
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop,
+                    onError = {
+                        avatarLoadFailed = true
+                    }
                 )
                 Box(
                     modifier = Modifier
@@ -354,6 +362,20 @@ private fun ProfileHeader(
                 ) {
                     Icon(Icons.Rounded.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                 }
+                if (state.isAvatarUpdating) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.25f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             } else {
                 Text(state.identity.avatarInitials, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
@@ -363,7 +385,7 @@ private fun ProfileHeader(
             Text(state.identity.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Icon(
                 imageVector = Icons.Rounded.Create,
-                contentDescription = "Редагувати ім'я",
+                contentDescription = t(isUk, "Редагувати ім'я", "Edit name"),
                 tint = TextSecondary,
                 modifier = Modifier.size(16.dp).clickable(onClick = onEditName)
             )

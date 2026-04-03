@@ -10,6 +10,7 @@ import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.AppSettings
 import com.vadymdev.habitix.domain.model.ThemeMode
 import com.vadymdev.habitix.domain.usecase.DeleteAccountUseCase
+import com.vadymdev.habitix.domain.usecase.DeleteDataUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
@@ -44,7 +45,8 @@ class SettingsViewModel(
     private val setAutoSyncEnabledUseCase: SetAutoSyncEnabledUseCase,
     private val syncSettingsUseCase: SyncSettingsUseCase,
     private val signOutUseCase: SignOutUseCase,
-    private val deleteAccountUseCase: DeleteAccountUseCase
+    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val deleteDataUseCase: DeleteDataUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsUiState())
@@ -111,6 +113,52 @@ class SettingsViewModel(
         }
     }
 
+    fun deleteData() {
+        if (_state.value.deleteData.phase == DeleteDataPhase.RUNNING) return
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    deleteData = DeleteDataUiState(
+                        phase = DeleteDataPhase.RUNNING,
+                        stepIndex = 0,
+                        errorMessage = null
+                    )
+                )
+            }
+
+            runCatching {
+                _state.update { state -> state.copy(deleteData = state.deleteData.copy(stepIndex = 1)) }
+                deleteDataUseCase(_state.value.userId)
+                _state.update { state -> state.copy(deleteData = state.deleteData.copy(stepIndex = 2)) }
+            }.onSuccess {
+                _state.update {
+                    it.copy(
+                        deleteData = DeleteDataUiState(
+                            phase = DeleteDataPhase.SUCCESS,
+                            stepIndex = 3,
+                            errorMessage = null
+                        )
+                    )
+                }
+            }.onFailure { error ->
+                _state.update {
+                    it.copy(
+                        deleteData = DeleteDataUiState(
+                            phase = DeleteDataPhase.ERROR,
+                            stepIndex = it.deleteData.stepIndex,
+                            errorMessage = error.message ?: "Не вдалося видалити дані"
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    fun dismissDeleteDataState() {
+        _state.update { it.copy(deleteData = DeleteDataUiState()) }
+    }
+
     suspend fun syncNow() {
         syncIfNeeded()
     }
@@ -140,7 +188,21 @@ class SettingsViewModel(
 
 data class SettingsUiState(
     val settings: AppSettings = AppSettings(),
-    val userId: String? = null
+    val userId: String? = null,
+    val deleteData: DeleteDataUiState = DeleteDataUiState()
+)
+
+enum class DeleteDataPhase {
+    IDLE,
+    RUNNING,
+    SUCCESS,
+    ERROR
+}
+
+data class DeleteDataUiState(
+    val phase: DeleteDataPhase = DeleteDataPhase.IDLE,
+    val stepIndex: Int = 0,
+    val errorMessage: String? = null
 )
 
 class SettingsViewModelFactory(
@@ -157,7 +219,8 @@ class SettingsViewModelFactory(
     private val setAutoSyncEnabledUseCase: SetAutoSyncEnabledUseCase,
     private val syncSettingsUseCase: SyncSettingsUseCase,
     private val signOutUseCase: SignOutUseCase,
-    private val deleteAccountUseCase: DeleteAccountUseCase
+    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val deleteDataUseCase: DeleteDataUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
@@ -176,7 +239,8 @@ class SettingsViewModelFactory(
                 setAutoSyncEnabledUseCase = setAutoSyncEnabledUseCase,
                 syncSettingsUseCase = syncSettingsUseCase,
                 signOutUseCase = signOutUseCase,
-                deleteAccountUseCase = deleteAccountUseCase
+                deleteAccountUseCase = deleteAccountUseCase,
+                deleteDataUseCase = deleteDataUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

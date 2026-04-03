@@ -18,6 +18,8 @@ class SettingsRepositoryImpl(
 
     override suspend fun replaceAll(settings: AppSettings) = local.replaceAll(settings)
 
+    override suspend fun resetToDefaults() = local.clearAllLocalData()
+
     override suspend fun setThemeMode(mode: ThemeMode) = local.setThemeMode(mode)
     override suspend fun setAccentPalette(palette: AccentPalette) = local.setAccentPalette(palette)
     override suspend fun setLanguage(language: AppLanguage) = local.setLanguage(language)

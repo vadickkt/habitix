@@ -10,4 +10,5 @@ interface ProfileRepository {
     suspend fun updateDisplayName(name: String)
     suspend fun updateBio(bio: String)
     suspend fun updateAvatarUri(uri: String?)
+    suspend fun clearLocalData()
 }

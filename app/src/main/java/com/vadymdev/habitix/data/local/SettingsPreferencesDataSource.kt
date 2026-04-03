@@ -32,6 +32,7 @@ class SettingsPreferencesDataSource(private val context: Context) {
     private val biometricKey = booleanPreferencesKey("biometric_enabled")
     private val autoSyncKey = booleanPreferencesKey("auto_sync_enabled")
     private val updatedAtKey = longPreferencesKey("settings_updated_at")
+    private val notificationsAskedOnceKey = booleanPreferencesKey("notifications_permission_asked_once")
 
     fun observeSettings(): Flow<AppSettings> = context.settingsDataStore.data.map { prefs -> prefs.toAppSettings() }
 
@@ -67,6 +68,33 @@ class SettingsPreferencesDataSource(private val context: Context) {
     suspend fun setVibrationEnabled(value: Boolean) = update { prefs -> prefs[vibrationKey] = value }
     suspend fun setBiometricEnabled(value: Boolean) = update { prefs -> prefs[biometricKey] = value }
     suspend fun setAutoSyncEnabled(value: Boolean) = update { prefs -> prefs[autoSyncKey] = value }
+
+    suspend fun hasAskedNotificationPermission(): Boolean {
+        return context.settingsDataStore.data.first()[notificationsAskedOnceKey] ?: false
+    }
+
+    suspend fun markNotificationPermissionAsked() {
+        context.settingsDataStore.edit { prefs ->
+            prefs[notificationsAskedOnceKey] = true
+        }
+    }
+
+    suspend fun clearAllLocalData() {
+        context.settingsDataStore.edit { prefs ->
+            prefs.remove(themeKey)
+            prefs.remove(paletteKey)
+            prefs.remove(languageKey)
+            prefs.remove(pushKey)
+            prefs.remove(reminderHourKey)
+            prefs.remove(reminderMinuteKey)
+            prefs.remove(soundsKey)
+            prefs.remove(vibrationKey)
+            prefs.remove(biometricKey)
+            prefs.remove(autoSyncKey)
+            prefs.remove(updatedAtKey)
+            prefs.remove(notificationsAskedOnceKey)
+        }
+    }
 
     private suspend fun update(block: (MutablePreferences) -> Unit) {
         context.settingsDataStore.edit { prefs ->

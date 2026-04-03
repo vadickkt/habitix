@@ -10,6 +10,7 @@ interface SettingsRepository {
     fun observeSettings(): Flow<AppSettings>
     suspend fun getCurrentSettings(): AppSettings
     suspend fun replaceAll(settings: AppSettings)
+    suspend fun resetToDefaults()
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setAccentPalette(palette: AccentPalette)
     suspend fun setLanguage(language: AppLanguage)

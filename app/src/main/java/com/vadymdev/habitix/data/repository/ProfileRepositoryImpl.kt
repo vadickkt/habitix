@@ -28,4 +28,8 @@ class ProfileRepositoryImpl(
     override suspend fun updateAvatarUri(uri: String?) {
         local.updateAvatarUri(uri)
     }
+
+    override suspend fun clearLocalData() {
+        local.clearLocalData()
+    }
 }

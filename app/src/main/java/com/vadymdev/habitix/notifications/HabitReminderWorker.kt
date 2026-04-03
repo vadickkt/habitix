@@ -11,9 +11,11 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
 import com.vadymdev.habitix.R
 import com.vadymdev.habitix.data.local.room.HabitixDatabase
 import com.vadymdev.habitix.data.repository.HabitRepositoryImpl
+import com.vadymdev.habitix.domain.model.AppLanguage
 import java.time.LocalDate
 
 class HabitReminderWorker(
@@ -30,7 +32,11 @@ class HabitReminderWorker(
             achievementUnlockDao = database.achievementUnlockDao()
         )
 
+        val settings = SettingsPreferencesDataSource(applicationContext).getCurrentSettings()
+        if (!settings.pushEnabled) return Result.success()
+
         val incomplete = repository.getIncompleteHabitsForDate(LocalDate.now())
+            .filter { it.reminderEnabled }
         if (incomplete.isEmpty()) return Result.success()
 
         createChannelIfNeeded(applicationContext)
@@ -42,10 +48,17 @@ class HabitReminderWorker(
             return Result.success()
         }
 
+        val isUk = settings.language == AppLanguage.UK
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("Є невиконані звички")
-            .setContentText("Сьогодні ще ${incomplete.size} звички чекають на тебе")
+            .setContentTitle(if (isUk) "Є невиконані звички" else "You still have unfinished habits")
+            .setContentText(
+                if (isUk) {
+                    "Сьогодні ще ${incomplete.size} звички чекають на тебе"
+                } else {
+                    "You still have ${incomplete.size} habits to complete today"
+                }
+            )
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()

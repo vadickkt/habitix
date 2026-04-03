@@ -3,20 +3,31 @@ package com.vadymdev.habitix.notifications
 import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import java.time.Duration
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 object ReminderScheduler {
 
     private const val PERIODIC_WORK_NAME = "habitix_periodic_reminders"
-    private const val IMMEDIATE_WORK_NAME = "habitix_immediate_reminder_check"
 
-    fun schedule(context: Context) {
+    fun schedule(context: Context, hour: Int, minute: Int) {
         val workManager = WorkManager.getInstance(context)
+        val now = LocalDateTime.now()
+        var nextRun = now
+            .withHour(hour)
+            .withMinute(minute)
+            .withSecond(0)
+            .withNano(0)
+
+        if (!nextRun.isAfter(now)) {
+            nextRun = nextRun.plusDays(1)
+        }
+
+        val initialDelay = Duration.between(now, nextRun).toMillis()
 
         val periodic = PeriodicWorkRequestBuilder<HabitReminderWorker>(24, TimeUnit.HOURS)
             .setConstraints(
@@ -24,6 +35,7 @@ object ReminderScheduler {
                     .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
                     .build()
             )
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
 
         workManager.enqueueUniquePeriodicWork(
@@ -31,18 +43,10 @@ object ReminderScheduler {
             ExistingPeriodicWorkPolicy.UPDATE,
             periodic
         )
-
-        val immediate = OneTimeWorkRequestBuilder<HabitReminderWorker>().build()
-        workManager.enqueueUniqueWork(
-            IMMEDIATE_WORK_NAME,
-            ExistingWorkPolicy.REPLACE,
-            immediate
-        )
     }
 
     fun cancel(context: Context) {
         val workManager = WorkManager.getInstance(context)
-        workManager.cancelUniqueWork(IMMEDIATE_WORK_NAME)
         workManager.cancelUniqueWork(PERIODIC_WORK_NAME)
     }
 }

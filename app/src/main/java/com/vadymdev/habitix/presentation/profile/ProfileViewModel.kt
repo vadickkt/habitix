@@ -32,6 +32,7 @@ class ProfileViewModel(
 
     private val selectedCategory = MutableStateFlow("Всі")
     private val currentUserId = MutableStateFlow<String?>(null)
+    private val avatarUpdating = MutableStateFlow(false)
 
     init {
         viewModelScope.launch {
@@ -48,8 +49,9 @@ class ProfileViewModel(
         observeProfileIdentityUseCase(),
         observeProfileAnalyticsUseCase(),
         observeAuthSessionUseCase(),
-        selectedCategory
-    ) { identity, analytics, session, category ->
+        selectedCategory,
+        avatarUpdating
+    ) { identity, analytics, session, category, isAvatarUpdating ->
         val resolvedName = if (identity.displayName == "Користувач") {
             session?.displayName ?: identity.displayName
         } else {
@@ -72,7 +74,8 @@ class ProfileViewModel(
             analytics = analytics,
             selectedCategory = category,
             achievements = filteredAchievements,
-            unlockedCount = analytics.allAchievements.count { it.unlocked }
+            unlockedCount = analytics.allAchievements.count { it.unlocked },
+            isAvatarUpdating = isAvatarUpdating
         )
     }.stateIn(
         scope = viewModelScope,
@@ -95,7 +98,15 @@ class ProfileViewModel(
     }
 
     fun updateAvatar(uri: String?) {
-        viewModelScope.launch { updateProfileAvatarUseCase(uri) }
+        viewModelScope.launch {
+            avatarUpdating.value = true
+            try {
+                updateProfileAvatarUseCase(uri)
+                currentUserId.value?.let { uid -> runCatching { syncProfileUseCase(uid) } }
+            } finally {
+                avatarUpdating.value = false
+            }
+        }
     }
 
     fun setAchievementCategory(value: String) {
@@ -134,7 +145,8 @@ data class ProfileUiState(
     ),
     val selectedCategory: String = "Всі",
     val achievements: List<ProfileAchievement> = emptyList(),
-    val unlockedCount: Int = 0
+    val unlockedCount: Int = 0,
+    val isAvatarUpdating: Boolean = false
 )
 
 class ProfileViewModelFactory(

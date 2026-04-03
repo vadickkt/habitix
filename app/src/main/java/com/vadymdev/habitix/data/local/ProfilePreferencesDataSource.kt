@@ -65,6 +65,29 @@ class ProfilePreferencesDataSource(private val context: Context) {
         }
     }
 
+    suspend fun clearLocalData() {
+        context.profilePrefsDataStore.edit { prefs ->
+            prefs[nameKey] = "Користувач"
+            prefs[bioKey] = "Будую кращу версію себе"
+            prefs.remove(avatarUriKey)
+        }
+
+        val avatarsDir = java.io.File(context.filesDir, "avatars")
+        if (avatarsDir.exists()) {
+            avatarsDir.deleteRecursively()
+        }
+
+        val cameraCacheDir = java.io.File(context.cacheDir, "images")
+        if (cameraCacheDir.exists()) {
+            cameraCacheDir.deleteRecursively()
+        }
+
+        val shareCacheDir = java.io.File(context.cacheDir, "share")
+        if (shareCacheDir.exists()) {
+            shareCacheDir.deleteRecursively()
+        }
+    }
+
     private fun initialsFor(name: String): String {
         val parts = name.trim().split(" ").filter { it.isNotBlank() }
         return when {

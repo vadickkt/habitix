@@ -19,6 +19,12 @@ class FirestoreHabitSyncRepository(
     private val hiddenDayDao: HiddenHabitDayDao
 ) : HabitSyncRepository {
 
+    override suspend fun clearUserData(userId: String) {
+        deleteCollection("users/$userId/habits")
+        deleteCollection("users/$userId/habit_completions")
+        deleteCollection("users/$userId/habit_hidden_days")
+    }
+
     override suspend fun syncUserHabits(userId: String) {
         uploadLocalHabits(userId)
         downloadCloudHabits(userId)
@@ -241,6 +247,23 @@ class FirestoreHabitSyncRepository(
                     dateEpochDay = dateEpochDay
                 )
             )
+        }
+    }
+
+    private suspend fun deleteCollection(path: String) {
+        while (true) {
+            val batch = firestore.batch()
+            val snapshot = firestore.collection(path)
+                .limit(400)
+                .get()
+                .await()
+
+            if (snapshot.isEmpty) return
+
+            snapshot.documents.forEach { doc ->
+                batch.delete(doc.reference)
+            }
+            batch.commit().await()
         }
     }
 }

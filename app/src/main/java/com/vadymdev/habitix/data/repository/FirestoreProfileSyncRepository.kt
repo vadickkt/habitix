@@ -10,6 +10,15 @@ class FirestoreProfileSyncRepository(
     private val profileRepository: ProfileRepository
 ) : ProfileSyncRepository {
 
+    override suspend fun clearUserData(userId: String) {
+        firestore.collection("users")
+            .document(userId)
+            .collection("meta")
+            .document("profile")
+            .delete()
+            .await()
+    }
+
     override suspend fun sync(userId: String) {
         val local = profileRepository.getCurrentProfileIdentity()
         val docRef = firestore.collection("users").document(userId).collection("meta").document("profile")

@@ -30,6 +30,7 @@ import com.vadymdev.habitix.domain.usecase.CreateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
 import com.vadymdev.habitix.domain.usecase.DeleteAllHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.DeleteAccountUseCase
+import com.vadymdev.habitix.domain.usecase.DeleteDataUseCase
 import com.vadymdev.habitix.domain.usecase.GetIncompleteHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.HideHabitForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
@@ -131,6 +132,16 @@ class AppContainer(context: Context) {
     val continueAsGuestUseCase by lazy { ContinueAsGuestUseCase(authRepository) }
     val signOutUseCase by lazy { SignOutUseCase(authRepository) }
     val deleteAccountUseCase by lazy { DeleteAccountUseCase(authRepository) }
+    val deleteDataUseCase by lazy {
+        DeleteDataUseCase(
+            habitRepository = habitRepository,
+            profileRepository = profileRepository,
+            settingsRepository = settingsRepository,
+            habitSyncRepository = habitSyncRepository,
+            profileSyncRepository = profileSyncRepository,
+            settingsSyncRepository = settingsSyncRepository
+        )
+    }
     val observeOnboardingUseCase by lazy { ObserveOnboardingUseCase(onboardingRepository) }
     val updateInterestsUseCase by lazy { UpdateInterestsUseCase(onboardingRepository) }
     val updateHabitsUseCase by lazy { UpdateHabitsUseCase(onboardingRepository) }
