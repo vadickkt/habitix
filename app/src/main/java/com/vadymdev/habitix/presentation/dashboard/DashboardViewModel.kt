@@ -7,6 +7,7 @@ import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import java.time.LocalDate
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class DashboardViewModel(
     private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
+    private val observeProfileAnalyticsUseCase: ObserveProfileAnalyticsUseCase,
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
     private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     observeAuthSessionUseCase: ObserveAuthSessionUseCase,
@@ -29,11 +31,41 @@ class DashboardViewModel(
 
     private val selectedDate = MutableStateFlow(LocalDate.now())
     private val currentUserId = MutableStateFlow<String?>(null)
+    private val unlockEvent = MutableStateFlow<DashboardAchievementEvent?>(null)
+    private var unlockSequence = 0L
+    private var initializedUnlockedSnapshot = false
+    private val knownUnlockedIds = mutableSetOf<String>()
 
     init {
         viewModelScope.launch {
             observeAuthSessionUseCase().collect { session ->
                 currentUserId.value = session?.uid
+            }
+        }
+
+        viewModelScope.launch {
+            observeProfileAnalyticsUseCase().collect { analytics ->
+                val unlockedNow = analytics.allAchievements
+                    .filter { it.unlocked }
+                    .associateBy { it.id }
+
+                if (!initializedUnlockedSnapshot) {
+                    knownUnlockedIds.addAll(unlockedNow.keys)
+                    initializedUnlockedSnapshot = true
+                    return@collect
+                }
+
+                val newUnlocked = unlockedNow.keys.filterNot { knownUnlockedIds.contains(it) }
+                if (newUnlocked.isNotEmpty()) {
+                    val first = unlockedNow.getValue(newUnlocked.first())
+                    unlockSequence += 1
+                    unlockEvent.value = DashboardAchievementEvent(
+                        id = unlockSequence,
+                        title = first.title,
+                        xpReward = first.xpReward
+                    )
+                    knownUnlockedIds.addAll(newUnlocked)
+                }
             }
         }
     }
@@ -42,12 +74,13 @@ class DashboardViewModel(
         .flatMapLatest { date -> observeHabitsForDateUseCase(date) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val state: StateFlow<DashboardUiState> = combine(selectedDate, habitsForDate) { date, habits ->
+    val state: StateFlow<DashboardUiState> = combine(selectedDate, habitsForDate, unlockEvent) { date, habits, event ->
         DashboardUiState(
             selectedDate = date,
             habits = habits,
             completedCount = habits.count { it.isCompletedForSelectedDate },
-            totalCount = habits.size
+            totalCount = habits.size,
+            achievementEvent = event
         )
     }.stateIn(
         scope = viewModelScope,
@@ -77,6 +110,12 @@ class DashboardViewModel(
         }
     }
 
+    fun consumeAchievementEvent(eventId: Long) {
+        if (unlockEvent.value?.id == eventId) {
+            unlockEvent.value = null
+        }
+    }
+
     private suspend fun syncIfAuthorized() {
         currentUserId.value?.let { uid ->
             runCatching { syncUserHabitsUseCase(uid) }
@@ -88,11 +127,19 @@ data class DashboardUiState(
     val selectedDate: LocalDate,
     val habits: List<Habit> = emptyList(),
     val completedCount: Int = 0,
-    val totalCount: Int = 0
+    val totalCount: Int = 0,
+    val achievementEvent: DashboardAchievementEvent? = null
+)
+
+data class DashboardAchievementEvent(
+    val id: Long,
+    val title: String,
+    val xpReward: Int
 )
 
 class DashboardViewModelFactory(
     private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
+    private val observeProfileAnalyticsUseCase: ObserveProfileAnalyticsUseCase,
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
     private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
@@ -103,6 +150,7 @@ class DashboardViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return DashboardViewModel(
                 observeHabitsForDateUseCase = observeHabitsForDateUseCase,
+                observeProfileAnalyticsUseCase = observeProfileAnalyticsUseCase,
                 toggleHabitCompletionUseCase = toggleHabitCompletionUseCase,
                 deactivateHabitFromDateUseCase = deactivateHabitFromDateUseCase,
                 observeAuthSessionUseCase = observeAuthSessionUseCase,

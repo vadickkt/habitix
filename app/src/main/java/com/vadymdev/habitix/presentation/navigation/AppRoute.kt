@@ -11,6 +11,7 @@ object AppRoute {
     const val EditHabit = "edit_habit"
     const val Stats = "stats"
     const val Profile = "profile"
+    const val Achievements = "achievements"
     const val Settings = "settings"
     const val PrivacyPolicy = "privacy_policy"
 }

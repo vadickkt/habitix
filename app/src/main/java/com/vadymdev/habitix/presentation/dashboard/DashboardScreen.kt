@@ -44,6 +44,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -88,6 +91,7 @@ fun DashboardScreen(
     onDateSelected: (LocalDate) -> Unit,
     onToggleHabit: (Habit) -> Unit,
     vibrationEnabled: Boolean,
+    onConsumeAchievementEvent: (Long) -> Unit,
     onDeleteHabit: (Habit) -> Unit,
     onEditHabit: (Habit) -> Unit,
     onCreateHabit: () -> Unit,
@@ -96,6 +100,7 @@ fun DashboardScreen(
     onOpenProfile: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val snackbarHostState = remember { SnackbarHostState() }
     val anchorWeekStart = remember { LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) }
     val initialPage = 10_000
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 20_000 })
@@ -109,16 +114,36 @@ fun DashboardScreen(
         }
     }
 
-    Column(
+    LaunchedEffect(state.achievementEvent?.id) {
+        val event = state.achievementEvent ?: return@LaunchedEffect
+        if (vibrationEnabled) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+        snackbarHostState.showSnackbar("Досягнення відкрито: ${event.title} (+${event.xpReward} XP)")
+        onConsumeAchievementEvent(event.id)
+    }
+
+    Scaffold(
         modifier = Modifier
             .fillMaxSize()
             .background(AppBackground)
-            .systemBarsPadding()
-    ) {
+            .systemBarsPadding(),
+        containerColor = AppBackground,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        bottomBar = {
+            BottomBar(
+                onHome = {},
+                onStats = onOpenStats,
+                onProfile = onOpenProfile,
+                onSettings = onOpenSettings,
+                activeTab = "home"
+            )
+        }
+    ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
         ) {
@@ -191,14 +216,6 @@ fun DashboardScreen(
                 AddHabitButton(onCreateHabit = onCreateHabit)
             }
         }
-
-        BottomBar(
-            onHome = {},
-            onStats = onOpenStats,
-            onProfile = onOpenProfile,
-            onSettings = onOpenSettings,
-            activeTab = "home"
-        )
     }
 }
 

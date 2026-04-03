@@ -19,7 +19,6 @@ import com.vadymdev.habitix.di.AppContainer
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
 import com.vadymdev.habitix.presentation.auth.AuthViewModelFactory
-import com.vadymdev.habitix.presentation.common.ComingSoonScreen
 import com.vadymdev.habitix.presentation.dashboard.DashboardScreen
 import com.vadymdev.habitix.presentation.dashboard.DashboardViewModel
 import com.vadymdev.habitix.presentation.dashboard.DashboardViewModelFactory
@@ -33,6 +32,10 @@ import com.vadymdev.habitix.presentation.onboarding.OnboardingViewModelFactory
 import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingHabitsScreen
 import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingInterestsScreen
 import com.vadymdev.habitix.presentation.onboarding.screens.OnboardingIntroScreen
+import com.vadymdev.habitix.presentation.profile.AchievementsScreen
+import com.vadymdev.habitix.presentation.profile.ProfileScreen
+import com.vadymdev.habitix.presentation.profile.ProfileViewModel
+import com.vadymdev.habitix.presentation.profile.ProfileViewModelFactory
 import com.vadymdev.habitix.presentation.settings.SettingsScreen
 import com.vadymdev.habitix.presentation.settings.SettingsViewModel
 import com.vadymdev.habitix.presentation.settings.SettingsViewModelFactory
@@ -95,6 +98,7 @@ fun HabitixApp() {
     val dashboardViewModel: DashboardViewModel = viewModel(
         factory = DashboardViewModelFactory(
             observeHabitsForDateUseCase = container.observeHabitsForDateUseCase,
+            observeProfileAnalyticsUseCase = container.observeProfileAnalyticsUseCase,
             toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase,
             deactivateHabitFromDateUseCase = container.deactivateHabitFromDateUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
@@ -117,12 +121,24 @@ fun HabitixApp() {
         )
     )
 
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = ProfileViewModelFactory(
+            observeProfileIdentityUseCase = container.observeProfileIdentityUseCase,
+            observeProfileAnalyticsUseCase = container.observeProfileAnalyticsUseCase,
+            observeAuthSessionUseCase = container.observeAuthSessionUseCase,
+            updateProfileNameUseCase = container.updateProfileNameUseCase,
+            updateProfileBioUseCase = container.updateProfileBioUseCase,
+            updateProfileAvatarUseCase = container.updateProfileAvatarUseCase
+        )
+    )
+
     val navController = rememberNavController()
     val onboardingState by onboardingViewModel.state.collectAsStateWithLifecycle()
     val dashboardState by dashboardViewModel.state.collectAsStateWithLifecycle()
     val createHabitState by createHabitViewModel.state.collectAsStateWithLifecycle()
     val settingsState by settingsViewModel.state.collectAsStateWithLifecycle()
     val statsState by statsViewModel.state.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
     val startDestination by appViewModel.startDestination.collectAsStateWithLifecycle()
 
     HabitixTheme(
@@ -197,6 +213,7 @@ fun HabitixApp() {
                     onDateSelected = dashboardViewModel::onDateSelected,
                     onToggleHabit = dashboardViewModel::onToggleHabit,
                     vibrationEnabled = settingsState.settings.vibrationEnabled,
+                    onConsumeAchievementEvent = dashboardViewModel::consumeAchievementEvent,
                     onDeleteHabit = dashboardViewModel::deleteHabitFromToday,
                     onEditHabit = { habit ->
                         createHabitViewModel.startEditing(habit)
@@ -228,7 +245,24 @@ fun HabitixApp() {
             }
 
             composable(AppRoute.Profile) {
-                ComingSoonScreen("Профіль")
+                ProfileScreen(
+                    state = profileState,
+                    onUpdateName = profileViewModel::updateName,
+                    onUpdateBio = profileViewModel::updateBio,
+                    onUpdateAvatar = profileViewModel::updateAvatar,
+                    onOpenAllAchievements = { navController.navigate(AppRoute.Achievements) },
+                    onOpenDashboard = { navController.navigate(AppRoute.Dashboard) },
+                    onOpenStats = { navController.navigate(AppRoute.Stats) },
+                    onOpenSettings = { navController.navigate(AppRoute.Settings) }
+                )
+            }
+
+            composable(AppRoute.Achievements) {
+                AchievementsScreen(
+                    state = profileState,
+                    onBack = { navController.popBackStack() },
+                    onSelectCategory = profileViewModel::setAchievementCategory
+                )
             }
 
             composable(AppRoute.Settings) {

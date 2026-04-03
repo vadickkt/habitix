@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.vadymdev.habitix.data.local.AuthPreferencesDataSource
 import com.vadymdev.habitix.data.local.OnboardingPreferencesDataSource
+import com.vadymdev.habitix.data.local.ProfilePreferencesDataSource
 import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
 import com.vadymdev.habitix.data.local.room.HabitixDatabase
 import com.vadymdev.habitix.data.repository.FirebaseAuthRepository
@@ -12,11 +13,13 @@ import com.vadymdev.habitix.data.repository.FirestoreHabitSyncRepository
 import com.vadymdev.habitix.data.repository.FirestoreSettingsSyncRepository
 import com.vadymdev.habitix.data.repository.HabitRepositoryImpl
 import com.vadymdev.habitix.data.repository.OnboardingRepositoryImpl
+import com.vadymdev.habitix.data.repository.ProfileRepositoryImpl
 import com.vadymdev.habitix.data.repository.SettingsRepositoryImpl
 import com.vadymdev.habitix.domain.repository.AuthRepository
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import com.vadymdev.habitix.domain.repository.OnboardingRepository
+import com.vadymdev.habitix.domain.repository.ProfileRepository
 import com.vadymdev.habitix.domain.repository.SettingsRepository
 import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
 import com.vadymdev.habitix.domain.usecase.CompleteOnboardingUseCase
@@ -33,6 +36,8 @@ import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveOnboardingUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
 import com.vadymdev.habitix.domain.usecase.SetAutoSyncEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SetBiometricEnabledUseCase
@@ -42,6 +47,9 @@ import com.vadymdev.habitix.domain.usecase.SetReminderTimeUseCase
 import com.vadymdev.habitix.domain.usecase.SetSoundsEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SetThemeModeUseCase
 import com.vadymdev.habitix.domain.usecase.SetVibrationEnabledUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
 import com.vadymdev.habitix.domain.usecase.SignOutUseCase
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
@@ -94,6 +102,10 @@ class AppContainer(context: Context) {
         SettingsRepositoryImpl(SettingsPreferencesDataSource(appContext))
     }
 
+    private val profileRepository: ProfileRepository by lazy {
+        ProfileRepositoryImpl(ProfilePreferencesDataSource(appContext))
+    }
+
     private val settingsSyncRepository: SettingsSyncRepository by lazy {
         FirestoreSettingsSyncRepository(
             firestore = firestore,
@@ -122,6 +134,11 @@ class AppContainer(context: Context) {
     val getIncompleteHabitsForDateUseCase by lazy { GetIncompleteHabitsForDateUseCase(habitRepository) }
     val syncUserHabitsUseCase by lazy { SyncUserHabitsUseCase(habitSyncRepository) }
     val observeSettingsUseCase by lazy { ObserveSettingsUseCase(settingsRepository) }
+    val observeProfileIdentityUseCase by lazy { ObserveProfileIdentityUseCase(profileRepository) }
+    val updateProfileNameUseCase by lazy { UpdateProfileNameUseCase(profileRepository) }
+    val updateProfileBioUseCase by lazy { UpdateProfileBioUseCase(profileRepository) }
+    val updateProfileAvatarUseCase by lazy { UpdateProfileAvatarUseCase(profileRepository) }
+    val observeProfileAnalyticsUseCase by lazy { ObserveProfileAnalyticsUseCase(habitRepository) }
     val setThemeModeUseCase by lazy { SetThemeModeUseCase(settingsRepository) }
     val setAccentPaletteUseCase by lazy { SetAccentPaletteUseCase(settingsRepository) }
     val setLanguageUseCase by lazy { SetLanguageUseCase(settingsRepository) }
