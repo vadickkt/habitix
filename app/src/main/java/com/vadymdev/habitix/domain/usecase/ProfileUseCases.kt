@@ -5,6 +5,7 @@ import com.vadymdev.habitix.domain.model.ProfileIdentity
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.ProfileRepository
 import com.vadymdev.habitix.domain.repository.ProfileSyncRepository
+import com.vadymdev.habitix.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 
 class ObserveProfileIdentityUseCase(private val repository: ProfileRepository) {
@@ -27,6 +28,12 @@ class ObserveProfileAnalyticsUseCase(private val repository: HabitRepository) {
     operator fun invoke(): Flow<ProfileAnalytics> = repository.observeProfileAnalytics()
 }
 
-class SyncProfileUseCase(private val repository: ProfileSyncRepository) {
-    suspend operator fun invoke(userId: String) = repository.sync(userId)
+class SyncProfileUseCase(
+    private val repository: ProfileSyncRepository,
+    private val settingsRepository: SettingsRepository
+) {
+    suspend operator fun invoke(userId: String) {
+        if (!settingsRepository.getCurrentSettings().autoSyncEnabled) return
+        repository.sync(userId)
+    }
 }

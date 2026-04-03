@@ -22,14 +22,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Coffee
 import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.MenuBook
+import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.Nightlight
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.TrackChanges
 import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -284,16 +291,16 @@ private fun AchievementRow(achievement: ProfileAchievement, onClick: () -> Unit)
 
 private fun achievementIcon(iconKey: String): ImageVector {
     return when (iconKey) {
-        "flame" -> Icons.Rounded.EmojiEvents
-        "medal" -> Icons.Rounded.EmojiEvents
-        "crown" -> Icons.Rounded.EmojiEvents
-        "zap" -> Icons.Rounded.Star
+        "flame" -> Icons.Rounded.LocalFireDepartment
+        "medal" -> Icons.Rounded.MilitaryTech
+        "crown" -> Icons.Rounded.WorkspacePremium
+        "zap" -> Icons.Rounded.Bolt
         "sunrise" -> Icons.Rounded.WbSunny
         "moon" -> Icons.Rounded.Nightlight
-        "target" -> Icons.Rounded.Star
-        "sparkles" -> Icons.Rounded.Star
+        "target" -> Icons.Rounded.TrackChanges
+        "sparkles" -> Icons.Rounded.AutoAwesome
         "trophy" -> Icons.Rounded.EmojiEvents
-        "heart" -> Icons.Rounded.Star
+        "heart" -> Icons.Rounded.Favorite
         "dumbbell" -> Icons.Rounded.FitnessCenter
         "brain" -> Icons.Rounded.Psychology
         "book" -> Icons.Rounded.MenuBook

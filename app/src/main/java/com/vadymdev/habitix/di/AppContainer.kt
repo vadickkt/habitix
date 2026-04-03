@@ -155,11 +155,11 @@ class AppContainer(context: Context) {
     val createHabitUseCase by lazy { CreateHabitUseCase(habitRepository) }
     val updateHabitUseCase by lazy { UpdateHabitUseCase(habitRepository) }
     val getIncompleteHabitsForDateUseCase by lazy { GetIncompleteHabitsForDateUseCase(habitRepository) }
-    val syncUserHabitsUseCase by lazy { SyncUserHabitsUseCase(habitSyncRepository) }
+    val syncUserHabitsUseCase by lazy { SyncUserHabitsUseCase(habitSyncRepository, settingsRepository) }
     val observeSettingsUseCase by lazy { ObserveSettingsUseCase(settingsRepository) }
     val validateHabitTitleUseCase by lazy { ValidateHabitTitleUseCase() }
     val observeProfileIdentityUseCase by lazy { ObserveProfileIdentityUseCase(profileRepository) }
-    val syncProfileUseCase by lazy { SyncProfileUseCase(profileSyncRepository) }
+    val syncProfileUseCase by lazy { SyncProfileUseCase(profileSyncRepository, settingsRepository) }
     val updateProfileNameUseCase by lazy { UpdateProfileNameUseCase(profileRepository) }
     val updateProfileBioUseCase by lazy { UpdateProfileBioUseCase(profileRepository) }
     val updateProfileAvatarUseCase by lazy { UpdateProfileAvatarUseCase(profileRepository) }
@@ -173,5 +173,5 @@ class AppContainer(context: Context) {
     val setVibrationEnabledUseCase by lazy { SetVibrationEnabledUseCase(settingsRepository) }
     val setBiometricEnabledUseCase by lazy { SetBiometricEnabledUseCase(settingsRepository) }
     val setAutoSyncEnabledUseCase by lazy { SetAutoSyncEnabledUseCase(settingsRepository) }
-    val syncSettingsUseCase by lazy { SyncSettingsUseCase(settingsSyncRepository) }
+    val syncSettingsUseCase by lazy { SyncSettingsUseCase(settingsSyncRepository, settingsRepository) }
 }

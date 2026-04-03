@@ -44,21 +44,28 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Analytics
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Coffee
 import androidx.compose.material.icons.rounded.Create
 import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.MenuBook
+import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.Nightlight
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.TrackChanges
 import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.CircularProgressIndicator
@@ -124,8 +131,8 @@ fun ProfileScreen(
     ) { uri ->
         if (uri != null) {
             persistReadPermissionIfPossible(context, uri)
-            val localUri = createCircularAvatarUri(context, uri)
-            onUpdateAvatar(localUri?.toString())
+            val localPath = createCircularAvatarPath(context, uri)
+            onUpdateAvatar(localPath)
         }
     }
 
@@ -134,8 +141,8 @@ fun ProfileScreen(
     ) { success ->
         if (success) {
             val sourceUri = pendingCameraUri
-            val localUri = sourceUri?.let { createCircularAvatarUri(context, it) }
-            onUpdateAvatar(localUri?.toString())
+            val localPath = sourceUri?.let { createCircularAvatarPath(context, it) }
+            onUpdateAvatar(localPath)
         }
     }
 
@@ -324,6 +331,15 @@ private fun ProfileHeader(
     onEditBio: () -> Unit
 ) {
     var avatarLoadFailed by remember(state.identity.avatarUri) { mutableStateOf(false) }
+    val avatarModel = remember(state.identity.avatarUri) {
+        resolveAvatarModel(state.identity.avatarUri)
+    }
+    val avatarStatusText = when {
+        state.isAvatarUpdating -> t(isUk, "Оновлюємо аватар...", "Updating avatar...")
+        avatarLoadFailed -> t(isUk, "Помилка завантаження фото", "Failed to load avatar")
+        state.identity.avatarUri.isNullOrBlank() -> t(isUk, "Аватар не встановлено", "Avatar not set")
+        else -> t(isUk, "Аватар збережено локально", "Avatar saved locally")
+    }
 
     Column(
         modifier = Modifier
@@ -341,9 +357,9 @@ private fun ProfileHeader(
                 .clickable(onClick = onEditAvatar),
             contentAlignment = Alignment.Center
         ) {
-            if (state.identity.avatarUri != null && !avatarLoadFailed) {
+            if (avatarModel != null && !avatarLoadFailed) {
                 AsyncImage(
-                    model = state.identity.avatarUri,
+                    model = avatarModel,
                     contentDescription = t(isUk, "Аватар", "Avatar"),
                     modifier = Modifier
                         .fillMaxSize()
@@ -395,6 +411,11 @@ private fun ProfileHeader(
             text = state.identity.bio,
             color = TextSecondary,
             modifier = Modifier.clickable(onClick = onEditBio)
+        )
+        Text(
+            text = avatarStatusText,
+            color = TextSecondary,
+            style = MaterialTheme.typography.bodySmall
         )
 
         Row(
@@ -812,16 +833,16 @@ private fun EditTextDialog(
 
 private fun achievementIcon(iconKey: String): ImageVector {
     return when (iconKey) {
-        "flame" -> Icons.Rounded.EmojiEvents
-        "medal" -> Icons.Rounded.EmojiEvents
-        "crown" -> Icons.Rounded.EmojiEvents
-        "zap" -> Icons.Rounded.Star
+        "flame" -> Icons.Rounded.LocalFireDepartment
+        "medal" -> Icons.Rounded.MilitaryTech
+        "crown" -> Icons.Rounded.WorkspacePremium
+        "zap" -> Icons.Rounded.Bolt
         "sunrise" -> Icons.Rounded.WbSunny
         "moon" -> Icons.Rounded.Nightlight
-        "target" -> Icons.Rounded.Star
-        "sparkles" -> Icons.Rounded.Star
+        "target" -> Icons.Rounded.TrackChanges
+        "sparkles" -> Icons.Rounded.AutoAwesome
         "trophy" -> Icons.Rounded.EmojiEvents
-        "heart" -> Icons.Rounded.Star
+        "heart" -> Icons.Rounded.Favorite
         "dumbbell" -> Icons.Rounded.FitnessCenter
         "brain" -> Icons.Rounded.Psychology
         "book" -> Icons.Rounded.MenuBook
@@ -965,7 +986,7 @@ private fun createTempImageUri(context: Context): Uri {
     )
 }
 
-private fun createCircularAvatarUri(context: Context, sourceUri: Uri): Uri? {
+private fun createCircularAvatarPath(context: Context, sourceUri: Uri): String? {
     return runCatching {
         val sourceBitmap = decodeBitmapFromUri(context, sourceUri) ?: return null
         val size = minOf(sourceBitmap.width, sourceBitmap.height)
@@ -996,8 +1017,23 @@ private fun createCircularAvatarUri(context: Context, sourceUri: Uri): Uri? {
         squared.recycle()
         result.recycle()
 
-        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", avatarFile)
+        avatarFile.absolutePath
     }.getOrNull()
+}
+
+private fun resolveAvatarModel(value: String?): Any? {
+    if (value.isNullOrBlank()) return null
+    return if (
+        value.startsWith("content://") ||
+        value.startsWith("file://") ||
+        value.startsWith("http://") ||
+        value.startsWith("https://") ||
+        value.startsWith("android.resource://")
+    ) {
+        value
+    } else {
+        File(value)
+    }
 }
 
 private fun decodeBitmapFromUri(context: Context, uri: Uri): Bitmap? {

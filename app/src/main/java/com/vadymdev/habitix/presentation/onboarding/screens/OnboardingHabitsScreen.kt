@@ -17,15 +17,23 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Coffee
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.MenuBook
+import androidx.compose.material.icons.rounded.Nightlight
+import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.HabitTemplate
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
@@ -88,7 +96,11 @@ fun OnboardingHabitsScreen(
                         .padding(horizontal = 18.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = habit.emoji, fontSize = 24.sp)
+                    Icon(
+                        imageVector = habitIcon(habit.key),
+                        contentDescription = null,
+                        tint = TextSecondary
+                    )
                     Spacer(modifier = Modifier.size(14.dp))
                     Text(
                         text = localizedHabitTitle(habit, isUk),
@@ -125,5 +137,17 @@ private fun localizedHabitTitle(item: HabitTemplate, isUk: Boolean): String {
         "sleep" -> "Sleep by 11 PM"
         "gratitude" -> "Gratitude"
         else -> item.title
+    }
+}
+
+private fun habitIcon(key: String): ImageVector {
+    return when (key) {
+        "water" -> Icons.Rounded.Coffee
+        "meditation" -> Icons.Rounded.Psychology
+        "morning" -> Icons.Rounded.FitnessCenter
+        "reading" -> Icons.Rounded.MenuBook
+        "sleep" -> Icons.Rounded.Nightlight
+        "gratitude" -> Icons.Rounded.Favorite
+        else -> Icons.Rounded.Favorite
     }
 }

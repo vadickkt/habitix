@@ -19,12 +19,19 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -125,7 +132,12 @@ fun OnboardingInterestsScreen(
                                 .background(activeTint, RoundedCornerShape(16.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = item.emoji, fontSize = 25.sp)
+                            Icon(
+                                imageVector = interestIcon(item.key),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
@@ -160,5 +172,15 @@ private fun localizedInterestTitle(item: InterestCategory, isUk: Boolean): Strin
         "sport" -> "Sport"
         "mindfulness" -> "Mindfulness"
         else -> item.title
+    }
+}
+
+private fun interestIcon(key: String): ImageVector {
+    return when (key) {
+        "health" -> Icons.Rounded.Favorite
+        "productivity" -> Icons.Rounded.Bolt
+        "sport" -> Icons.Rounded.FitnessCenter
+        "mindfulness" -> Icons.Rounded.Psychology
+        else -> Icons.Rounded.Favorite
     }
 }

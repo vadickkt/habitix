@@ -52,6 +52,12 @@ class GetCurrentSettingsUseCase(private val repository: SettingsRepository) {
     suspend operator fun invoke(): AppSettings = repository.getCurrentSettings()
 }
 
-class SyncSettingsUseCase(private val repository: SettingsSyncRepository) {
-    suspend operator fun invoke(userId: String) = repository.sync(userId)
+class SyncSettingsUseCase(
+    private val repository: SettingsSyncRepository,
+    private val settingsRepository: SettingsRepository
+) {
+    suspend operator fun invoke(userId: String) {
+        if (!settingsRepository.getCurrentSettings().autoSyncEnabled) return
+        repository.sync(userId)
+    }
 }

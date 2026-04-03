@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
 import com.vadymdev.habitix.presentation.components.StepIndicator
@@ -55,7 +57,12 @@ fun OnboardingIntroScreen(
                 .background(Color(0xFFD9EFE3), RoundedCornerShape(28.dp)),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "✧", color = BrandGreen, fontSize = 44.sp)
+            Icon(
+                imageVector = Icons.Rounded.Star,
+                contentDescription = null,
+                tint = BrandGreen,
+                modifier = Modifier.size(44.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(30.dp))

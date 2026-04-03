@@ -1,20 +1,28 @@
 package com.vadymdev.habitix.presentation
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
 import com.vadymdev.habitix.di.AppContainer
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
@@ -215,6 +223,30 @@ fun HabitixApp() {
             }
 
             composable(AppRoute.Dashboard) {
+                val dashboardContext = LocalContext.current
+                val permissionSettingsDataSource = remember(dashboardContext) {
+                    SettingsPreferencesDataSource(dashboardContext)
+                }
+                val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { }
+
+                LaunchedEffect(settingsState.settings.pushEnabled) {
+                    if (!settingsState.settings.pushEnabled) return@LaunchedEffect
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@LaunchedEffect
+
+                    val granted = ContextCompat.checkSelfPermission(
+                        dashboardContext,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    val askedOnce = permissionSettingsDataSource.hasAskedNotificationPermission()
+                    if (!granted && !askedOnce) {
+                        permissionSettingsDataSource.markNotificationPermissionAsked()
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+
                 DashboardScreen(
                     state = dashboardState,
                     language = settingsState.settings.language,

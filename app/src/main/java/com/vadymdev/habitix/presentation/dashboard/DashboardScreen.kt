@@ -167,12 +167,7 @@ fun DashboardScreen(
                     anchorWeekStart = anchorWeekStart,
                     selected = state.selectedDate,
                     locale = locale,
-                    onSelect = {
-                        if (vibrationEnabled) {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        }
-                        onDateSelected(it)
-                    }
+                    onSelect = onDateSelected
                 )
             }
 
@@ -207,23 +202,13 @@ fun DashboardScreen(
                         habit = habit,
                         isUk = isUk,
                         onToggle = {
-                            if (vibrationEnabled) {
+                            if (vibrationEnabled && !habit.isCompletedForSelectedDate) {
                                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             }
                             onToggleHabit(habit)
                         },
-                        onDelete = {
-                            if (vibrationEnabled) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            }
-                            onDeleteHabit(habit)
-                        },
-                        onEdit = {
-                            if (vibrationEnabled) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            }
-                            onEditHabit(habit)
-                        }
+                        onDelete = { onDeleteHabit(habit) },
+                        onEdit = { onEditHabit(habit) }
                     )
                 }
             }
