@@ -150,7 +150,7 @@ fun AchievementsScreen(
             }
 
             items(state.achievements) { achievement ->
-                AchievementRow(achievement = achievement, onClick = { selected = achievement })
+                AchievementRow(achievement = achievement, isUk = isUk, onClick = { selected = achievement })
             }
 
             item {
@@ -160,14 +160,16 @@ fun AchievementsScreen(
     }
 
     selected?.let { achievement ->
+        val title = localizedAchievementTitle(achievement, isUk)
+        val description = localizedAchievementDescription(achievement, isUk)
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         AlertDialog(
             onDismissRequest = { selected = null },
             confirmButton = { TextButton(onClick = { selected = null }) { Text(t(isUk, "Закрити", "Close")) } },
-            title = { Text(achievement.title) },
+            title = { Text(title) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(achievement.description)
+                    Text(description)
                     Text(t(isUk, "Прогрес: ${achievement.progressPercent}%", "Progress: ${achievement.progressPercent}%"))
                     Text(t(isUk, "Нагорода: +${achievement.xpReward} XP", "Reward: +${achievement.xpReward} XP"))
                     Text(
@@ -201,7 +203,9 @@ private fun StatHeadCard(title: String, value: String, modifier: Modifier) {
 }
 
 @Composable
-private fun AchievementRow(achievement: ProfileAchievement, onClick: () -> Unit) {
+private fun AchievementRow(achievement: ProfileAchievement, isUk: Boolean, onClick: () -> Unit) {
+    val title = localizedAchievementTitle(achievement, isUk)
+    val description = localizedAchievementDescription(achievement, isUk)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -234,7 +238,7 @@ private fun AchievementRow(achievement: ProfileAchievement, onClick: () -> Unit)
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        achievement.title,
+                        title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = if (achievement.unlocked) Color.Black else TextSecondary,
@@ -256,7 +260,7 @@ private fun AchievementRow(achievement: ProfileAchievement, onClick: () -> Unit)
                     )
                 }
                 Text(
-                    achievement.description,
+                    description,
                     color = TextSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -332,5 +336,53 @@ private fun localizedCategoryLabel(categoryKey: String, isUk: Boolean): String {
         "Початок" -> "Start"
         "Категорії" -> "Categories"
         else -> categoryKey
+    }
+}
+
+private fun localizedAchievementTitle(achievement: ProfileAchievement, isUk: Boolean): String {
+    if (isUk) return achievement.title
+    return when (achievement.id) {
+        "week_7" -> "7-day streak"
+        "week_14" -> "14-day streak"
+        "week_30" -> "Marathoner"
+        "week_100" -> "Legend"
+        "early_8" -> "Early bird"
+        "early_7" -> "Dawn warrior"
+        "late_owl" -> "Night owl"
+        "month_perfect" -> "Monthly champion"
+        "perfect_week" -> "Perfectionist"
+        "first" -> "First win"
+        "five" -> "Collector"
+        "ten" -> "Ambitious"
+        "health" -> "Healthy lifestyle"
+        "sport" -> "Athlete"
+        "mind" -> "Sage"
+        "book" -> "Book lover"
+        "prod" -> "Productive"
+        else -> achievement.title
+    }
+}
+
+private fun localizedAchievementDescription(achievement: ProfileAchievement, isUk: Boolean): String {
+    if (isUk) return achievement.description
+    return when (achievement.id) {
+        "week_7" -> "Complete a habit for 7 days in a row"
+        "week_14" -> "Complete a habit for 14 days in a row"
+        "week_30" -> "30-day streak"
+        "week_100" -> "100-day streak"
+        "early_8" -> "Complete 5 habits before 8:00"
+        "early_7" -> "Complete 20 habits before 7:00"
+        "late_owl" -> "Complete 10 habits after 22:00"
+        "month_perfect" -> "100% completion for a month"
+        "perfect_week" -> "Perfect week"
+        "first" -> "Create your first habit"
+        "five" -> "Create 5 different habits"
+        "ten" -> "Create 10 habits"
+        "health" -> "Complete 50 Health category habits"
+        "sport" -> "Complete 30 Sport category habits"
+        "mind" -> "Complete 50 Mindfulness category habits"
+        "book" -> "Read for 30 days in a row"
+        "prod" -> "Complete 100 Productivity category habits"
+        else -> achievement.description
     }
 }

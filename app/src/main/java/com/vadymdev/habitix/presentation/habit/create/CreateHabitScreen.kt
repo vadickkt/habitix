@@ -1,5 +1,10 @@
 package com.vadymdev.habitix.presentation.habit.create
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -35,8 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.vadymdev.habitix.domain.model.AppLanguage
@@ -63,7 +67,7 @@ fun CreateHabitScreen(
     onSave: () -> Unit
 ) {
     val isUk = language == AppLanguage.UK
-    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     val primary = MaterialTheme.colorScheme.primary
     val iconKeys = listOf("water", "book", "fitness", "moon", "mind", "heart", "fork", "music", "pen", "sun", "cup", "steps")
     val colorKeys = listOf("mint", "orange", "purple", "blue", "pink")
@@ -264,7 +268,7 @@ fun CreateHabitScreen(
             Button(
                 onClick = {
                     if (vibrationEnabled) {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        vibrateForCreate(context)
                     }
                     onSave()
                 },
@@ -300,5 +304,26 @@ private fun FrequencyChip(text: String, active: Boolean, onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
         Text(text, color = if (active) TextPrimary else TextSecondary, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
+    }
+}
+
+private fun vibrateForCreate(context: Context) {
+    runCatching {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager = context.getSystemService(VibratorManager::class.java)
+            manager?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        } ?: return
+
+        if (!vibrator.hasVibrator()) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(40L, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(40L)
+        }
     }
 }

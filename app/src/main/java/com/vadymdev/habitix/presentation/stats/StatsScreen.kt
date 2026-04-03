@@ -95,7 +95,7 @@ fun StatsScreen(
             }
 
             item {
-                QuickStatsGrid(snapshot, onMetricClick = onMetricClick)
+                QuickStatsGrid(snapshot = snapshot, isUk = isUk, onMetricClick = onMetricClick)
             }
 
             item {
@@ -180,12 +180,12 @@ private fun StatsPeriodSelector(selectedDays: Int, isUk: Boolean, onSelectPeriod
 }
 
 @Composable
-private fun QuickStatsGrid(snapshot: HabitStatsSnapshot, onMetricClick: (StatsMetric) -> Unit) {
+private fun QuickStatsGrid(snapshot: HabitStatsSnapshot, isUk: Boolean, onMetricClick: (StatsMetric) -> Unit) {
     val cards = listOf(
-        StatCardData("🔥", snapshot.longestStreak.toString(), "Найдовша серія", StatsMetric.LONGEST_STREAK),
-        StatCardData("🏆", snapshot.earnedBadgesCount.toString(), "Бейджів отримано", StatsMetric.BADGES),
-        StatCardData("◎", "${snapshot.successRatePercent}%", "Успішність", StatsMetric.SUCCESS),
-        StatCardData("↗", snapshot.completedTasksCount.toString(), "Виконано завдань", StatsMetric.COMPLETED)
+        StatCardData("🔥", snapshot.longestStreak.toString(), t(isUk, "Найдовша серія", "Longest streak"), StatsMetric.LONGEST_STREAK),
+        StatCardData("🏆", snapshot.earnedBadgesCount.toString(), t(isUk, "Бейджів отримано", "Badges earned"), StatsMetric.BADGES),
+        StatCardData("◎", "${snapshot.successRatePercent}%", t(isUk, "Успішність", "Success rate"), StatsMetric.SUCCESS),
+        StatCardData("↗", snapshot.completedTasksCount.toString(), t(isUk, "Виконано завдань", "Tasks completed"), StatsMetric.COMPLETED)
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -344,7 +344,7 @@ private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (H
                 ) {
                     Text(badge.emoji, style = MaterialTheme.typography.headlineSmall)
                     Text(
-                        badge.title,
+                        localizedBadgeTitle(badge, isUk),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (badge.earned) TextPrimary else TextSecondary,
                         fontWeight = if (badge.earned) FontWeight.SemiBold else FontWeight.Normal
@@ -404,7 +404,7 @@ private fun BadgeDetailsDialog(badge: HabitBadge, isUk: Boolean, onDismiss: () -
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text(t(isUk, "Закрити", "Close")) } },
-        title = { Text("${badge.emoji} ${badge.title}") },
+        title = { Text("${badge.emoji} ${localizedBadgeTitle(badge, isUk)}") },
         text = { Text(status) }
     )
 }
@@ -493,5 +493,18 @@ private fun localizedCategoryName(raw: String, isUk: Boolean): String {
         "Спорт" -> "Sport"
         "Усвідомленість" -> "Mindfulness"
         else -> raw
+    }
+}
+
+private fun localizedBadgeTitle(badge: HabitBadge, isUk: Boolean): String {
+    if (isUk) return badge.title
+    return when (badge.id) {
+        "week_1" -> "First week"
+        "days_30" -> "30 days"
+        "days_100" -> "100 days"
+        "morning" -> "Morning bird"
+        "mind" -> "Meditation master"
+        "book" -> "Bookworm"
+        else -> badge.title
     }
 }
