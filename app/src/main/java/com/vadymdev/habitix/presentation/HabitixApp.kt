@@ -110,6 +110,7 @@ fun HabitixApp() {
         factory = CreateHabitViewModelFactory(
             createHabitUseCase = container.createHabitUseCase,
             updateHabitUseCase = container.updateHabitUseCase,
+            validateHabitTitleUseCase = container.validateHabitTitleUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
             syncUserHabitsUseCase = container.syncUserHabitsUseCase
         )
@@ -126,6 +127,7 @@ fun HabitixApp() {
             observeProfileIdentityUseCase = container.observeProfileIdentityUseCase,
             observeProfileAnalyticsUseCase = container.observeProfileAnalyticsUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
+            syncProfileUseCase = container.syncProfileUseCase,
             updateProfileNameUseCase = container.updateProfileNameUseCase,
             updateProfileBioUseCase = container.updateProfileBioUseCase,
             updateProfileAvatarUseCase = container.updateProfileAvatarUseCase

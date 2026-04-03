@@ -3,4 +3,7 @@
     <cache-path
         name="avatar_cache"
         path="images/" />
+    <cache-path
+        name="share_cache"
+        path="share/" />
 </paths>

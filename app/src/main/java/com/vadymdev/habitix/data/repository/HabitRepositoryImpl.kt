@@ -6,6 +6,8 @@ import com.vadymdev.habitix.data.local.room.HabitDao
 import com.vadymdev.habitix.data.local.room.HabitEntity
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
+import com.vadymdev.habitix.data.local.room.AchievementUnlockDao
+import com.vadymdev.habitix.data.local.room.AchievementUnlockEntity
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.model.HabitBadge
 import com.vadymdev.habitix.domain.model.HabitCategoryStat
@@ -22,19 +24,20 @@ import java.time.ZoneId
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.util.UUID
-import kotlin.math.abs
 
 class HabitRepositoryImpl(
     private val habitDao: HabitDao,
     private val completionDao: HabitCompletionDao,
-    private val hiddenDayDao: HiddenHabitDayDao
+    private val hiddenDayDao: HiddenHabitDayDao,
+    private val achievementUnlockDao: AchievementUnlockDao
 ) : HabitRepository {
 
     override fun observeProfileAnalytics(): Flow<ProfileAnalytics> {
         return combine(
             habitDao.observeAllHabits(),
-            completionDao.observeAllCompletions()
-        ) { habits, completions ->
+            completionDao.observeAllCompletions(),
+            achievementUnlockDao.observeAllUnlocks()
+        ) { habits, completions, unlocks ->
             val today = LocalDate.now()
             val completionDates = completions.map { it.dateEpochDay }.distinct().sorted()
             val completionByDate = completions.groupBy { it.dateEpochDay }
@@ -89,7 +92,6 @@ class HabitRepositoryImpl(
                 ?: 0
 
             val achievements = buildProfileAchievements(
-                today = today,
                 bestStreak = bestStreak,
                 earlyBefore8 = earlyBefore8,
                 earlyBefore7 = earlyBefore7,
@@ -101,10 +103,28 @@ class HabitRepositoryImpl(
                 sportCount = sportCount,
                 mindfulCount = mindfulCount,
                 readingStreak = readingStreak,
-                productiveCount = productiveCount
+                productiveCount = productiveCount,
+                unlockedDateById = buildAchievementUnlockDates(
+                    habits = habits,
+                    completions = completions,
+                    completionByHabit = completionByHabit,
+                    completionDates = completionDates,
+                    monthlyPerfectPercent = monthlyPerfectProgress,
+                    perfectWeekCount = perfectWeekScore
+                )
             )
 
-            val unlockedXp = achievements.filter { it.unlocked }.sumOf { it.xpReward }
+            val persistedDates = unlocks.associate { it.achievementId to LocalDate.ofEpochDay(it.unlockedEpochDay) }
+            val achievementsWithPersistedDates = achievements.map { achievement ->
+                val persistedDate = persistedDates[achievement.id]
+                if (persistedDate != null && achievement.unlocked) {
+                    achievement.copy(unlockedDate = persistedDate)
+                } else {
+                    achievement
+                }
+            }
+
+            val unlockedXp = achievementsWithPersistedDates.filter { it.unlocked }.sumOf { it.xpReward }
             val totalXp = totalCompleted * 5 + unlockedXp
             val level = (totalXp / 100).coerceAtLeast(1)
             val xpCurrent = totalXp % 1000
@@ -119,8 +139,8 @@ class HabitRepositoryImpl(
                 daysWithUs = daysWithUs,
                 monthGrowthPercent = monthGrowthPercent,
                 monthWeeklyActivity = monthWeeklyActivity,
-                topAchievements = achievements.take(3),
-                allAchievements = achievements
+                topAchievements = achievementsWithPersistedDates.take(3),
+                allAchievements = achievementsWithPersistedDates
             )
         }
     }
@@ -179,27 +199,7 @@ class HabitRepositoryImpl(
                 }
             }
 
-            val categories = listOf(
-                "Здоров'я" to "mint",
-                "Продуктивність" to "orange",
-                "Спорт" to "blue",
-                "Усвідомленість" to "purple"
-            )
-
-            val categoryGrowth = IntArray(categories.size)
-            completionByDate.keys.sorted().forEach { epochDay ->
-                // Slow growth model: each active day gives +1% to one pseudo-random category.
-                val index = abs((epochDay * 31 + 17).toInt()) % categories.size
-                categoryGrowth[index] = (categoryGrowth[index] + 1).coerceAtMost(100)
-            }
-
-            val categoryStats = categories.mapIndexed { index, (title, colorKey) ->
-                HabitCategoryStat(
-                    name = title,
-                    percent = categoryGrowth[index],
-                    colorKey = colorKey
-                )
-            }
+            val categoryStats = buildCategoryStats(activeHabits, completionsByHabit)
 
             val badges = buildBadges(activeHabits, completions, longestStreak)
 
@@ -258,6 +258,7 @@ class HabitRepositoryImpl(
         } else {
             completionDao.removeCompletion(habitId, epochDay)
         }
+        refreshAchievementUnlockLog()
     }
 
     override suspend fun updateHabit(habitId: Long, draft: HabitCreateDraft) {
@@ -274,24 +275,28 @@ class HabitRepositoryImpl(
             customDaysCsv = customDaysCsv,
             reminderEnabled = draft.reminderEnabled
         )
+        refreshAchievementUnlockLog()
     }
 
     override suspend fun hideHabitForDate(habitId: Long, date: LocalDate) {
         val epochDay = date.toEpochDay()
         completionDao.removeCompletion(habitId, epochDay)
         hiddenDayDao.upsert(HiddenHabitDayEntity(habitId = habitId, dateEpochDay = epochDay))
+        refreshAchievementUnlockLog()
     }
 
     override suspend fun deactivateHabitFromDate(habitId: Long, date: LocalDate) {
         val epochDay = date.toEpochDay()
         completionDao.removeCompletion(habitId, epochDay)
         habitDao.updateActiveUntil(habitId, epochDay - 1)
+        refreshAchievementUnlockLog()
     }
 
     override suspend fun deleteAllHabits() {
         completionDao.removeAll()
         hiddenDayDao.deleteAll()
         habitDao.deleteAllHabits()
+        achievementUnlockDao.deleteAll()
     }
 
     override suspend fun createHabit(draft: HabitCreateDraft) {
@@ -316,6 +321,7 @@ class HabitRepositoryImpl(
                 source = "manual"
             )
         )
+        refreshAchievementUnlockLog()
     }
 
     override suspend fun seedOnboardingHabits(habitKeys: Set<String>) {
@@ -347,6 +353,7 @@ class HabitRepositoryImpl(
 
         if (entities.isNotEmpty()) {
             habitDao.insertHabits(entities)
+            refreshAchievementUnlockLog()
         }
     }
 
@@ -535,7 +542,6 @@ class HabitRepositoryImpl(
     }
 
     private fun buildProfileAchievements(
-        today: LocalDate,
         bestStreak: Int,
         earlyBefore8: Int,
         earlyBefore7: Int,
@@ -547,7 +553,8 @@ class HabitRepositoryImpl(
         sportCount: Int,
         mindfulCount: Int,
         readingStreak: Int,
-        productiveCount: Int
+        productiveCount: Int,
+        unlockedDateById: Map<String, LocalDate?>
     ): List<ProfileAchievement> {
         fun mk(
             id: String,
@@ -572,7 +579,7 @@ class HabitRepositoryImpl(
                 xpReward = xp,
                 progressPercent = progress,
                 unlocked = unlocked,
-                unlockedDate = if (unlocked) today.minusDays((id.hashCode().toLong() and 7L) + 1L) else null
+                unlockedDate = if (unlocked) unlockedDateById[id] else null
             )
         }
 
@@ -595,6 +602,206 @@ class HabitRepositoryImpl(
             mk("book", "Книголюб", "Читайте 30 днів поспіль", "book", "sky", "Категорії", 200, readingStreak, 30),
             mk("prod", "Продуктивний", "Виконайте 100 звичок категорії Продуктивність", "coffee", "peach", "Категорії", 250, productiveCount, 100)
         )
+    }
+
+    private suspend fun refreshAchievementUnlockLog() {
+        val habits = habitDao.getAllHabits()
+        val completions = completionDao.getAllCompletions()
+        val completionByHabit = completions.groupBy { it.habitId }
+        val completionDates = completions.map { it.dateEpochDay }.distinct().sorted()
+        val activeHabits = habits.filter { !it.isArchived }
+
+        val bestStreak = longestStreakForDates(completionDates)
+        val earlyBefore8 = completions.count { hourOf(it.completedAtMillis) < 8 }
+        val earlyBefore7 = completions.count { hourOf(it.completedAtMillis) < 7 }
+        val lateAfter22 = completions.count { hourOf(it.completedAtMillis) >= 22 }
+        val createdHabitsCount = habits.size
+        val today = LocalDate.now()
+        val completionByDate = completions.groupBy { it.dateEpochDay }
+
+        val monthlyPerfectProgress = monthlyPerfectionPercent(activeHabits, completionByDate, today)
+        val perfectWeekScore = perfectWeekCount(activeHabits, completionByDate)
+        val healthCount = completionsByColor(habits, completionByHabit, setOf("mint", "green", "rose"))
+        val sportCount = completionsByColor(habits, completionByHabit, setOf("blue", "sky"))
+        val mindfulCount = completionsByColor(habits, completionByHabit, setOf("purple", "lavender"))
+        val productiveCount = completionsByColor(habits, completionByHabit, setOf("orange", "peach"))
+        val readingStreak = habits
+            .filter { it.title.contains("чит", ignoreCase = true) || it.iconKey == "book" }
+            .maxOfOrNull { h -> longestStreakForDates(completionByHabit[h.id].orEmpty().map { it.dateEpochDay }) }
+            ?: 0
+
+        val dateMap = buildAchievementUnlockDates(
+            habits = habits,
+            completions = completions,
+            completionByHabit = completionByHabit,
+            completionDates = completionDates,
+            monthlyPerfectPercent = monthlyPerfectProgress,
+            perfectWeekCount = perfectWeekScore
+        )
+
+        val achievements = buildProfileAchievements(
+            bestStreak = bestStreak,
+            earlyBefore8 = earlyBefore8,
+            earlyBefore7 = earlyBefore7,
+            lateAfter22 = lateAfter22,
+            monthlyPerfectPercent = monthlyPerfectProgress,
+            perfectWeekCount = perfectWeekScore,
+            createdHabitsCount = createdHabitsCount,
+            healthCount = healthCount,
+            sportCount = sportCount,
+            mindfulCount = mindfulCount,
+            readingStreak = readingStreak,
+            productiveCount = productiveCount,
+            unlockedDateById = dateMap
+        )
+
+        achievements
+            .filter { it.unlocked }
+            .forEach { achievement ->
+                val epoch = (achievement.unlockedDate ?: today).toEpochDay()
+                achievementUnlockDao.insertIgnore(
+                    AchievementUnlockEntity(
+                        achievementId = achievement.id,
+                        unlockedEpochDay = epoch
+                    )
+                )
+            }
+    }
+
+    private fun buildCategoryStats(
+        activeHabits: List<HabitEntity>,
+        completionsByHabit: Map<Long, List<HabitCompletionEntity>>
+    ): List<HabitCategoryStat> {
+        data class CategoryBucket(val name: String, val colorKey: String, val keys: Set<String>)
+
+        val buckets = listOf(
+            CategoryBucket("Здоров'я", "mint", setOf("mint", "green", "rose")),
+            CategoryBucket("Продуктивність", "orange", setOf("orange", "peach")),
+            CategoryBucket("Спорт", "blue", setOf("blue", "sky")),
+            CategoryBucket("Усвідомленість", "purple", setOf("purple", "lavender"))
+        )
+
+        val counts = buckets.associateWith { bucket ->
+            activeHabits
+                .filter { habit -> bucket.keys.contains(habit.colorKey) }
+                .sumOf { habit -> completionsByHabit[habit.id].orEmpty().size }
+        }
+
+        val total = counts.values.sum().coerceAtLeast(1)
+        return buckets.map { bucket ->
+            HabitCategoryStat(
+                name = bucket.name,
+                colorKey = bucket.colorKey,
+                percent = ((counts.getValue(bucket) * 100f) / total).toInt().coerceIn(0, 100)
+            )
+        }
+    }
+
+    private fun buildAchievementUnlockDates(
+        habits: List<HabitEntity>,
+        completions: List<HabitCompletionEntity>,
+        completionByHabit: Map<Long, List<HabitCompletionEntity>>,
+        completionDates: List<Long>,
+        monthlyPerfectPercent: Int,
+        perfectWeekCount: Int
+    ): Map<String, LocalDate?> {
+        val sortedCompletions = completions.sortedBy { it.completedAtMillis }
+        val result = mutableMapOf<String, LocalDate?>()
+
+        result["week_7"] = dateWhenStreakReached(completionDates, 7)
+        result["week_14"] = dateWhenStreakReached(completionDates, 14)
+        result["week_30"] = dateWhenStreakReached(completionDates, 30)
+        result["week_100"] = dateWhenStreakReached(completionDates, 100)
+
+        result["early_8"] = dateWhenCountReached(sortedCompletions.filter { hourOf(it.completedAtMillis) < 8 }, 5)
+        result["early_7"] = dateWhenCountReached(sortedCompletions.filter { hourOf(it.completedAtMillis) < 7 }, 20)
+        result["late_owl"] = dateWhenCountReached(sortedCompletions.filter { hourOf(it.completedAtMillis) >= 22 }, 10)
+
+        if (monthlyPerfectPercent >= 100) {
+            result["month_perfect"] = LocalDate.now()
+        }
+        if (perfectWeekCount >= 1) {
+            result["perfect_week"] = LocalDate.now()
+        }
+
+        val habitsByCreated = habits.sortedBy { it.createdAt }
+        result["first"] = habitsByCreated.getOrNull(0)?.createdAt?.toLocalDateFromMillis()
+        result["five"] = habitsByCreated.getOrNull(4)?.createdAt?.toLocalDateFromMillis()
+        result["ten"] = habitsByCreated.getOrNull(9)?.createdAt?.toLocalDateFromMillis()
+
+        result["health"] = dateWhenCountReached(
+            completionsForColors(habits, completionByHabit, setOf("mint", "green", "rose")),
+            50
+        )
+        result["sport"] = dateWhenCountReached(
+            completionsForColors(habits, completionByHabit, setOf("blue", "sky")),
+            30
+        )
+        result["mind"] = dateWhenCountReached(
+            completionsForColors(habits, completionByHabit, setOf("purple", "lavender")),
+            50
+        )
+        result["book"] = dateWhenStreakReached(
+            habits
+                .filter { it.title.contains("чит", ignoreCase = true) || it.iconKey == "book" }
+                .flatMap { completionByHabit[it.id].orEmpty() }
+                .map { it.dateEpochDay }
+                .distinct()
+                .sorted(),
+            30
+        )
+        result["prod"] = dateWhenCountReached(
+            completionsForColors(habits, completionByHabit, setOf("orange", "peach")),
+            100
+        )
+
+        return result
+    }
+
+    private fun completionsForColors(
+        habits: List<HabitEntity>,
+        completionByHabit: Map<Long, List<HabitCompletionEntity>>,
+        colorKeys: Set<String>
+    ): List<HabitCompletionEntity> {
+        return habits
+            .filter { colorKeys.contains(it.colorKey) }
+            .flatMap { completionByHabit[it.id].orEmpty() }
+            .sortedBy { it.completedAtMillis }
+    }
+
+    private fun dateWhenCountReached(
+        completions: List<HabitCompletionEntity>,
+        target: Int
+    ): LocalDate? {
+        if (target <= 0 || completions.size < target) return null
+        return completions[target - 1].dateEpochDay.toLocalDateFromEpochDay()
+    }
+
+    private fun dateWhenStreakReached(epochDaysSorted: List<Long>, target: Int): LocalDate? {
+        if (target <= 0 || epochDaysSorted.isEmpty()) return null
+        var current = 1
+        if (target == 1) return epochDaysSorted.first().toLocalDateFromEpochDay()
+
+        for (index in 1 until epochDaysSorted.size) {
+            current = if (epochDaysSorted[index] == epochDaysSorted[index - 1] + 1) {
+                current + 1
+            } else {
+                1
+            }
+
+            if (current >= target) {
+                return epochDaysSorted[index].toLocalDateFromEpochDay()
+            }
+        }
+        return null
+    }
+
+    private fun Long.toLocalDateFromEpochDay(): LocalDate {
+        return LocalDate.ofEpochDay(this)
+    }
+
+    private fun Long.toLocalDateFromMillis(): LocalDate {
+        return Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
     }
 }
 

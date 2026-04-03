@@ -9,6 +9,7 @@ import com.vadymdev.habitix.domain.model.ProfileIdentity
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
+import com.vadymdev.habitix.domain.usecase.SyncProfileUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
@@ -23,12 +24,25 @@ class ProfileViewModel(
     observeProfileIdentityUseCase: ObserveProfileIdentityUseCase,
     observeProfileAnalyticsUseCase: ObserveProfileAnalyticsUseCase,
     observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val syncProfileUseCase: SyncProfileUseCase,
     private val updateProfileNameUseCase: UpdateProfileNameUseCase,
     private val updateProfileBioUseCase: UpdateProfileBioUseCase,
     private val updateProfileAvatarUseCase: UpdateProfileAvatarUseCase
 ) : ViewModel() {
 
     private val selectedCategory = MutableStateFlow("Всі")
+    private val currentUserId = MutableStateFlow<String?>(null)
+
+    init {
+        viewModelScope.launch {
+            observeAuthSessionUseCase().collect { session ->
+                currentUserId.value = session?.uid
+                session?.uid?.let { uid ->
+                    runCatching { syncProfileUseCase(uid) }
+                }
+            }
+        }
+    }
 
     val state: StateFlow<ProfileUiState> = combine(
         observeProfileIdentityUseCase(),
@@ -67,11 +81,17 @@ class ProfileViewModel(
     )
 
     fun updateName(value: String) {
-        viewModelScope.launch { updateProfileNameUseCase(value) }
+        viewModelScope.launch {
+            updateProfileNameUseCase(value)
+            currentUserId.value?.let { uid -> runCatching { syncProfileUseCase(uid) } }
+        }
     }
 
     fun updateBio(value: String) {
-        viewModelScope.launch { updateProfileBioUseCase(value) }
+        viewModelScope.launch {
+            updateProfileBioUseCase(value)
+            currentUserId.value?.let { uid -> runCatching { syncProfileUseCase(uid) } }
+        }
     }
 
     fun updateAvatar(uri: String?) {
@@ -121,6 +141,7 @@ class ProfileViewModelFactory(
     private val observeProfileIdentityUseCase: ObserveProfileIdentityUseCase,
     private val observeProfileAnalyticsUseCase: ObserveProfileAnalyticsUseCase,
     private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
+    private val syncProfileUseCase: SyncProfileUseCase,
     private val updateProfileNameUseCase: UpdateProfileNameUseCase,
     private val updateProfileBioUseCase: UpdateProfileBioUseCase,
     private val updateProfileAvatarUseCase: UpdateProfileAvatarUseCase
@@ -132,6 +153,7 @@ class ProfileViewModelFactory(
                 observeProfileIdentityUseCase = observeProfileIdentityUseCase,
                 observeProfileAnalyticsUseCase = observeProfileAnalyticsUseCase,
                 observeAuthSessionUseCase = observeAuthSessionUseCase,
+                syncProfileUseCase = syncProfileUseCase,
                 updateProfileNameUseCase = updateProfileNameUseCase,
                 updateProfileBioUseCase = updateProfileBioUseCase,
                 updateProfileAvatarUseCase = updateProfileAvatarUseCase

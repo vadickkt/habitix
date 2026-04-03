@@ -26,7 +26,8 @@ class HabitReminderWorker(
         val repository = HabitRepositoryImpl(
             habitDao = database.habitDao(),
             completionDao = database.habitCompletionDao(),
-            hiddenDayDao = database.hiddenHabitDayDao()
+            hiddenDayDao = database.hiddenHabitDayDao(),
+            achievementUnlockDao = database.achievementUnlockDao()
         )
 
         val incomplete = repository.getIncompleteHabitsForDate(LocalDate.now())

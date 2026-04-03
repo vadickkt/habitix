@@ -10,6 +10,7 @@ import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
 import com.vadymdev.habitix.data.local.room.HabitixDatabase
 import com.vadymdev.habitix.data.repository.FirebaseAuthRepository
 import com.vadymdev.habitix.data.repository.FirestoreHabitSyncRepository
+import com.vadymdev.habitix.data.repository.FirestoreProfileSyncRepository
 import com.vadymdev.habitix.data.repository.FirestoreSettingsSyncRepository
 import com.vadymdev.habitix.data.repository.HabitRepositoryImpl
 import com.vadymdev.habitix.data.repository.OnboardingRepositoryImpl
@@ -20,6 +21,7 @@ import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import com.vadymdev.habitix.domain.repository.OnboardingRepository
 import com.vadymdev.habitix.domain.repository.ProfileRepository
+import com.vadymdev.habitix.domain.repository.ProfileSyncRepository
 import com.vadymdev.habitix.domain.repository.SettingsRepository
 import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
 import com.vadymdev.habitix.domain.usecase.CompleteOnboardingUseCase
@@ -38,6 +40,7 @@ import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
+import com.vadymdev.habitix.domain.usecase.SyncProfileUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
 import com.vadymdev.habitix.domain.usecase.SetAutoSyncEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SetBiometricEnabledUseCase
@@ -50,6 +53,7 @@ import com.vadymdev.habitix.domain.usecase.SetVibrationEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
+import com.vadymdev.habitix.domain.usecase.ValidateHabitTitleUseCase
 import com.vadymdev.habitix.domain.usecase.SignOutUseCase
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
@@ -85,7 +89,8 @@ class AppContainer(context: Context) {
         HabitRepositoryImpl(
             habitDao = database.habitDao(),
             completionDao = database.habitCompletionDao(),
-            hiddenDayDao = database.hiddenHabitDayDao()
+            hiddenDayDao = database.hiddenHabitDayDao(),
+            achievementUnlockDao = database.achievementUnlockDao()
         )
     }
 
@@ -104,6 +109,13 @@ class AppContainer(context: Context) {
 
     private val profileRepository: ProfileRepository by lazy {
         ProfileRepositoryImpl(ProfilePreferencesDataSource(appContext))
+    }
+
+    private val profileSyncRepository: ProfileSyncRepository by lazy {
+        FirestoreProfileSyncRepository(
+            firestore = firestore,
+            profileRepository = profileRepository
+        )
     }
 
     private val settingsSyncRepository: SettingsSyncRepository by lazy {
@@ -134,7 +146,9 @@ class AppContainer(context: Context) {
     val getIncompleteHabitsForDateUseCase by lazy { GetIncompleteHabitsForDateUseCase(habitRepository) }
     val syncUserHabitsUseCase by lazy { SyncUserHabitsUseCase(habitSyncRepository) }
     val observeSettingsUseCase by lazy { ObserveSettingsUseCase(settingsRepository) }
+    val validateHabitTitleUseCase by lazy { ValidateHabitTitleUseCase() }
     val observeProfileIdentityUseCase by lazy { ObserveProfileIdentityUseCase(profileRepository) }
+    val syncProfileUseCase by lazy { SyncProfileUseCase(profileSyncRepository) }
     val updateProfileNameUseCase by lazy { UpdateProfileNameUseCase(profileRepository) }
     val updateProfileBioUseCase by lazy { UpdateProfileBioUseCase(profileRepository) }
     val updateProfileAvatarUseCase by lazy { UpdateProfileAvatarUseCase(profileRepository) }

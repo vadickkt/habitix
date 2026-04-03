@@ -122,8 +122,13 @@ fun CreateHabitScreen(
                 placeholder = { Text("Наприклад: Пити воду") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
+                isError = state.titleError != null,
                 singleLine = true
             )
+            if (state.titleError != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(state.titleError, color = Color(0xFFD44747), style = MaterialTheme.typography.bodySmall)
+            }
         }
 
         item {
@@ -213,6 +218,10 @@ fun CreateHabitScreen(
                             }
                         }
                     }
+                    if (state.daysError != null) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(state.daysError, color = Color(0xFFD44747), style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
         }
@@ -246,7 +255,7 @@ fun CreateHabitScreen(
             Spacer(modifier = Modifier.height(10.dp))
             Button(
                 onClick = onSave,
-                enabled = state.title.isNotBlank() && (state.frequency != HabitFrequencyType.CUSTOM || state.customDays.isNotEmpty()),
+                enabled = state.title.trim().length >= 2 && (state.frequency != HabitFrequencyType.CUSTOM || state.customDays.isNotEmpty()),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),

@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [HabitEntity::class, HabitCompletionEntity::class, HiddenHabitDayEntity::class],
-    version = 3,
+    entities = [HabitEntity::class, HabitCompletionEntity::class, HiddenHabitDayEntity::class, AchievementUnlockEntity::class],
+    version = 4,
     exportSchema = false
 )
 abstract class HabitixDatabase : RoomDatabase() {
@@ -15,6 +15,7 @@ abstract class HabitixDatabase : RoomDatabase() {
     abstract fun habitDao(): HabitDao
     abstract fun habitCompletionDao(): HabitCompletionDao
     abstract fun hiddenHabitDayDao(): HiddenHabitDayDao
+    abstract fun achievementUnlockDao(): AchievementUnlockDao
 
     companion object {
         @Volatile

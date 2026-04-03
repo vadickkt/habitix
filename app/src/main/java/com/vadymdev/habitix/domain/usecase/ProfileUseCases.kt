@@ -4,6 +4,7 @@ import com.vadymdev.habitix.domain.model.ProfileAnalytics
 import com.vadymdev.habitix.domain.model.ProfileIdentity
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.ProfileRepository
+import com.vadymdev.habitix.domain.repository.ProfileSyncRepository
 import kotlinx.coroutines.flow.Flow
 
 class ObserveProfileIdentityUseCase(private val repository: ProfileRepository) {
@@ -24,4 +25,8 @@ class UpdateProfileAvatarUseCase(private val repository: ProfileRepository) {
 
 class ObserveProfileAnalyticsUseCase(private val repository: HabitRepository) {
     operator fun invoke(): Flow<ProfileAnalytics> = repository.observeProfileAnalytics()
+}
+
+class SyncProfileUseCase(private val repository: ProfileSyncRepository) {
+    suspend operator fun invoke(userId: String) = repository.sync(userId)
 }

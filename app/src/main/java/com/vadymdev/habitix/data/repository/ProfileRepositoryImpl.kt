@@ -11,6 +11,12 @@ class ProfileRepositoryImpl(
 
     override fun observeProfileIdentity(): Flow<ProfileIdentity> = local.observeIdentity()
 
+    override suspend fun getCurrentProfileIdentity(): ProfileIdentity = local.getCurrentIdentity()
+
+    override suspend fun replaceProfileIdentity(displayName: String, bio: String) {
+        local.replaceIdentity(displayName = displayName, bio = bio)
+    }
+
     override suspend fun updateDisplayName(name: String) {
         local.updateDisplayName(name)
     }

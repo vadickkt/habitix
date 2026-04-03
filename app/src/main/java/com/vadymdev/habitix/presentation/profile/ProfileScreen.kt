@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -109,6 +110,7 @@ fun ProfileScreen(
     var showShare by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(false) }
     var editBio by remember { mutableStateOf(false) }
+    var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showAvatarActions by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
     var draftName by remember(state.identity.displayName) { mutableStateOf(state.identity.displayName) }
@@ -277,10 +279,19 @@ fun ProfileScreen(
             title = "Ім'я",
             value = draftName,
             onValueChange = { draftName = it },
+            error = nameValidationError,
             onDismiss = { editName = false },
             onConfirm = {
-                onUpdateName(draftName)
-                editName = false
+                val trimmed = draftName.trim()
+                when {
+                    trimmed.isBlank() -> nameValidationError = "Ім'я не може бути порожнім"
+                    trimmed.length < 2 -> nameValidationError = "Ім'я має містити щонайменше 2 символи"
+                    else -> {
+                        nameValidationError = null
+                        onUpdateName(trimmed)
+                        editName = false
+                    }
+                }
             }
         )
     }
@@ -584,10 +595,10 @@ private fun ShareProgressDialog(state: ProfileUiState, onDismiss: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SocialItem("IG", "Instagram", Color(0xFFE642A0)) { openLink(context, "https://instagram.com") }
-                SocialItem("X", "Twitter", Color(0xFF1D9BF0)) { openLink(context, "https://x.com") }
-                SocialItem("TG", "Telegram", Color(0xFF2AABEE)) { openLink(context, "https://t.me") }
-                SocialItem("...", "Інше", Color(0xFFD9D6D2)) { shareText(context, state) }
+                SocialItem("IG", "Instagram", Color(0xFFE642A0)) { shareToInstagram(context, state, style) }
+                SocialItem("X", "Twitter", Color(0xFF1D9BF0)) { shareToTwitter(context, state, style) }
+                SocialItem("TG", "Telegram", Color(0xFF2AABEE)) { shareToTelegram(context, state, style) }
+                SocialItem("...", "Інше", Color(0xFFD9D6D2)) { shareImageToAny(context, state, style) }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -647,11 +658,11 @@ private fun SharePreviewCard(state: ProfileUiState, style: ShareStyle) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             ShareStatCard("${state.analytics.totalCompleted}", "виконано", Modifier.weight(1f))
-            ShareStatCard("${state.analytics.daysWithUs}", "днів з Habito", Modifier.weight(1f))
+            ShareStatCard("${state.analytics.daysWithUs}", "днів з Habitix", Modifier.weight(1f))
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Habito", color = Color.White, fontWeight = FontWeight.Bold)
+            Text("Habitix", color = Color.White, fontWeight = FontWeight.Bold)
             Icon(Icons.Rounded.Share, contentDescription = null, tint = Color.White.copy(alpha = 0.86f))
         }
     }
@@ -746,6 +757,7 @@ private fun EditTextDialog(
     title: String,
     value: String,
     onValueChange: (String) -> Unit,
+    error: String? = null,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
@@ -759,8 +771,13 @@ private fun EditTextDialog(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.fillMaxWidth(),
+                isError = error != null,
                 singleLine = true
             )
+            if (error != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(error, color = Color(0xFFD44747), style = MaterialTheme.typography.bodySmall)
+            }
         }
     )
 }
@@ -811,10 +828,94 @@ private fun shareText(context: Context, state: ProfileUiState) {
     context.startActivity(Intent.createChooser(shareIntent, "Поділитися прогресом"))
 }
 
-private fun openLink(context: Context, url: String) {
-    runCatching {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+private fun shareToInstagram(context: Context, state: ProfileUiState, style: ShareStyle) {
+    shareToPackage(
+        context = context,
+        packageName = "com.instagram.android",
+        fallbackUrl = "https://instagram.com",
+        state = state,
+        style = style
+    )
+}
+
+private fun shareToTwitter(context: Context, state: ProfileUiState, style: ShareStyle) {
+    shareToPackage(
+        context = context,
+        packageName = "com.twitter.android",
+        fallbackUrl = "https://x.com",
+        state = state,
+        style = style
+    )
+}
+
+private fun shareToTelegram(context: Context, state: ProfileUiState, style: ShareStyle) {
+    shareToPackage(
+        context = context,
+        packageName = "org.telegram.messenger",
+        fallbackUrl = "https://t.me",
+        state = state,
+        style = style
+    )
+}
+
+private fun shareImageToAny(context: Context, state: ProfileUiState, style: ShareStyle) {
+    val uri = createShareImageUri(context, state, style)
+    if (uri == null) {
+        Toast.makeText(context, "Не вдалося підготувати зображення", Toast.LENGTH_SHORT).show()
+        return
     }
+
+    val text = buildShareText(state)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "image/png"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_TEXT, text)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(intent, "Поділитися прогресом"))
+}
+
+private fun shareToPackage(
+    context: Context,
+    packageName: String,
+    fallbackUrl: String,
+    state: ProfileUiState,
+    style: ShareStyle
+) {
+    val uri = createShareImageUri(context, state, style)
+    if (uri == null) {
+        Toast.makeText(context, "Не вдалося підготувати зображення", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    val text = buildShareText(state)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "image/png"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_TEXT, text)
+        setPackage(packageName)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(fallbackUrl)))
+        }
+    }
+}
+
+private fun createShareImageUri(context: Context, state: ProfileUiState, style: ShareStyle): Uri? {
+    return runCatching {
+        val shareDir = File(context.cacheDir, "share").apply { mkdirs() }
+        val shareFile = File(shareDir, "share_${System.currentTimeMillis()}.png")
+        val bitmap = renderShareBitmap(state, style)
+        FileOutputStream(shareFile).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", shareFile)
+    }.getOrNull()
 }
 
 private fun persistReadPermissionIfPossible(context: Context, uri: Uri) {
@@ -952,14 +1053,14 @@ private fun renderShareBitmap(state: ProfileUiState, style: ShareStyle): Bitmap 
     drawStatBlock(canvas, 80f, 250f, 430f, 240f, "${state.analytics.currentStreakDays}", "днів поспіль")
     drawStatBlock(canvas, 570f, 250f, 430f, 240f, "${state.analytics.bestStreakDays}", "найкраща серія")
     drawStatBlock(canvas, 80f, 540f, 430f, 240f, "${state.analytics.totalCompleted}", "виконано")
-    drawStatBlock(canvas, 570f, 540f, 430f, 240f, "${state.analytics.daysWithUs}", "днів з Habito")
+    drawStatBlock(canvas, 570f, 540f, 430f, 240f, "${state.analytics.daysWithUs}", "днів з Habitix")
 
     val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.WHITE
         textSize = 38f
         isFakeBoldText = true
     }
-    canvas.drawText("Habito", 88f, 1260f, footerPaint)
+    canvas.drawText("Habitix", 88f, 1260f, footerPaint)
 
     return bitmap
 }
@@ -1002,7 +1103,7 @@ private fun ShareStyle.gradientColors(): IntArray {
 
 private fun buildShareText(state: ProfileUiState): String {
     return """
-        Мій прогрес у Habito:
+        Мій прогрес у Habitix:
         Рівень ${state.analytics.level} (${state.analytics.xpCurrent}/${state.analytics.xpTarget} XP)
         Поточна серія: ${state.analytics.currentStreakDays} днів
         Найкраща серія: ${state.analytics.bestStreakDays} днів
