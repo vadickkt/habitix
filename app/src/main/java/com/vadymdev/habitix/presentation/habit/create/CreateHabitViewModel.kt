@@ -3,6 +3,7 @@ package com.vadymdev.habitix.presentation.habit.create
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.vadymdev.habitix.domain.model.DUPLICATE_ACTIVE_HABIT_ERROR
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.domain.model.Habit
@@ -84,6 +85,8 @@ class CreateHabitViewModel(
     }
 
     fun saveHabit(onSaved: () -> Unit) {
+        if (_state.value.isSaving) return
+
         val snapshot = _state.value
         val titleValidation = validateHabitTitleUseCase(snapshot.title)
         val daysError = if (snapshot.frequency == HabitFrequencyType.CUSTOM && snapshot.customDays.isEmpty()) {
@@ -112,18 +115,33 @@ class CreateHabitViewModel(
         )
 
         viewModelScope.launch {
-            val editingId = snapshot.editingHabitId
-            if (editingId == null) {
-                createHabitUseCase(draft)
-            } else {
-                updateHabitUseCase(editingId, draft)
-            }
+            _state.update { it.copy(isSaving = true) }
+            try {
+                val editingId = snapshot.editingHabitId
+                if (editingId == null) {
+                    createHabitUseCase(draft)
+                } else {
+                    updateHabitUseCase(editingId, draft)
+                }
 
-            currentUserId.value?.let { uid ->
-                runCatching { syncUserHabitsUseCase(uid) }
+                currentUserId.value?.let { uid ->
+                    runCatching { syncUserHabitsUseCase(uid) }
+                }
+                resetDraft()
+                onSaved()
+            } catch (error: IllegalArgumentException) {
+                if (error.message == DUPLICATE_ACTIVE_HABIT_ERROR) {
+                    _state.update {
+                        it.copy(
+                            titleError = "Така звичка вже існує на сьогодні"
+                        )
+                    }
+                } else {
+                    throw error
+                }
+            } finally {
+                _state.update { it.copy(isSaving = false) }
             }
-            resetDraft()
-            onSaved()
         }
     }
 }
@@ -137,7 +155,8 @@ data class CreateHabitUiState(
     val frequency: HabitFrequencyType = HabitFrequencyType.DAILY,
     val customDays: Set<DayOfWeek> = emptySet(),
     val daysError: String? = null,
-    val reminderEnabled: Boolean = true
+    val reminderEnabled: Boolean = true,
+    val isSaving: Boolean = false
 )
 
 class CreateHabitViewModelFactory(

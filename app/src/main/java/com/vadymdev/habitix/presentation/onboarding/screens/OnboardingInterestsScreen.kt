@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.InterestCategory
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
 import com.vadymdev.habitix.presentation.components.StepIndicator
@@ -38,11 +39,14 @@ import com.vadymdev.habitix.ui.theme.TextSecondary
 
 @Composable
 fun OnboardingInterestsScreen(
+    language: AppLanguage,
     interests: List<InterestCategory>,
     selectedKeys: Set<String>,
     onToggle: (String) -> Unit,
     onContinue: () -> Unit
 ) {
+    val isUk = language == AppLanguage.UK
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -57,14 +61,14 @@ fun OnboardingInterestsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Оберіть сфери інтересів",
+            text = t(isUk, "Оберіть сфери інтересів", "Choose your interests"),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Що ви хочете покращити?",
+            text = t(isUk, "Що ви хочете покращити?", "What do you want to improve?"),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )
@@ -125,7 +129,7 @@ fun OnboardingInterestsScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = item.title,
+                            text = localizedInterestTitle(item, isUk),
                             style = MaterialTheme.typography.bodyLarge,
                             color = TextPrimary,
                             fontWeight = FontWeight.SemiBold
@@ -138,10 +142,23 @@ fun OnboardingInterestsScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = "Далі",
+            text = t(isUk, "Далі", "Next"),
             enabled = selectedKeys.isNotEmpty(),
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
+
+private fun localizedInterestTitle(item: InterestCategory, isUk: Boolean): String {
+    if (isUk) return item.title
+    return when (item.key) {
+        "health" -> "Health"
+        "productivity" -> "Productivity"
+        "sport" -> "Sport"
+        "mindfulness" -> "Mindfulness"
+        else -> item.title
     }
 }

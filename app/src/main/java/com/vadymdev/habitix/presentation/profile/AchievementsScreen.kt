@@ -48,9 +48,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.ui.theme.AppBackground
-import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.time.format.DateTimeFormatter
 
@@ -59,9 +59,11 @@ private val categories = listOf("Всі", "Серії", "Час", "Доскон�
 @Composable
 fun AchievementsScreen(
     state: ProfileUiState,
+    language: AppLanguage,
     onBack: () -> Unit,
     onSelectCategory: (String) -> Unit
 ) {
+    val isUk = language == AppLanguage.UK
     var selected by remember { mutableStateOf<ProfileAchievement?>(null) }
 
     Column(
@@ -85,12 +87,19 @@ fun AchievementsScreen(
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Назад")
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t(isUk, "Назад", "Back"))
             }
 
             Column {
-                Text("Досягнення", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text("${state.unlockedCount}/${state.analytics.allAchievements.size} отримано", color = TextSecondary)
+                Text(t(isUk, "Досягнення", "Achievements"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    if (isUk) {
+                        "${state.unlockedCount}/${state.analytics.allAchievements.size} отримано"
+                    } else {
+                        "${state.unlockedCount}/${state.analytics.allAchievements.size} unlocked"
+                    },
+                    color = TextSecondary
+                )
             }
         }
 
@@ -100,8 +109,8 @@ fun AchievementsScreen(
                 .padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StatHeadCard("Досягнень", state.unlockedCount.toString(), Modifier.weight(1f))
-            StatHeadCard("XP зароблено", state.analytics.allAchievements.filter { it.unlocked }.sumOf { it.xpReward }.toString(), Modifier.weight(1f))
+            StatHeadCard(t(isUk, "Досягнень", "Achievements"), state.unlockedCount.toString(), Modifier.weight(1f))
+            StatHeadCard(t(isUk, "XP зароблено", "XP earned"), state.analytics.allAchievements.filter { it.unlocked }.sumOf { it.xpReward }.toString(), Modifier.weight(1f))
         }
 
         LazyColumn(
@@ -117,12 +126,12 @@ fun AchievementsScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(999.dp))
-                                    .background(if (active) BrandGreen else Color(0xFFE9E7E3))
+                                    .background(if (active) MaterialTheme.colorScheme.primary else Color(0xFFE9E7E3))
                                     .clickable { onSelectCategory(category) }
                                     .padding(horizontal = 12.dp, vertical = 8.dp)
                             ) {
                                 Text(
-                                    text = category,
+                                    text = localizedCategoryLabel(category, isUk),
                                     color = if (active) Color.White else TextSecondary,
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1
@@ -147,20 +156,20 @@ fun AchievementsScreen(
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         AlertDialog(
             onDismissRequest = { selected = null },
-            confirmButton = { TextButton(onClick = { selected = null }) { Text("Закрити") } },
+            confirmButton = { TextButton(onClick = { selected = null }) { Text(t(isUk, "Закрити", "Close")) } },
             title = { Text(achievement.title) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(achievement.description)
-                    Text("Прогрес: ${achievement.progressPercent}%")
-                    Text("Нагорода: +${achievement.xpReward} XP")
+                    Text(t(isUk, "Прогрес: ${achievement.progressPercent}%", "Progress: ${achievement.progressPercent}%"))
+                    Text(t(isUk, "Нагорода: +${achievement.xpReward} XP", "Reward: +${achievement.xpReward} XP"))
                     Text(
                         if (achievement.unlocked) {
-                            "Отримано ${achievement.unlockedDate?.format(formatter).orEmpty()}"
+                            t(isUk, "Отримано ${achievement.unlockedDate?.format(formatter).orEmpty()}", "Unlocked ${achievement.unlockedDate?.format(formatter).orEmpty()}")
                         } else {
-                            "Ще трохи і ви відкриєте це досягнення"
+                            t(isUk, "Ще трохи і ви відкриєте це досягнення", "A bit more to unlock this achievement")
                         },
-                        color = if (achievement.unlocked) BrandGreen else TextSecondary
+                        color = if (achievement.unlocked) MaterialTheme.colorScheme.primary else TextSecondary
                     )
                 }
             }
@@ -229,7 +238,7 @@ private fun AchievementRow(achievement: ProfileAchievement, onClick: () -> Unit)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         "+${achievement.xpReward} XP",
-                        color = if (achievement.unlocked) BrandGreen else TextSecondary,
+                        color = if (achievement.unlocked) MaterialTheme.colorScheme.primary else TextSecondary,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .background(
@@ -263,7 +272,7 @@ private fun AchievementRow(achievement: ProfileAchievement, onClick: () -> Unit)
                             .fillMaxWidth(achievement.progressPercent / 100f)
                             .height(6.dp)
                             .clip(RoundedCornerShape(99.dp))
-                            .background(BrandGreen)
+                            .background(MaterialTheme.colorScheme.primary)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -301,5 +310,20 @@ private fun achievementColor(colorKey: String): Color {
         "sky" -> Color(0xFFB6DDF1)
         "lavender" -> Color(0xFFD8D0F8)
         else -> Color(0xFFE7E4E0)
+    }
+}
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
+
+private fun localizedCategoryLabel(categoryKey: String, isUk: Boolean): String {
+    if (isUk) return categoryKey
+    return when (categoryKey) {
+        "Всі" -> "All"
+        "Серії" -> "Streaks"
+        "Час" -> "Time"
+        "Досконалість" -> "Perfection"
+        "Початок" -> "Start"
+        "Категорії" -> "Categories"
+        else -> categoryKey
     }
 }

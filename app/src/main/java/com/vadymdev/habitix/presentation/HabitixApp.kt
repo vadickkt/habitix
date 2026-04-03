@@ -165,12 +165,14 @@ fun HabitixApp() {
         ) {
             composable(AppRoute.OnboardingIntro) {
                 OnboardingIntroScreen(
+                    language = settingsState.settings.language,
                     onContinue = { navController.navigate(AppRoute.OnboardingInterests) }
                 )
             }
 
             composable(AppRoute.OnboardingInterests) {
                 OnboardingInterestsScreen(
+                    language = settingsState.settings.language,
                     interests = onboardingState.interests,
                     selectedKeys = onboardingState.selectedInterestKeys,
                     onToggle = onboardingViewModel::toggleInterest,
@@ -180,6 +182,7 @@ fun HabitixApp() {
 
             composable(AppRoute.OnboardingHabits) {
                 OnboardingHabitsScreen(
+                    language = settingsState.settings.language,
                     habits = onboardingState.habits,
                     selected = onboardingState.selectedHabitKeys,
                     onToggle = onboardingViewModel::toggleHabit,
@@ -196,6 +199,7 @@ fun HabitixApp() {
             composable(AppRoute.Auth) {
                 AuthScreen(
                     viewModel = authViewModel,
+                    language = settingsState.settings.language,
                     onAuthorized = {
                         navController.navigate(AppRoute.Dashboard) {
                             popUpTo(AppRoute.Auth) { inclusive = true }
@@ -232,6 +236,7 @@ fun HabitixApp() {
             composable(AppRoute.Stats) {
                 StatsScreen(
                     state = statsState,
+                    language = settingsState.settings.language,
                     onSelectPeriod = statsViewModel::setPeriod,
                     onMetricClick = statsViewModel::openMetric,
                     onMetricDismiss = statsViewModel::closeMetric,
@@ -250,6 +255,7 @@ fun HabitixApp() {
             composable(AppRoute.Profile) {
                 ProfileScreen(
                     state = profileState,
+                    language = settingsState.settings.language,
                     onUpdateName = profileViewModel::updateName,
                     onUpdateBio = profileViewModel::updateBio,
                     onUpdateAvatar = profileViewModel::updateAvatar,
@@ -263,6 +269,7 @@ fun HabitixApp() {
             composable(AppRoute.Achievements) {
                 AchievementsScreen(
                     state = profileState,
+                    language = settingsState.settings.language,
                     onBack = { navController.popBackStack() },
                     onSelectCategory = profileViewModel::setAchievementCategory
                 )
@@ -303,12 +310,16 @@ fun HabitixApp() {
             }
 
             composable(AppRoute.PrivacyPolicy) {
-                PrivacyPolicyScreen(onBack = { navController.popBackStack() })
+                PrivacyPolicyScreen(
+                    language = settingsState.settings.language,
+                    onBack = { navController.popBackStack() }
+                )
             }
 
             composable(AppRoute.CreateHabit) {
                 CreateHabitScreen(
                     state = createHabitState,
+                    language = settingsState.settings.language,
                     onBack = {
                         createHabitViewModel.resetDraft()
                         navController.popBackStack()
@@ -330,6 +341,7 @@ fun HabitixApp() {
             composable(AppRoute.EditHabit) {
                 EditHabitScreen(
                     state = createHabitState,
+                    language = settingsState.settings.language,
                     onBack = {
                         createHabitViewModel.resetDraft()
                         navController.popBackStack()

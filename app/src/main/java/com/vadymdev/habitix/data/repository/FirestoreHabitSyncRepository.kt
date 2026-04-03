@@ -9,6 +9,7 @@ import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
 import java.util.UUID
 
 class FirestoreHabitSyncRepository(
@@ -50,6 +51,7 @@ class FirestoreHabitSyncRepository(
                         "reminderEnabled" to habit.reminderEnabled,
                         "reminderHour" to habit.reminderHour,
                         "reminderMinute" to habit.reminderMinute,
+                        "startEpochDay" to habit.startEpochDay,
                         "activeUntilEpochDay" to habit.activeUntilEpochDay,
                         "isArchived" to habit.isArchived,
                         "source" to habit.source,
@@ -77,6 +79,7 @@ class FirestoreHabitSyncRepository(
             val reminderEnabled = doc.getBoolean("reminderEnabled") ?: true
             val reminderHour = (doc.getLong("reminderHour") ?: 20L).toInt()
             val reminderMinute = (doc.getLong("reminderMinute") ?: 0L).toInt()
+            val startEpochDay = doc.getLong("startEpochDay") ?: LocalDate.now().toEpochDay()
             val activeUntilEpochDay = doc.getLong("activeUntilEpochDay")
             val isArchived = doc.getBoolean("isArchived") ?: false
 
@@ -92,6 +95,7 @@ class FirestoreHabitSyncRepository(
                     reminderEnabled = reminderEnabled,
                     reminderHour = reminderHour,
                     reminderMinute = reminderMinute,
+                    startEpochDay = startEpochDay,
                     activeUntilEpochDay = activeUntilEpochDay,
                     isArchived = isArchived
                 )
@@ -111,6 +115,7 @@ class FirestoreHabitSyncRepository(
                     reminderEnabled = reminderEnabled,
                     reminderHour = reminderHour,
                     reminderMinute = reminderMinute,
+                    startEpochDay = startEpochDay,
                     activeUntilEpochDay = activeUntilEpochDay,
                     isArchived = isArchived
                 )
@@ -129,6 +134,7 @@ class FirestoreHabitSyncRepository(
                     reminderHour = reminderHour,
                     reminderMinute = reminderMinute,
                     createdAt = System.currentTimeMillis(),
+                    startEpochDay = startEpochDay,
                     activeUntilEpochDay = activeUntilEpochDay,
                     isArchived = isArchived,
                     source = doc.getString("source") ?: "cloud"

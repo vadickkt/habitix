@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.HabitTemplate
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
 import com.vadymdev.habitix.presentation.components.SelectCircle
@@ -36,11 +37,14 @@ import com.vadymdev.habitix.ui.theme.TextSecondary
 
 @Composable
 fun OnboardingHabitsScreen(
+    language: AppLanguage,
     habits: List<HabitTemplate>,
     selected: Set<String>,
     onToggle: (String) -> Unit,
     onComplete: () -> Unit
 ) {
+    val isUk = language == AppLanguage.UK
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -55,14 +59,14 @@ fun OnboardingHabitsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Оберіть перші звички",
+            text = t(isUk, "Оберіть перші звички", "Choose your first habits"),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "Можете обрати декілька для початку",
+            text = t(isUk, "Можете обрати декілька для початку", "You can pick several to get started"),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )
@@ -87,7 +91,7 @@ fun OnboardingHabitsScreen(
                     Text(text = habit.emoji, fontSize = 24.sp)
                     Spacer(modifier = Modifier.size(14.dp))
                     Text(
-                        text = habit.title,
+                        text = localizedHabitTitle(habit, isUk),
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
@@ -101,10 +105,25 @@ fun OnboardingHabitsScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = "Завершити",
+            text = t(isUk, "Завершити", "Finish"),
             enabled = selected.isNotEmpty(),
             onClick = onComplete,
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
+
+private fun localizedHabitTitle(item: HabitTemplate, isUk: Boolean): String {
+    if (isUk) return item.title
+    return when (item.key) {
+        "water" -> "Drink water"
+        "meditation" -> "Meditation"
+        "morning" -> "Morning workout"
+        "reading" -> "Reading"
+        "sleep" -> "Sleep by 11 PM"
+        "gratitude" -> "Gratitude"
+        else -> item.title
     }
 }

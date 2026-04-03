@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [HabitEntity::class, HabitCompletionEntity::class, HiddenHabitDayEntity::class, AchievementUnlockEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class HabitixDatabase : RoomDatabase() {

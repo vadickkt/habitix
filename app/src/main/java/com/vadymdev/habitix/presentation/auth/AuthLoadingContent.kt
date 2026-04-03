@@ -46,7 +46,10 @@ import com.vadymdev.habitix.ui.theme.TextSecondary
 private const val LOADING_STEP_COUNT = 4
 
 @Composable
-fun AuthLoadingContent(currentStepIndex: Int) {
+fun AuthLoadingContent(
+    currentStepIndex: Int,
+    isUk: Boolean
+) {
     val ringRotation by rememberInfiniteTransition(label = "ring").animateFloat(
         initialValue = 0f,
         targetValue = 360f,
@@ -81,7 +84,7 @@ fun AuthLoadingContent(currentStepIndex: Int) {
 
         Spacer(modifier = Modifier.height(34.dp))
 
-        val steps = authLoadingSteps(currentStepIndex)
+        val steps = authLoadingSteps(currentStepIndex, isUk)
         steps.forEachIndexed { index, step ->
             LoadingStepRow(
                 text = step.text,
@@ -134,12 +137,12 @@ private enum class LoadingStepStatus {
     PENDING
 }
 
-private fun authLoadingSteps(currentStepIndex: Int): List<LoadingStepModel> {
+private fun authLoadingSteps(currentStepIndex: Int, isUk: Boolean): List<LoadingStepModel> {
     val titles = listOf(
-        "Підключення до Google...",
-        "Отримання даних профілю...",
-        "Налаштування акаунту...",
-        "Майже готово!"
+        t(isUk, "Підключення до Google...", "Connecting to Google..."),
+        t(isUk, "Отримання даних профілю...", "Fetching profile data..."),
+        t(isUk, "Налаштування акаунту...", "Setting up account..."),
+        t(isUk, "Майже готово!", "Almost done!")
     )
 
     return titles.mapIndexed { index, title ->
@@ -153,6 +156,8 @@ private fun authLoadingSteps(currentStepIndex: Int): List<LoadingStepModel> {
         LoadingStepModel(text = title, status = status)
     }
 }
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun LoadingStepRow(text: String, status: LoadingStepStatus, isMutedRow: Boolean) {

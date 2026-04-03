@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
 import com.vadymdev.habitix.presentation.components.StepIndicator
 import com.vadymdev.habitix.ui.theme.AppBackground
@@ -30,7 +31,12 @@ import com.vadymdev.habitix.ui.theme.TextPrimary
 import com.vadymdev.habitix.ui.theme.TextSecondary
 
 @Composable
-fun OnboardingIntroScreen(onContinue: () -> Unit) {
+fun OnboardingIntroScreen(
+    language: AppLanguage,
+    onContinue: () -> Unit
+) {
+    val isUk = language == AppLanguage.UK
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -55,7 +61,7 @@ fun OnboardingIntroScreen(onContinue: () -> Unit) {
         Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = "Маленькі кроки\n— великі зміни",
+            text = t(isUk, "Маленькі кроки\n— великі зміни", "Small steps\n- big changes"),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             textAlign = TextAlign.Center,
@@ -65,7 +71,7 @@ fun OnboardingIntroScreen(onContinue: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Створюй корисні звички та відстежуй\nсвій прогрес кожного дня",
+            text = t(isUk, "Створюй корисні звички та відстежуй\nсвій прогрес кожного дня", "Build healthy habits and track\nyour progress every day"),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -74,10 +80,12 @@ fun OnboardingIntroScreen(onContinue: () -> Unit) {
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = "Почати",
+            text = t(isUk, "Почати", "Start"),
             enabled = true,
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en

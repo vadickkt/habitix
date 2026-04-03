@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.presentation.habit.habitColor
 import com.vadymdev.habitix.presentation.habit.habitIconVector
@@ -49,6 +50,7 @@ import java.time.DayOfWeek
 @Composable
 fun CreateHabitScreen(
     state: CreateHabitUiState,
+    language: AppLanguage,
     onBack: () -> Unit,
     onTitle: (String) -> Unit,
     onIcon: (String) -> Unit,
@@ -58,6 +60,7 @@ fun CreateHabitScreen(
     onToggleReminder: () -> Unit,
     onSave: () -> Unit
 ) {
+    val isUk = language == AppLanguage.UK
     val iconKeys = listOf("water", "book", "fitness", "moon", "mind", "heart", "fork", "music", "pen", "sun", "cup", "steps")
     val colorKeys = listOf("mint", "orange", "purple", "blue", "pink")
 
@@ -84,7 +87,7 @@ fun CreateHabitScreen(
                 }
                 Spacer(modifier = Modifier.size(10.dp))
                 Text(
-                    if (state.editingHabitId == null) "Нова звичка" else "Редагувати звичку",
+                    if (state.editingHabitId == null) t(isUk, "Нова звичка", "New habit") else t(isUk, "Редагувати звичку", "Edit habit"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -114,12 +117,12 @@ fun CreateHabitScreen(
         }
 
         item {
-            Text("Назва звички", fontWeight = FontWeight.SemiBold)
+            Text(t(isUk, "Назва звички", "Habit title"), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.title,
                 onValueChange = onTitle,
-                placeholder = { Text("Наприклад: Пити воду") },
+                placeholder = { Text(t(isUk, "Наприклад: Пити воду", "For example: Drink water")) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 isError = state.titleError != null,
@@ -132,7 +135,7 @@ fun CreateHabitScreen(
         }
 
         item {
-            Text("Іконка", fontWeight = FontWeight.SemiBold)
+            Text(t(isUk, "Іконка", "Icon"), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(6),
@@ -162,7 +165,7 @@ fun CreateHabitScreen(
         }
 
         item {
-            Text("Колір", fontWeight = FontWeight.SemiBold)
+            Text(t(isUk, "Колір", "Color"), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 colorKeys.forEach { key ->
@@ -183,25 +186,25 @@ fun CreateHabitScreen(
         }
 
         item {
-            Text("Частота", fontWeight = FontWeight.SemiBold)
+            Text(t(isUk, "Частота", "Frequency"), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FrequencyChip("Щодня", state.frequency == HabitFrequencyType.DAILY) { onFrequency(HabitFrequencyType.DAILY) }
-                FrequencyChip("Будні дні", state.frequency == HabitFrequencyType.WEEKDAYS) { onFrequency(HabitFrequencyType.WEEKDAYS) }
-                FrequencyChip("Обрати дні", state.frequency == HabitFrequencyType.CUSTOM) { onFrequency(HabitFrequencyType.CUSTOM) }
+                FrequencyChip(t(isUk, "Щодня", "Daily"), state.frequency == HabitFrequencyType.DAILY) { onFrequency(HabitFrequencyType.DAILY) }
+                FrequencyChip(t(isUk, "Будні дні", "Weekdays"), state.frequency == HabitFrequencyType.WEEKDAYS) { onFrequency(HabitFrequencyType.WEEKDAYS) }
+                FrequencyChip(t(isUk, "Обрати дні", "Custom days"), state.frequency == HabitFrequencyType.CUSTOM) { onFrequency(HabitFrequencyType.CUSTOM) }
             }
 
             Column(modifier = Modifier.animateContentSize()) {
                 if (state.frequency == HabitFrequencyType.CUSTOM) {
                     Spacer(modifier = Modifier.height(10.dp))
                     val days = listOf(
-                        DayOfWeek.MONDAY to "Пн",
-                        DayOfWeek.TUESDAY to "Вт",
-                        DayOfWeek.WEDNESDAY to "Ср",
-                        DayOfWeek.THURSDAY to "Чт",
-                        DayOfWeek.FRIDAY to "Пт",
-                        DayOfWeek.SATURDAY to "Сб",
-                        DayOfWeek.SUNDAY to "Нд"
+                        DayOfWeek.MONDAY to if (isUk) "Пн" else "Mo",
+                        DayOfWeek.TUESDAY to if (isUk) "Вт" else "Tu",
+                        DayOfWeek.WEDNESDAY to if (isUk) "Ср" else "We",
+                        DayOfWeek.THURSDAY to if (isUk) "Чт" else "Th",
+                        DayOfWeek.FRIDAY to if (isUk) "Пт" else "Fr",
+                        DayOfWeek.SATURDAY to if (isUk) "Сб" else "Sa",
+                        DayOfWeek.SUNDAY to if (isUk) "Нд" else "Su"
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         days.forEach { (day, label) ->
@@ -244,8 +247,8 @@ fun CreateHabitScreen(
                 }
                 Spacer(modifier = Modifier.size(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Нагадування", fontWeight = FontWeight.SemiBold)
-                    Text(if (state.reminderEnabled) "Увімкнено" else "Вимкнено", color = TextSecondary)
+                    Text(t(isUk, "Нагадування", "Reminder"), fontWeight = FontWeight.SemiBold)
+                    Text(if (state.reminderEnabled) t(isUk, "Увімкнено", "Enabled") else t(isUk, "Вимкнено", "Disabled"), color = TextSecondary)
                 }
                 Switch(checked = state.reminderEnabled, onCheckedChange = { onToggleReminder() })
             }
@@ -255,7 +258,7 @@ fun CreateHabitScreen(
             Spacer(modifier = Modifier.height(10.dp))
             Button(
                 onClick = onSave,
-                enabled = state.title.trim().length >= 2 && (state.frequency != HabitFrequencyType.CUSTOM || state.customDays.isNotEmpty()),
+                enabled = !state.isSaving && state.title.trim().length >= 2 && (state.frequency != HabitFrequencyType.CUSTOM || state.customDays.isNotEmpty()),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -266,12 +269,15 @@ fun CreateHabitScreen(
                     disabledContainerColor = BrandGreen.copy(alpha = 0.45f)
                 )
             ) {
-                Text(if (state.editingHabitId == null) "Створити звичку ✓" else "Зберегти зміни ✓", fontWeight = FontWeight.Bold)
+                val saveLabel = if (state.editingHabitId == null) t(isUk, "Створити звичку ✓", "Create habit ✓") else t(isUk, "Зберегти зміни ✓", "Save changes ✓")
+                Text(if (state.isSaving) t(isUk, "Збереження...", "Saving...") else saveLabel, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(14.dp))
         }
     }
 }
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun FrequencyChip(text: String, active: Boolean, onClick: () -> Unit) {

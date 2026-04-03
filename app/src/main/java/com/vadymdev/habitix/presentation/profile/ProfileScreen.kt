@@ -87,9 +87,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.ui.theme.AppBackground
-import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
 import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.io.File
@@ -98,6 +98,7 @@ import java.io.FileOutputStream
 @Composable
 fun ProfileScreen(
     state: ProfileUiState,
+    language: AppLanguage,
     onUpdateName: (String) -> Unit,
     onUpdateBio: (String) -> Unit,
     onUpdateAvatar: (String?) -> Unit,
@@ -107,6 +108,7 @@ fun ProfileScreen(
     onOpenSettings: () -> Unit
 ) {
     val context = LocalContext.current
+    val isUk = language == AppLanguage.UK
     var showShare by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf(false) }
     var editBio by remember { mutableStateOf(false) }
@@ -144,7 +146,7 @@ fun ProfileScreen(
             pendingCameraUri = uri
             cameraLauncher.launch(uri)
         } else {
-            Toast.makeText(context, "Потрібен дозвіл на камеру", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t(isUk, "Потрібен дозвіл на камеру", "Camera permission is required"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -161,7 +163,7 @@ fun ProfileScreen(
         ) {
             item {
                 Text(
-                    text = "Профіль",
+                    text = t(isUk, "Профіль", "Profile"),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -188,8 +190,8 @@ fun ProfileScreen(
                 ) {
                     Text("Досягнення", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
-                        text = "Всі",
-                        color = BrandGreen,
+                        text = t(isUk, "Всі", "All"),
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.clickable(onClick = onOpenAllAchievements)
                     )
@@ -210,12 +212,12 @@ fun ProfileScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(BrandGreen)
+                        .background(MaterialTheme.colorScheme.primary)
                         .clickable { showShare = true }
                         .padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Поділитися прогресом", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(t(isUk, "Поділитися прогресом", "Share progress"), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -225,6 +227,7 @@ fun ProfileScreen(
             onStats = onOpenStats,
             onProfile = {},
             onSettings = onOpenSettings,
+            isUk = isUk,
             activeTab = "profile"
         )
     }
@@ -241,7 +244,7 @@ fun ProfileScreen(
                     galleryLauncher.launch("image/*")
                     showAvatarActions = false
                 }) {
-                    Text("Галерея")
+                    Text(t(isUk, "Галерея", "Gallery"))
                 }
             },
             dismissButton = {
@@ -256,18 +259,18 @@ fun ProfileScreen(
                     }
                     showAvatarActions = false
                 }) {
-                    Text("Камера")
+                    Text(t(isUk, "Камера", "Camera"))
                 }
             },
-            title = { Text("Оберіть аватар") },
+            title = { Text(t(isUk, "Оберіть аватар", "Choose avatar")) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Фото зберігається локально на пристрої.")
+                    Text(t(isUk, "Фото зберігається локально на пристрої.", "Photo is stored locally on the device."))
                     TextButton(onClick = {
                         onUpdateAvatar(null)
                         showAvatarActions = false
                     }) {
-                        Text("Скинути аватар")
+                        Text(t(isUk, "Скинути аватар", "Reset avatar"))
                     }
                 }
             }
@@ -276,7 +279,7 @@ fun ProfileScreen(
 
     if (editName) {
         EditTextDialog(
-            title = "Ім'я",
+            title = t(isUk, "Ім'я", "Name"),
             value = draftName,
             onValueChange = { draftName = it },
             error = nameValidationError,
@@ -284,8 +287,8 @@ fun ProfileScreen(
             onConfirm = {
                 val trimmed = draftName.trim()
                 when {
-                    trimmed.isBlank() -> nameValidationError = "Ім'я не може бути порожнім"
-                    trimmed.length < 2 -> nameValidationError = "Ім'я має містити щонайменше 2 символи"
+                    trimmed.isBlank() -> nameValidationError = t(isUk, "Ім'я не може бути порожнім", "Name cannot be empty")
+                    trimmed.length < 2 -> nameValidationError = t(isUk, "Ім'я має містити щонайменше 2 символи", "Name must have at least 2 characters")
                     else -> {
                         nameValidationError = null
                         onUpdateName(trimmed)
@@ -298,7 +301,7 @@ fun ProfileScreen(
 
     if (editBio) {
         EditTextDialog(
-            title = "Опис",
+            title = t(isUk, "Опис", "Bio"),
             value = draftBio,
             onValueChange = { draftBio = it },
             onDismiss = { editBio = false },
@@ -346,13 +349,13 @@ private fun ProfileHeader(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .size(28.dp)
-                        .background(BrandGreen, CircleShape),
+                        .background(MaterialTheme.colorScheme.primary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Rounded.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
                 }
             } else {
-                Text(state.identity.avatarInitials, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = BrandGreen)
+                Text(state.identity.avatarInitials, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
         }
 
@@ -379,9 +382,9 @@ private fun ProfileHeader(
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Rounded.Star, contentDescription = null, tint = BrandGreen, modifier = Modifier.size(16.dp))
+            Icon(Icons.Rounded.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text("Рівень ${state.analytics.level}", color = BrandGreen, fontWeight = FontWeight.Bold)
+            Text("Рівень ${state.analytics.level}", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
@@ -395,7 +398,7 @@ private fun ProfileHeader(
                         .fillMaxWidth((state.analytics.xpCurrent.toFloat() / state.analytics.xpTarget.toFloat()).coerceIn(0f, 1f))
                         .height(6.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(BrandGreen)
+                        .background(MaterialTheme.colorScheme.primary)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -434,7 +437,7 @@ private fun InfoCard(modifier: Modifier, value: Triple<String, String, ImageVect
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(value.third, contentDescription = null, tint = BrandGreen)
+        Icon(value.third, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Text(value.first, color = TextSecondary, style = MaterialTheme.typography.bodySmall)
         Text(value.second, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     }
@@ -466,7 +469,7 @@ private fun AchievementCard(achievement: ProfileAchievement, compact: Boolean) {
                     if (achievement.unlocked) {
                         Text(
                             "Отримано",
-                            color = BrandGreen,
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
                                 .background(Color(0xFFDDF3E8), RoundedCornerShape(99.dp))
@@ -493,7 +496,7 @@ private fun AchievementCard(achievement: ProfileAchievement, compact: Boolean) {
                             .fillMaxWidth(achievement.progressPercent / 100f)
                             .height(6.dp)
                             .clip(RoundedCornerShape(99.dp))
-                            .background(BrandGreen)
+                            .background(MaterialTheme.colorScheme.primary)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -517,7 +520,7 @@ private fun MonthActivityCard(state: ProfileUiState) {
     ) {
         Text("Активність цього місяця", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Icon(Icons.Rounded.Star, contentDescription = null, tint = BrandGreen, modifier = Modifier.size(16.dp))
+            Icon(Icons.Rounded.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             Text(
                 "${if (state.analytics.monthGrowthPercent >= 0) "+" else ""}${state.analytics.monthGrowthPercent}%",
                 color = TextPrimary,
@@ -714,6 +717,7 @@ private fun ProfileBottomBar(
     onStats: () -> Unit,
     onProfile: () -> Unit,
     onSettings: () -> Unit,
+    isUk: Boolean,
     activeTab: String
 ) {
     Surface(
@@ -729,10 +733,10 @@ private fun ProfileBottomBar(
                 .padding(vertical = 8.dp, horizontal = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            BottomItem(Icons.Rounded.Home, "Головна", activeTab == "home", onHome)
-            BottomItem(Icons.Rounded.Analytics, "Статистика", activeTab == "stats", onStats)
-            BottomItem(Icons.Rounded.Person, "Профіль", activeTab == "profile", onProfile)
-            BottomItem(Icons.Rounded.Settings, "Налаштування", activeTab == "settings", onSettings)
+            BottomItem(Icons.Rounded.Home, t(isUk, "Головна", "Home"), activeTab == "home", onHome)
+            BottomItem(Icons.Rounded.Analytics, t(isUk, "Статистика", "Stats"), activeTab == "stats", onStats)
+            BottomItem(Icons.Rounded.Person, t(isUk, "Профіль", "Profile"), activeTab == "profile", onProfile)
+            BottomItem(Icons.Rounded.Settings, t(isUk, "Налаштування", "Settings"), activeTab == "settings", onSettings)
         }
     }
 }
@@ -747,10 +751,12 @@ private fun BottomItem(icon: ImageVector, label: String, active: Boolean, onClic
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
-        Icon(icon, contentDescription = label, tint = if (active) BrandGreen else TextSecondary)
-        Text(label, color = if (active) BrandGreen else TextSecondary, style = MaterialTheme.typography.bodySmall)
+        Icon(icon, contentDescription = label, tint = if (active) MaterialTheme.colorScheme.primary else TextSecondary)
+        Text(label, color = if (active) MaterialTheme.colorScheme.primary else TextSecondary, style = MaterialTheme.typography.bodySmall)
     }
 }
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun EditTextDialog(
@@ -968,7 +974,7 @@ private fun createCircularAvatarUri(context: Context, sourceUri: Uri): Uri? {
         squared.recycle()
         result.recycle()
 
-        Uri.fromFile(avatarFile)
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", avatarFile)
     }.getOrNull()
 }
 

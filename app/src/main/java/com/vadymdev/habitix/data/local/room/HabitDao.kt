@@ -53,7 +53,7 @@ interface HabitDao {
     suspend fun deleteAllHabits()
 
     @Query(
-        "UPDATE habits SET title = :title, iconKey = :iconKey, colorKey = :colorKey, frequencyType = :frequencyType, customDaysCsv = :customDaysCsv, reminderEnabled = :reminderEnabled, reminderHour = :reminderHour, reminderMinute = :reminderMinute, activeUntilEpochDay = :activeUntilEpochDay, isArchived = :isArchived WHERE id = :id"
+        "UPDATE habits SET title = :title, iconKey = :iconKey, colorKey = :colorKey, frequencyType = :frequencyType, customDaysCsv = :customDaysCsv, reminderEnabled = :reminderEnabled, reminderHour = :reminderHour, reminderMinute = :reminderMinute, startEpochDay = :startEpochDay, activeUntilEpochDay = :activeUntilEpochDay, isArchived = :isArchived WHERE id = :id"
     )
     suspend fun updateFromCloud(
         id: Long,
@@ -65,6 +65,7 @@ interface HabitDao {
         reminderEnabled: Boolean,
         reminderHour: Int,
         reminderMinute: Int,
+        startEpochDay: Long,
         activeUntilEpochDay: Long?,
         isArchived: Boolean
     )

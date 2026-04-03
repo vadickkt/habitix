@@ -158,7 +158,7 @@ fun DashboardScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)
         ) {
             item {
-                HeaderBlock(state = state)
+                HeaderBlock(state = state, isUk = isUk)
             }
 
             item {
@@ -306,15 +306,20 @@ private fun SwipeBackground(dismissState: SwipeToDismissBoxState, isUk: Boolean)
 }
 
 @Composable
-private fun HeaderBlock(state: DashboardUiState) {
+private fun HeaderBlock(state: DashboardUiState, isUk: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top
     ) {
         Column {
-            Text("Привіт 👋", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
-            Text("Гарного дня!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text(if (isUk) "Привіт 👋" else "Hi 👋", style = MaterialTheme.typography.bodyLarge, color = TextSecondary)
+            Text(
+                if (isUk) "Гарного дня!" else "Have a great day!",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
         }
 
         Box(

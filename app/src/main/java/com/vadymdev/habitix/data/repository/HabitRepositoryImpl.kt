@@ -16,6 +16,7 @@ import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.domain.model.HabitStatsSnapshot
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.domain.model.ProfileAnalytics
+import com.vadymdev.habitix.domain.model.DUPLICATE_ACTIVE_HABIT_ERROR
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -300,6 +301,15 @@ class HabitRepositoryImpl(
     }
 
     override suspend fun createHabit(draft: HabitCreateDraft) {
+        val today = LocalDate.now()
+        val normalizedTitle = normalizeTitle(draft.title)
+        val duplicateExists = habitDao.getActiveHabits().any { existing ->
+            existing.matches(today) && normalizeTitle(existing.title) == normalizedTitle
+        }
+        if (duplicateExists) {
+            throw IllegalArgumentException(DUPLICATE_ACTIVE_HABIT_ERROR)
+        }
+
         val customDaysCsv = draft.customDays
             .sortedBy { it.value }
             .joinToString(",") { it.value.toString() }
@@ -307,7 +317,7 @@ class HabitRepositoryImpl(
         habitDao.insertHabit(
             HabitEntity(
                 cloudId = UUID.randomUUID().toString(),
-                title = draft.title,
+                title = draft.title.trim(),
                 iconKey = draft.iconKey,
                 colorKey = draft.colorKey,
                 frequencyType = draft.frequencyType.name,
@@ -316,6 +326,7 @@ class HabitRepositoryImpl(
                 reminderHour = 20,
                 reminderMinute = 0,
                 createdAt = System.currentTimeMillis(),
+                startEpochDay = today.toEpochDay(),
                 activeUntilEpochDay = null,
                 isArchived = false,
                 source = "manual"
@@ -344,6 +355,7 @@ class HabitRepositoryImpl(
                     reminderHour = 20,
                     reminderMinute = 0,
                     createdAt = System.currentTimeMillis(),
+                    startEpochDay = LocalDate.now().toEpochDay(),
                     activeUntilEpochDay = null,
                     isArchived = false,
                     source = "onboarding"
@@ -384,8 +396,10 @@ class HabitRepositoryImpl(
     }
 
     private fun HabitEntity.matches(date: LocalDate): Boolean {
+        val epochDay = date.toEpochDay()
         val dayOfWeek = date.dayOfWeek
-        if (activeUntilEpochDay != null && date.toEpochDay() > activeUntilEpochDay) return false
+        if (epochDay < startEpochDay) return false
+        if (activeUntilEpochDay != null && epochDay > activeUntilEpochDay) return false
 
         return when (HabitFrequencyType.valueOf(frequencyType)) {
             HabitFrequencyType.DAILY -> true
@@ -400,6 +414,13 @@ class HabitRepositoryImpl(
             .mapNotNull { value -> value.toIntOrNull() }
             .mapNotNull { runCatching { DayOfWeek.of(it) }.getOrNull() }
             .toSet()
+    }
+
+    private fun normalizeTitle(value: String): String {
+        return value
+            .trim()
+            .replace(Regex("\\s+"), " ")
+            .lowercase()
     }
 
     private fun onboardingDefaults(): List<OnboardingHabitDefault> {

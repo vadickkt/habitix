@@ -51,6 +51,7 @@ import coil.request.ImageRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.vadymdev.habitix.R
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.ui.theme.AppBackground
 import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
@@ -60,9 +61,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun AuthScreen(
     viewModel: AuthViewModel,
+    language: AppLanguage,
     onAuthorized: () -> Unit,
     onContinueAsGuest: () -> Unit
 ) {
+    val isUk = language == AppLanguage.UK
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val webClientId = resolveWebClientId(context)
@@ -88,7 +91,10 @@ fun AuthScreen(
     }
 
     if (state.showLoadingFlow) {
-        AuthLoadingContent(currentStepIndex = state.loadingStepIndex)
+        AuthLoadingContent(
+            currentStepIndex = state.loadingStepIndex,
+            isUk = isUk
+        )
         return
     }
 
@@ -113,14 +119,14 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         Text(
-            text = "Привіт!",
+            text = t(isUk, "Привіт!", "Hi!"),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Я допоможу тобі сформувати корисні звички",
+            text = t(isUk, "Я допоможу тобі сформувати корисні звички", "I will help you build healthy habits"),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -162,9 +168,9 @@ fun AuthScreen(
                             viewModel.signInWithGoogleToken(idToken)
                         }
                     } catch (_: GetCredentialException) {
-                        viewModel.setError("Помилка Google входу. Спробуйте ще раз")
+                        viewModel.setError(t(isUk, "Помилка Google входу. Спробуйте ще раз", "Google sign-in failed. Please try again"))
                     } catch (_: Exception) {
-                        viewModel.setError("Не вдалося отримати токен входу")
+                        viewModel.setError(t(isUk, "Не вдалося отримати токен входу", "Failed to retrieve sign-in token"))
                     }
                 }
             },
@@ -219,17 +225,17 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            BenefitChip("Безпечно")
+            BenefitChip(t(isUk, "Безпечно", "Secure"))
             Spacer(modifier = Modifier.size(8.dp))
-            BenefitChip("Швидко")
+            BenefitChip(t(isUk, "Швидко", "Fast"))
             Spacer(modifier = Modifier.size(8.dp))
-            BenefitChip("Безкоштовно")
+            BenefitChip(t(isUk, "Безкоштовно", "Free"))
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = "Продовжити як гість",
+            text = t(isUk, "Продовжити як гість", "Continue as guest"),
             color = TextPrimary,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier
@@ -240,7 +246,7 @@ fun AuthScreen(
         )
 
         Text(
-            text = "Продовжуючи, ви погоджуєтесь з Умовами та\nПолітикою",
+            text = t(isUk, "Продовжуючи, ви погоджуєтесь з Умовами та\nПолітикою", "By continuing, you agree to the Terms\nand Privacy Policy"),
             color = TextSecondary.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium.copy(
                 textDecoration = TextDecoration.Underline
@@ -251,6 +257,8 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(6.dp))
     }
 }
+
+private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun BenefitChip(text: String) {
