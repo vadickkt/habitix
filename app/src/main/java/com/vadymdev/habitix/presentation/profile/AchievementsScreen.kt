@@ -22,21 +22,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.Bolt
-import androidx.compose.material.icons.rounded.Coffee
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.MenuBook
-import androidx.compose.material.icons.rounded.MilitaryTech
-import androidx.compose.material.icons.rounded.Nightlight
-import androidx.compose.material.icons.rounded.Psychology
-import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material.icons.rounded.TrackChanges
-import androidx.compose.material.icons.rounded.WbSunny
-import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,12 +36,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.annotation.StringRes
 import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.ProfileAchievement
@@ -137,7 +119,7 @@ fun AchievementsScreen(
                                     .padding(horizontal = 12.dp, vertical = 8.dp)
                             ) {
                                 Text(
-                                    text = localizedCategoryLabel(category, isUk),
+                                    text = achievementsCategoryLabel(category, isUk),
                                     color = if (active) Color.White else TextSecondary,
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1
@@ -159,8 +141,8 @@ fun AchievementsScreen(
     }
 
     selected?.let { achievement ->
-        val title = localizedAchievementTitle(achievement, isUk)
-        val description = localizedAchievementDescription(achievement, isUk)
+        val title = achievementsLocalizedTitle(achievement, isUk)
+        val description = achievementsLocalizedDescription(achievement, isUk)
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         AlertDialog(
             onDismissRequest = { selected = null },
@@ -203,8 +185,8 @@ private fun StatHeadCard(title: String, value: String, modifier: Modifier) {
 
 @Composable
 private fun AchievementRow(achievement: ProfileAchievement, isUk: Boolean, onClick: () -> Unit) {
-    val title = localizedAchievementTitle(achievement, isUk)
-    val description = localizedAchievementDescription(achievement, isUk)
+    val title = achievementsLocalizedTitle(achievement, isUk)
+    val description = achievementsLocalizedDescription(achievement, isUk)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,13 +200,13 @@ private fun AchievementRow(achievement: ProfileAchievement, isUk: Boolean, onCli
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        if (achievement.unlocked) achievementColor(achievement.colorKey).copy(alpha = 0.35f) else Color(0xFFECEAE6),
+                        if (achievement.unlocked) achievementsScreenColor(achievement.colorKey).copy(alpha = 0.35f) else Color(0xFFECEAE6),
                         RoundedCornerShape(14.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = achievementIcon(achievement.iconKey),
+                    imageVector = achievementsScreenIcon(achievement.iconKey),
                     contentDescription = null,
                     tint = if (achievement.unlocked) Color.Black else TextSecondary
                 )
@@ -292,108 +274,3 @@ private fun AchievementRow(achievement: ProfileAchievement, isUk: Boolean, onCli
     }
 }
 
-private fun achievementIcon(iconKey: String): ImageVector {
-    return when (iconKey) {
-        "flame" -> Icons.Rounded.LocalFireDepartment
-        "medal" -> Icons.Rounded.MilitaryTech
-        "crown" -> Icons.Rounded.WorkspacePremium
-        "zap" -> Icons.Rounded.Bolt
-        "sunrise" -> Icons.Rounded.WbSunny
-        "moon" -> Icons.Rounded.Nightlight
-        "target" -> Icons.Rounded.TrackChanges
-        "sparkles" -> Icons.Rounded.AutoAwesome
-        "trophy" -> Icons.Rounded.EmojiEvents
-        "heart" -> Icons.Rounded.Favorite
-        "dumbbell" -> Icons.Rounded.FitnessCenter
-        "brain" -> Icons.Rounded.Psychology
-        "book" -> Icons.Rounded.MenuBook
-        "coffee" -> Icons.Rounded.Coffee
-        else -> Icons.Rounded.Star
-    }
-}
-
-private fun achievementColor(colorKey: String): Color {
-    return when (colorKey) {
-        "peach" -> Color(0xFFF6C491)
-        "rose" -> Color(0xFFF0B3C5)
-        "mint" -> Color(0xFFB7E9D1)
-        "sky" -> Color(0xFFB6DDF1)
-        "lavender" -> Color(0xFFD8D0F8)
-        else -> Color(0xFFE7E4E0)
-    }
-}
-
-@Composable
-private fun localizedString(
-    isUk: Boolean,
-    @StringRes ukResId: Int,
-    @StringRes enResId: Int,
-    vararg formatArgs: Any
-): String {
-    return if (isUk) {
-        stringResource(ukResId, *formatArgs)
-    } else {
-        stringResource(enResId, *formatArgs)
-    }
-}
-
-private fun localizedCategoryLabel(categoryKey: String, isUk: Boolean): String {
-    if (isUk) return categoryKey
-    return when (categoryKey) {
-        "Всі" -> "All"
-        "Серії" -> "Streaks"
-        "Час" -> "Time"
-        "Досконалість" -> "Perfection"
-        "Початок" -> "Start"
-        "Категорії" -> "Categories"
-        else -> categoryKey
-    }
-}
-
-private fun localizedAchievementTitle(achievement: ProfileAchievement, isUk: Boolean): String {
-    if (isUk) return achievement.title
-    return when (achievement.id) {
-        "week_7" -> "7-day streak"
-        "week_14" -> "14-day streak"
-        "week_30" -> "Marathoner"
-        "week_100" -> "Legend"
-        "early_8" -> "Early bird"
-        "early_7" -> "Dawn warrior"
-        "late_owl" -> "Night owl"
-        "month_perfect" -> "Monthly champion"
-        "perfect_week" -> "Perfectionist"
-        "first" -> "First win"
-        "five" -> "Collector"
-        "ten" -> "Ambitious"
-        "health" -> "Healthy lifestyle"
-        "sport" -> "Athlete"
-        "mind" -> "Sage"
-        "book" -> "Book lover"
-        "prod" -> "Productive"
-        else -> achievement.title
-    }
-}
-
-private fun localizedAchievementDescription(achievement: ProfileAchievement, isUk: Boolean): String {
-    if (isUk) return achievement.description
-    return when (achievement.id) {
-        "week_7" -> "Complete a habit for 7 days in a row"
-        "week_14" -> "Complete a habit for 14 days in a row"
-        "week_30" -> "30-day streak"
-        "week_100" -> "100-day streak"
-        "early_8" -> "Complete 5 habits before 8:00"
-        "early_7" -> "Complete 20 habits before 7:00"
-        "late_owl" -> "Complete 10 habits after 22:00"
-        "month_perfect" -> "100% completion for a month"
-        "perfect_week" -> "Perfect week"
-        "first" -> "Create your first habit"
-        "five" -> "Create 5 different habits"
-        "ten" -> "Create 10 habits"
-        "health" -> "Complete 50 Health category habits"
-        "sport" -> "Complete 30 Sport category habits"
-        "mind" -> "Complete 50 Mindfulness category habits"
-        "book" -> "Read for 30 days in a row"
-        "prod" -> "Complete 100 Productivity category habits"
-        else -> achievement.description
-    }
-}
