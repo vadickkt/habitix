@@ -1,6 +1,5 @@
 package com.vadymdev.habitix.data.repository.sync
 
-import com.google.firebase.firestore.FirebaseFirestore
 import com.vadymdev.habitix.data.local.room.HabitCompletionEntity
 import com.vadymdev.habitix.data.local.room.HabitEntity
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity

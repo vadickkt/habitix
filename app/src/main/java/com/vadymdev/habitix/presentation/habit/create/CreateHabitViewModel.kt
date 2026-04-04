@@ -4,9 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.DuplicateActiveHabitException
+import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
-import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.CreateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase

@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
 }
@@ -39,6 +41,12 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
     }
 }
 

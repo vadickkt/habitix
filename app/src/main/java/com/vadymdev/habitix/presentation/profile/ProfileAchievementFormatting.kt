@@ -1,6 +1,7 @@
 package com.vadymdev.habitix.presentation.profile
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Coffee
@@ -8,7 +9,6 @@ import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FitnessCenter
 import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.MenuBook
 import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.Nightlight
 import androidx.compose.material.icons.rounded.Psychology
@@ -36,7 +36,7 @@ internal fun achievementIcon(iconKey: String): ImageVector {
         "heart" -> Icons.Rounded.Favorite
         "dumbbell" -> Icons.Rounded.FitnessCenter
         "brain" -> Icons.Rounded.Psychology
-        "book" -> Icons.Rounded.MenuBook
+        "book" -> Icons.AutoMirrored.Rounded.MenuBook
         "coffee" -> Icons.Rounded.Coffee
         else -> Icons.Rounded.Star
     }

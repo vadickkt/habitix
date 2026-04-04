@@ -5,9 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -15,19 +13,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ContactSupport
+import androidx.compose.material.icons.automirrored.rounded.ContactSupport
+import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Policy
 import androidx.compose.material.icons.rounded.RateReview
 import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Vibration
-import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -44,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import com.vadymdev.habitix.domain.model.AccentPalette
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.ui.theme.AppBackground
-import com.vadymdev.habitix.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -138,7 +134,7 @@ fun SettingsScreen(
                             true
                         ).show()
                     }
-                    SwitchRow(t("Звуки", "Sounds"), t("Звуки при виконанні", "Completion sounds"), Icons.Rounded.VolumeUp, settings.soundsEnabled, onSoundsToggle)
+                    SwitchRow(t("Звуки", "Sounds"), t("Звуки при виконанні", "Completion sounds"), Icons.AutoMirrored.Rounded.VolumeUp, settings.soundsEnabled, onSoundsToggle)
                     SwitchRow(t("Вібрація", "Vibration"), t("Тактильний відгук", "Haptic feedback"), Icons.Rounded.Vibration, settings.vibrationEnabled, onVibrationToggle)
                 }
             }
@@ -156,7 +152,7 @@ fun SettingsScreen(
         item {
             DividerTitle(t("ПІДТРИМКА", "SUPPORT"))
             SettingsCard {
-                ClickRow(t("Зв'язатися з нами", "Contact us"), t("Підтримка та пропозиції", "Support and ideas"), Icons.Rounded.ContactSupport, onClick = ::openContact)
+                ClickRow(t("Зв'язатися з нами", "Contact us"), t("Підтримка та пропозиції", "Support and ideas"), Icons.AutoMirrored.Rounded.ContactSupport, onClick = ::openContact)
                 ClickRow(t("Оцінити додаток", "Rate app"), t("Залиште відгук", "Leave feedback"), Icons.Rounded.RateReview, onClick = ::openRateApp)
             }
         }
@@ -175,12 +171,12 @@ fun SettingsScreen(
                     ClickRow(
                         t("Повернутися до аутентифікації", "Return to authentication"),
                         t("Увійдіть, щоб синхронізувати дані гостя", "Sign in to sync guest data"),
-                        Icons.Rounded.Logout,
+                        Icons.AutoMirrored.Rounded.Logout,
                         titleColor = MaterialTheme.colorScheme.primary,
                         onClick = onReturnToAuth
                     )
                 } else {
-                    ClickRow(t("Вийти", "Sign out"), "", Icons.Rounded.Logout, titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
+                    ClickRow(t("Вийти", "Sign out"), "", Icons.AutoMirrored.Rounded.Logout, titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
                 }
                 ClickRow(t("Видалити дані", "Delete data"), t("Очистити локальні та хмарні дані", "Clear local and cloud data"), Icons.Rounded.DeleteForever, titleColor = Color(0xFFE24949)) { showDangerDialog = "delete" }
             }

@@ -3,11 +3,8 @@ package com.vadymdev.habitix.data.repository.habit
 import com.vadymdev.habitix.data.local.room.AchievementUnlockEntity
 import com.vadymdev.habitix.data.local.room.HabitCompletionEntity
 import com.vadymdev.habitix.data.local.room.HabitEntity
-import com.vadymdev.habitix.domain.model.HabitBadge
-import com.vadymdev.habitix.domain.model.HabitCategoryStat
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.domain.model.HabitStatsSnapshot
-import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.domain.model.ProfileAnalytics
 import java.time.DayOfWeek
 import java.time.Instant

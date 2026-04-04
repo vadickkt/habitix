@@ -1,17 +1,17 @@
 package com.vadymdev.habitix.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.vadymdev.habitix.data.repository.sync.mapSyncThrowable
-import com.vadymdev.habitix.data.repository.sync.FirestoreHabitCloudStore
-import com.vadymdev.habitix.data.repository.sync.HabitCloudRecord
-import com.vadymdev.habitix.data.repository.sync.HabitSyncContract
-import com.vadymdev.habitix.data.repository.sync.HabitSyncLocalStore
 import com.vadymdev.habitix.data.local.room.HabitCompletionDao
 import com.vadymdev.habitix.data.local.room.HabitCompletionEntity
 import com.vadymdev.habitix.data.local.room.HabitDao
 import com.vadymdev.habitix.data.local.room.HabitEntity
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
+import com.vadymdev.habitix.data.repository.sync.FirestoreHabitCloudStore
+import com.vadymdev.habitix.data.repository.sync.HabitCloudRecord
+import com.vadymdev.habitix.data.repository.sync.HabitSyncContract
+import com.vadymdev.habitix.data.repository.sync.HabitSyncLocalStore
+import com.vadymdev.habitix.data.repository.sync.mapSyncThrowable
 import com.vadymdev.habitix.domain.model.SyncTarget
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import kotlinx.coroutines.sync.Mutex

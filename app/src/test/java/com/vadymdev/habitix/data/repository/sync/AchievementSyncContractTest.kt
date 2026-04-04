@@ -9,7 +9,7 @@ import org.junit.Test
 class AchievementSyncContractTest {
 
     @Test
-    fun localNewer_uploadsRecordToCloud() = runBlocking {
+    fun localMissingInCloud_uploadsRecordToCloud() = runBlocking {
         val local = FakeAchievementLocalStore(
             listOf(AchievementUnlockEntity("week_7", unlockedEpochDay = 20L))
         )
@@ -22,6 +22,38 @@ class AchievementSyncContractTest {
         AchievementSyncContract(local, cloud).sync("uid")
 
         assertTrue(cloud.upserted.any { it.achievementId == "week_7" && it.unlockedEpochDay == 20L })
+    }
+
+    @Test
+    fun localNewerThanRemote_uploadsRecordToCloud() = runBlocking {
+        val local = FakeAchievementLocalStore(
+            listOf(AchievementUnlockEntity("week_7", unlockedEpochDay = 40L))
+        )
+        val cloud = FakeAchievementCloudStore(
+            mutableListOf(
+                AchievementCloudRecord("week_7", unlockedEpochDay = 10L, updatedAtMillis = 10L)
+            )
+        )
+
+        AchievementSyncContract(local, cloud).sync("uid")
+
+        assertTrue(cloud.upserted.any { it.achievementId == "week_7" && it.unlockedEpochDay == 40L })
+    }
+
+    @Test
+    fun localOlderThanRemote_doesNotUploadLocalRecord() = runBlocking {
+        val local = FakeAchievementLocalStore(
+            listOf(AchievementUnlockEntity("month_30", unlockedEpochDay = 10L))
+        )
+        val cloud = FakeAchievementCloudStore(
+            mutableListOf(
+                AchievementCloudRecord("month_30", unlockedEpochDay = 40L, updatedAtMillis = Long.MAX_VALUE)
+            )
+        )
+
+        AchievementSyncContract(local, cloud).sync("uid")
+
+        assertTrue(cloud.upserted.none { it.achievementId == "month_30" })
     }
 
     @Test
@@ -38,6 +70,20 @@ class AchievementSyncContractTest {
         AchievementSyncContract(local, cloud).sync("uid")
 
         assertEquals(40L, local.replaced.first().unlockedEpochDay)
+    }
+
+    @Test
+    fun remoteMissingLocally_isInserted() = runBlocking {
+        val local = FakeAchievementLocalStore(emptyList())
+        val cloud = FakeAchievementCloudStore(
+            mutableListOf(
+                AchievementCloudRecord("first", unlockedEpochDay = 2L, updatedAtMillis = 200L)
+            )
+        )
+
+        AchievementSyncContract(local, cloud).sync("uid")
+
+        assertTrue(local.getAll().any { it.achievementId == "first" && it.unlockedEpochDay == 2L })
     }
 
     @Test

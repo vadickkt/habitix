@@ -9,7 +9,6 @@ import com.vadymdev.habitix.domain.repository.ProfileRepository
 import com.vadymdev.habitix.domain.repository.ProfileSyncRepository
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.tasks.await
 
 class FirestoreProfileSyncRepository(
     private val firestore: FirebaseFirestore,

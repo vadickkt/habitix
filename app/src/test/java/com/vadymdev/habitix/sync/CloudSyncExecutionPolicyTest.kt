@@ -1,10 +1,10 @@
 package com.vadymdev.habitix.sync
 
+import androidx.work.ListenableWorker
 import com.vadymdev.habitix.domain.model.SyncDomainException
 import com.vadymdev.habitix.domain.model.SyncFailureKind
 import com.vadymdev.habitix.domain.model.SyncTarget
 import com.vadymdev.habitix.domain.usecase.SyncScope
-import androidx.work.ListenableWorker
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

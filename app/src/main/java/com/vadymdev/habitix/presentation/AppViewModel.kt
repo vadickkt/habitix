@@ -7,10 +7,10 @@ import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveGuestModeUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveOnboardingUseCase
 import com.vadymdev.habitix.presentation.navigation.AppRoute
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
 
 class AppViewModel(
     observeOnboardingUseCase: ObserveOnboardingUseCase,

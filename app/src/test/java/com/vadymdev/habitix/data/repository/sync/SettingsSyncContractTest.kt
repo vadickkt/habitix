@@ -9,13 +9,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SettingsSyncContractTest {
 
     @Test
-    fun guestLocalSettings_whenCloudEmpty_uploadsLocalWithoutOverwrite() = runBlocking {
+    fun remoteMissing_uploadsFullLocalSnapshot() = runBlocking {
         val local = AppSettings(
             themeMode = ThemeMode.DARK,
             accentPalette = AccentPalette.PEACH,
@@ -23,6 +24,10 @@ class SettingsSyncContractTest {
             pushEnabled = false,
             reminderHour = 6,
             reminderMinute = 45,
+            soundsEnabled = false,
+            vibrationEnabled = false,
+            biometricEnabled = true,
+            autoSyncEnabled = false,
             updatedAtMillis = 44L
         )
         val localRepo = FakeSettingsRepository(local)
@@ -34,16 +39,30 @@ class SettingsSyncContractTest {
         assertEquals(local.themeMode.name, cloudStore.lastSet?.themeMode)
         assertEquals(local.accentPalette.name, cloudStore.lastSet?.accentPalette)
         assertEquals(local.language.name, cloudStore.lastSet?.language)
+        assertEquals(local.pushEnabled, cloudStore.lastSet?.pushEnabled)
+        assertEquals(local.reminderHour, cloudStore.lastSet?.reminderHour)
+        assertEquals(local.reminderMinute, cloudStore.lastSet?.reminderMinute)
+        assertEquals(local.soundsEnabled, cloudStore.lastSet?.soundsEnabled)
+        assertEquals(local.vibrationEnabled, cloudStore.lastSet?.vibrationEnabled)
+        assertEquals(local.biometricEnabled, cloudStore.lastSet?.biometricEnabled)
+        assertEquals(local.autoSyncEnabled, cloudStore.lastSet?.autoSyncEnabled)
         assertEquals(local.updatedAtMillis, localRepo.current.updatedAtMillis)
     }
 
     @Test
-    fun remoteNewer_replacesLocal() = runBlocking {
+    fun remoteNewer_replacesLocalSnapshot() = runBlocking {
         val localRepo = FakeSettingsRepository(
             AppSettings(
                 themeMode = ThemeMode.LIGHT,
                 accentPalette = AccentPalette.MINT,
                 language = AppLanguage.EN,
+                pushEnabled = true,
+                reminderHour = 11,
+                reminderMinute = 11,
+                soundsEnabled = true,
+                vibrationEnabled = true,
+                biometricEnabled = false,
+                autoSyncEnabled = true,
                 updatedAtMillis = 10L
             )
         )
@@ -67,10 +86,19 @@ class SettingsSyncContractTest {
 
         assertEquals(ThemeMode.DARK, localRepo.current.themeMode)
         assertEquals(AccentPalette.ROSE, localRepo.current.accentPalette)
+        assertEquals(AppLanguage.UK, localRepo.current.language)
+        assertEquals(false, localRepo.current.pushEnabled)
+        assertEquals(8, localRepo.current.reminderHour)
+        assertEquals(30, localRepo.current.reminderMinute)
+        assertEquals(false, localRepo.current.soundsEnabled)
+        assertEquals(false, localRepo.current.vibrationEnabled)
+        assertEquals(true, localRepo.current.biometricEnabled)
+        assertEquals(true, localRepo.current.autoSyncEnabled)
+        assertEquals(20L, localRepo.current.updatedAtMillis)
     }
 
     @Test
-    fun localNewer_uploadsToCloud() = runBlocking {
+    fun localNewer_uploadsLocalSnapshotToCloud() = runBlocking {
         val local = AppSettings(updatedAtMillis = 20L, language = AppLanguage.EN)
         val localRepo = FakeSettingsRepository(local)
         val cloudStore = FakeSettingsCloudStore(
@@ -96,6 +124,71 @@ class SettingsSyncContractTest {
     }
 
     @Test
+    fun equalTimestamps_prefersLocalAndUploads() = runBlocking {
+        val local = AppSettings(
+            themeMode = ThemeMode.DARK,
+            accentPalette = AccentPalette.LAVENDER,
+            language = AppLanguage.EN,
+            updatedAtMillis = 100L
+        )
+        val localRepo = FakeSettingsRepository(local)
+        val cloudStore = FakeSettingsCloudStore(
+            remote = SettingsCloudRecord(
+                themeMode = ThemeMode.LIGHT.name,
+                accentPalette = AccentPalette.MINT.name,
+                language = AppLanguage.UK.name,
+                pushEnabled = true,
+                reminderHour = 9,
+                reminderMinute = 0,
+                soundsEnabled = true,
+                vibrationEnabled = true,
+                biometricEnabled = false,
+                autoSyncEnabled = true,
+                updatedAtMillis = 100L
+            )
+        )
+
+        SettingsSyncContract(localRepo, cloudStore).sync("uid")
+
+        assertEquals(ThemeMode.DARK.name, cloudStore.lastSet?.themeMode)
+        assertEquals(AccentPalette.LAVENDER.name, cloudStore.lastSet?.accentPalette)
+        assertEquals(AppLanguage.EN.name, cloudStore.lastSet?.language)
+    }
+
+    @Test
+    fun invalidRemoteEnums_fallBackToSafeDefaults() = runBlocking {
+        val localRepo = FakeSettingsRepository(AppSettings(updatedAtMillis = 1L))
+        val cloudStore = FakeSettingsCloudStore(
+            remote = SettingsCloudRecord(
+                themeMode = "BROKEN_THEME",
+                accentPalette = "BROKEN_ACCENT",
+                language = "BROKEN_LANG",
+                pushEnabled = false,
+                reminderHour = 7,
+                reminderMinute = 40,
+                soundsEnabled = false,
+                vibrationEnabled = false,
+                biometricEnabled = true,
+                autoSyncEnabled = false,
+                updatedAtMillis = 50L
+            )
+        )
+
+        SettingsSyncContract(localRepo, cloudStore).sync("uid")
+
+        assertEquals(ThemeMode.LIGHT, localRepo.current.themeMode)
+        assertEquals(AccentPalette.MINT, localRepo.current.accentPalette)
+        assertEquals(AppLanguage.UK, localRepo.current.language)
+        assertEquals(false, localRepo.current.pushEnabled)
+        assertEquals(7, localRepo.current.reminderHour)
+        assertEquals(40, localRepo.current.reminderMinute)
+        assertEquals(false, localRepo.current.soundsEnabled)
+        assertEquals(false, localRepo.current.vibrationEnabled)
+        assertEquals(true, localRepo.current.biometricEnabled)
+        assertEquals(false, localRepo.current.autoSyncEnabled)
+    }
+
+    @Test
     fun clear_deletesRemoteRecord() = runBlocking {
         val localRepo = FakeSettingsRepository(AppSettings())
         val cloudStore = FakeSettingsCloudStore(remote = null)
@@ -103,6 +196,7 @@ class SettingsSyncContractTest {
         SettingsSyncContract(localRepo, cloudStore).clearUserData("uid")
 
         assertTrue(cloudStore.cleared)
+        assertNull(cloudStore.get("uid"))
     }
 
     private class FakeSettingsCloudStore(

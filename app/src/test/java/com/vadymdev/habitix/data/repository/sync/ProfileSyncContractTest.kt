@@ -6,13 +6,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ProfileSyncContractTest {
 
     @Test
-    fun guestLocalProfile_whenCloudEmpty_uploadsLocalIdentity() = runBlocking {
+    fun remoteMissing_uploadsLocalIdentity() = runBlocking {
         val local = ProfileIdentity("Guest User", "Guest bio", "GU", null, updatedAtMillis = 55L)
         val localRepo = FakeProfileRepository(local)
         val cloudStore = FakeProfileCloudStore(remote = null)
@@ -23,6 +24,22 @@ class ProfileSyncContractTest {
         assertEquals(local.bio, cloudStore.lastSet?.bio)
         assertEquals(local.updatedAtMillis, cloudStore.lastSet?.updatedAtMillis)
         assertEquals(local.displayName, localRepo.current.displayName)
+    }
+
+    @Test
+    fun remoteNewer_replacesLocalWhenBioPresent() = runBlocking {
+        val localRepo = FakeProfileRepository(
+            ProfileIdentity("Local", "Local bio", "L", null, updatedAtMillis = 10L)
+        )
+        val cloudStore = FakeProfileCloudStore(
+            remote = ProfileCloudRecord("Remote", "Cloud bio", updatedAtMillis = 20L)
+        )
+
+        ProfileSyncContract(localRepo, cloudStore).sync("uid")
+
+        assertEquals("Remote", localRepo.current.displayName)
+        assertEquals("Cloud bio", localRepo.current.bio)
+        assertEquals(20L, localRepo.current.updatedAtMillis)
     }
 
     @Test
@@ -56,6 +73,22 @@ class ProfileSyncContractTest {
     }
 
     @Test
+    fun equalTimestamps_prefersLocalAndUploads() = runBlocking {
+        val localRepo = FakeProfileRepository(
+            ProfileIdentity("Local Name", "Local Bio", "LN", null, updatedAtMillis = 15L)
+        )
+        val cloudStore = FakeProfileCloudStore(
+            remote = ProfileCloudRecord("Remote Name", "Remote Bio", updatedAtMillis = 15L)
+        )
+
+        ProfileSyncContract(localRepo, cloudStore).sync("uid")
+
+        assertEquals("Local Name", cloudStore.lastSet?.displayName)
+        assertEquals("Local Bio", cloudStore.lastSet?.bio)
+        assertEquals(15L, cloudStore.lastSet?.updatedAtMillis)
+    }
+
+    @Test
     fun clear_deletesRemoteRecord() = runBlocking {
         val localRepo = FakeProfileRepository(ProfileIdentity("A", "B", "AB", null, 1L))
         val cloudStore = FakeProfileCloudStore(null)
@@ -63,6 +96,7 @@ class ProfileSyncContractTest {
         ProfileSyncContract(localRepo, cloudStore).clearUserData("uid")
 
         assertTrue(cloudStore.cleared)
+        assertNull(cloudStore.get("uid"))
     }
 
     private class FakeProfileCloudStore(

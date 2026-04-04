@@ -18,8 +18,8 @@ import com.vadymdev.habitix.data.repository.OnboardingRepositoryImpl
 import com.vadymdev.habitix.data.repository.ProfileRepositoryImpl
 import com.vadymdev.habitix.data.repository.SettingsRepositoryImpl
 import com.vadymdev.habitix.data.sync.NetworkConnectivityChecker
-import com.vadymdev.habitix.domain.repository.AuthRepository
 import com.vadymdev.habitix.domain.repository.AchievementSyncRepository
+import com.vadymdev.habitix.domain.repository.AuthRepository
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import com.vadymdev.habitix.domain.repository.OnboardingRepository
@@ -31,8 +31,8 @@ import com.vadymdev.habitix.domain.usecase.CompleteOnboardingUseCase
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.CreateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
-import com.vadymdev.habitix.domain.usecase.DeleteAllHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.DeleteAccountUseCase
+import com.vadymdev.habitix.domain.usecase.DeleteAllHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.DeleteDataUseCase
 import com.vadymdev.habitix.domain.usecase.GetIncompleteHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.HideHabitForDateUseCase
@@ -40,13 +40,10 @@ import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveGuestModeUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveOnboardingUseCase
-import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
-import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
-import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
-import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
-import com.vadymdev.habitix.domain.usecase.SyncProfileUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
 import com.vadymdev.habitix.domain.usecase.SetAutoSyncEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SetBiometricEnabledUseCase
@@ -56,18 +53,21 @@ import com.vadymdev.habitix.domain.usecase.SetReminderTimeUseCase
 import com.vadymdev.habitix.domain.usecase.SetSoundsEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SetThemeModeUseCase
 import com.vadymdev.habitix.domain.usecase.SetVibrationEnabledUseCase
-import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
-import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
-import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
-import com.vadymdev.habitix.domain.usecase.ValidateHabitTitleUseCase
-import com.vadymdev.habitix.domain.usecase.SignOutUseCase
-import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
-import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
+import com.vadymdev.habitix.domain.usecase.SignOutUseCase
+import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
+import com.vadymdev.habitix.domain.usecase.SyncProfileUseCase
 import com.vadymdev.habitix.domain.usecase.SyncSettingsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
+import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateInterestsUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
+import com.vadymdev.habitix.domain.usecase.ValidateHabitTitleUseCase
 import com.vadymdev.habitix.sync.CloudSyncScheduler
 
 class AppContainer(context: Context) {

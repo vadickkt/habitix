@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
+import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase

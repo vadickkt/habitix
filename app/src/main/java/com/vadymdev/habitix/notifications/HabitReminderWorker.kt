@@ -12,7 +12,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
-import com.vadymdev.habitix.R
 import com.vadymdev.habitix.data.local.room.HabitixDatabase
 import com.vadymdev.habitix.data.repository.HabitRepositoryImpl
 import com.vadymdev.habitix.domain.model.AppLanguage

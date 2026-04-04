@@ -144,6 +144,82 @@ class HabitSyncContractTest {
     }
 
     @Test
+    fun completions_uploadAndDownload_resolveByCloudIdOnly() = runBlocking {
+        val localStore = FakeHabitLocalStore(
+            habits = mutableListOf(
+                HabitEntity(
+                    id = 1,
+                    cloudId = "habit-1",
+                    title = "Read",
+                    iconKey = "book",
+                    colorKey = "mint",
+                    frequencyType = "DAILY",
+                    customDaysCsv = "",
+                    reminderEnabled = true,
+                    reminderHour = 8,
+                    reminderMinute = 0,
+                    createdAt = 1L,
+                    startEpochDay = 1L,
+                    activeUntilEpochDay = null,
+                    isArchived = false,
+                    source = "local"
+                )
+            ),
+            completions = mutableListOf(
+                HabitCompletionEntity(habitId = 1, dateEpochDay = 20L, completedAtMillis = 2000L)
+            )
+        )
+        val cloudStore = FakeHabitCloudStore().apply {
+            completions.add(CompletionCloudRecord(cloudId = "habit-1", dateEpochDay = 21L, completedAtMillis = 2100L))
+            completions.add(CompletionCloudRecord(cloudId = "unknown", dateEpochDay = 22L, completedAtMillis = 2200L))
+        }
+
+        HabitSyncContract(localStore, cloudStore).syncUserHabits("uid")
+
+        assertTrue(cloudStore.completions.any { it.cloudId == "habit-1" && it.dateEpochDay == 20L })
+        assertTrue(localStore.completions.any { it.habitId == 1L && it.dateEpochDay == 21L })
+        assertTrue(localStore.completions.none { it.dateEpochDay == 22L })
+    }
+
+    @Test
+    fun hiddenDays_uploadAndDownload_resolveByCloudIdOnly() = runBlocking {
+        val localStore = FakeHabitLocalStore(
+            habits = mutableListOf(
+                HabitEntity(
+                    id = 7,
+                    cloudId = "habit-7",
+                    title = "Workout",
+                    iconKey = "sport",
+                    colorKey = "sky",
+                    frequencyType = "DAILY",
+                    customDaysCsv = "",
+                    reminderEnabled = true,
+                    reminderHour = 8,
+                    reminderMinute = 0,
+                    createdAt = 1L,
+                    startEpochDay = 1L,
+                    activeUntilEpochDay = null,
+                    isArchived = false,
+                    source = "local"
+                )
+            ),
+            hiddenDays = mutableListOf(
+                HiddenHabitDayEntity(habitId = 7, dateEpochDay = 100L)
+            )
+        )
+        val cloudStore = FakeHabitCloudStore().apply {
+            hidden.add(HiddenDayCloudRecord(cloudId = "habit-7", dateEpochDay = 101L))
+            hidden.add(HiddenDayCloudRecord(cloudId = "missing", dateEpochDay = 102L))
+        }
+
+        HabitSyncContract(localStore, cloudStore).syncUserHabits("uid")
+
+        assertTrue(cloudStore.hidden.any { it.cloudId == "habit-7" && it.dateEpochDay == 100L })
+        assertTrue(localStore.hiddenDays.any { it.habitId == 7L && it.dateEpochDay == 101L })
+        assertTrue(localStore.hiddenDays.none { it.dateEpochDay == 102L })
+    }
+
+    @Test
     fun clearUserData_callsCloudClear() = runBlocking {
         val localStore = FakeHabitLocalStore()
         val cloudStore = FakeHabitCloudStore()

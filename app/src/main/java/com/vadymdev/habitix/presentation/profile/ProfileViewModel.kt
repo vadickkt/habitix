@@ -12,8 +12,8 @@ import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
 import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
 import com.vadymdev.habitix.domain.usecase.SyncScope
-import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
+import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

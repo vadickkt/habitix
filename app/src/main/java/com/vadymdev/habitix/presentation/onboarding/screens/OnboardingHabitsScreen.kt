@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,10 +17,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Coffee
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Nightlight
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material3.Icon
@@ -145,7 +144,7 @@ private fun habitIcon(key: String): ImageVector {
         "water" -> Icons.Rounded.Coffee
         "meditation" -> Icons.Rounded.Psychology
         "morning" -> Icons.Rounded.FitnessCenter
-        "reading" -> Icons.Rounded.MenuBook
+        "reading" -> Icons.AutoMirrored.Rounded.MenuBook
         "sleep" -> Icons.Rounded.Nightlight
         "gratitude" -> Icons.Rounded.Favorite
         else -> Icons.Rounded.Favorite

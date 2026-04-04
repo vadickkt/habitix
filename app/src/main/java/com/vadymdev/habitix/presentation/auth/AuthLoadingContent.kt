@@ -42,7 +42,6 @@ import com.vadymdev.habitix.R
 import com.vadymdev.habitix.ui.theme.AppBackground
 import com.vadymdev.habitix.ui.theme.BrandGreen
 import com.vadymdev.habitix.ui.theme.TextPrimary
-import com.vadymdev.habitix.ui.theme.TextSecondary
 
 private const val LOADING_STEP_COUNT = 4
 

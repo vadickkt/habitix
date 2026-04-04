@@ -7,13 +7,13 @@ import com.vadymdev.habitix.domain.model.HabitBadge
 import com.vadymdev.habitix.domain.model.HabitCategoryStat
 import com.vadymdev.habitix.domain.model.HabitStatsSnapshot
 import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)

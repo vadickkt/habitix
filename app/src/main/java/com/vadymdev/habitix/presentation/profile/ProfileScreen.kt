@@ -1,6 +1,5 @@
 package com.vadymdev.habitix.presentation.profile
 
-import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
@@ -11,8 +10,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,10 +23,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,24 +52,24 @@ fun ProfileScreen(
 ) {
     val context = LocalContext.current
     val isUk = language == AppLanguage.UK
-    var showShare by remember { mutableStateOf(false) }
-    var editName by remember { mutableStateOf(false) }
-    var editBio by remember { mutableStateOf(false) }
-    var nameValidationError by remember { mutableStateOf<String?>(null) }
-    var showAvatarActions by remember { mutableStateOf(false) }
-    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
-    var pendingAvatarSourceUri by remember { mutableStateOf<Uri?>(null) }
-    var showAvatarEditor by remember { mutableStateOf(false) }
-    var draftName by remember(state.identity.displayName) { mutableStateOf(state.identity.displayName) }
-    var draftBio by remember(state.identity.bio) { mutableStateOf(state.identity.bio) }
+    val showShare = remember { mutableStateOf(false) }
+    val editName = remember { mutableStateOf(false) }
+    val editBio = remember { mutableStateOf(false) }
+    val nameValidationError = remember { mutableStateOf<String?>(null) }
+    val showAvatarActions = remember { mutableStateOf(false) }
+    val pendingCameraUri = remember { mutableStateOf<Uri?>(null) }
+    val pendingAvatarSourceUri = remember { mutableStateOf<Uri?>(null) }
+    val showAvatarEditor = remember { mutableStateOf(false) }
+    val draftName = remember(state.identity.displayName) { mutableStateOf(state.identity.displayName) }
+    val draftBio = remember(state.identity.bio) { mutableStateOf(state.identity.bio) }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
             persistReadPermissionIfPossible(context, uri)
-            pendingAvatarSourceUri = uri
-            showAvatarEditor = true
+            pendingAvatarSourceUri.value = uri
+            showAvatarEditor.value = true
         }
     }
 
@@ -80,10 +77,10 @@ fun ProfileScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            val sourceUri = pendingCameraUri
+            val sourceUri = pendingCameraUri.value
             if (sourceUri != null) {
-                pendingAvatarSourceUri = sourceUri
-                showAvatarEditor = true
+                pendingAvatarSourceUri.value = sourceUri
+                showAvatarEditor.value = true
             }
         }
     }
@@ -93,7 +90,7 @@ fun ProfileScreen(
     ) { granted ->
         if (granted) {
             val uri = createTempImageUri(context)
-            pendingCameraUri = uri
+            pendingCameraUri.value = uri
             cameraLauncher.launch(uri)
         } else {
             Toast.makeText(context, t(context, isUk, R.string.profile_camera_permission_required_uk, R.string.profile_camera_permission_required_en), Toast.LENGTH_SHORT).show()
@@ -125,9 +122,9 @@ fun ProfileScreen(
                 ProfileHeader(
                     state = state,
                     isUk = isUk,
-                    onEditAvatar = { showAvatarActions = true },
-                    onEditName = { editName = true },
-                    onEditBio = { editBio = true },
+                    onEditAvatar = { showAvatarActions.value = true },
+                    onEditName = { editName.value = true },
+                    onEditBio = { editBio.value = true },
                     onAvatarBroken = { onUpdateAvatar(null) }
                 )
             }
@@ -165,7 +162,7 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
                         .background(MaterialTheme.colorScheme.primary)
-                        .clickable { showShare = true }
+                        .clickable { showShare.value = true }
                         .padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -184,17 +181,17 @@ fun ProfileScreen(
         )
     }
 
-    if (showShare) {
-        ShareProgressDialog(state = state, isUk = isUk, onDismiss = { showShare = false })
+    if (showShare.value) {
+        ShareProgressDialog(state = state, isUk = isUk, onDismiss = { showShare.value = false })
     }
 
-    if (showAvatarActions) {
+    if (showAvatarActions.value) {
         AlertDialog(
-            onDismissRequest = { showAvatarActions = false },
+            onDismissRequest = { showAvatarActions.value = false },
             confirmButton = {
                 TextButton(onClick = {
                     galleryLauncher.launch("image/*")
-                    showAvatarActions = false
+                    showAvatarActions.value = false
                 }) {
                     Text(t(isUk, R.string.profile_gallery_uk, R.string.profile_gallery_en))
                 }
@@ -204,12 +201,12 @@ fun ProfileScreen(
                     val permissionState = ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)
                     if (permissionState == PackageManager.PERMISSION_GRANTED) {
                         val uri = createTempImageUri(context)
-                        pendingCameraUri = uri
+                        pendingCameraUri.value = uri
                         cameraLauncher.launch(uri)
                     } else {
                         cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                     }
-                    showAvatarActions = false
+                    showAvatarActions.value = false
                 }) {
                     Text(t(isUk, R.string.profile_camera_uk, R.string.profile_camera_en))
                 }
@@ -221,7 +218,7 @@ fun ProfileScreen(
                     Text(t(isUk, R.string.profile_avatar_edit_note_uk, R.string.profile_avatar_edit_note_en))
                     TextButton(onClick = {
                         onUpdateAvatar(null)
-                        showAvatarActions = false
+                        showAvatarActions.value = false
                     }) {
                         Text(t(isUk, R.string.profile_reset_avatar_uk, R.string.profile_reset_avatar_en))
                     }
@@ -230,14 +227,14 @@ fun ProfileScreen(
         )
     }
 
-    val editorUri = pendingAvatarSourceUri
-    if (showAvatarEditor && editorUri != null) {
+    val editorUri = pendingAvatarSourceUri.value
+    if (showAvatarEditor.value && editorUri != null) {
         AvatarEditorSheet(
             sourceUri = editorUri,
             isUk = isUk,
             onDismiss = {
-                showAvatarEditor = false
-                pendingAvatarSourceUri = null
+                showAvatarEditor.value = false
+                pendingAvatarSourceUri.value = null
             },
             onConfirm = { transform ->
                 val localPath = saveAvatarWithTransform(context, editorUri, transform)
@@ -247,49 +244,49 @@ fun ProfileScreen(
                     onUpdateAvatar(localPath)
                     Toast.makeText(context, t(context, isUk, R.string.profile_avatar_updated_uk, R.string.profile_avatar_updated_en), Toast.LENGTH_SHORT).show()
                 }
-                showAvatarEditor = false
-                pendingAvatarSourceUri = null
+                showAvatarEditor.value = false
+                pendingAvatarSourceUri.value = null
             }
         )
     }
 
-    if (editName) {
+    if (editName.value) {
         val emptyNameError = t(isUk, R.string.profile_name_empty_error_uk, R.string.profile_name_empty_error_en)
         val shortNameError = t(isUk, R.string.profile_name_short_error_uk, R.string.profile_name_short_error_en)
         EditTextDialog(
             title = t(isUk, R.string.profile_name_uk, R.string.profile_name_en),
-            value = draftName,
-            onValueChange = { draftName = it },
-            error = nameValidationError,
+            value = draftName.value,
+            onValueChange = { draftName.value = it },
+            error = nameValidationError.value,
             confirmText = t(isUk, R.string.common_save_uk, R.string.common_save_en),
             dismissText = t(isUk, R.string.common_cancel_uk, R.string.common_cancel_en),
-            onDismiss = { editName = false },
+            onDismiss = { editName.value = false },
             onConfirm = {
-                val trimmed = draftName.trim()
+                val trimmed = draftName.value.trim()
                 when {
-                    trimmed.isBlank() -> nameValidationError = emptyNameError
-                    trimmed.length < 2 -> nameValidationError = shortNameError
+                    trimmed.isBlank() -> nameValidationError.value = emptyNameError
+                    trimmed.length < 2 -> nameValidationError.value = shortNameError
                     else -> {
-                        nameValidationError = null
+                        nameValidationError.value = null
                         onUpdateName(trimmed)
-                        editName = false
+                        editName.value = false
                     }
                 }
             }
         )
     }
 
-    if (editBio) {
+    if (editBio.value) {
         EditTextDialog(
             title = t(isUk, R.string.profile_bio_uk, R.string.profile_bio_en),
-            value = draftBio,
-            onValueChange = { draftBio = it },
+            value = draftBio.value,
+            onValueChange = { draftBio.value = it },
             confirmText = t(isUk, R.string.common_save_uk, R.string.common_save_en),
             dismissText = t(isUk, R.string.common_cancel_uk, R.string.common_cancel_en),
-            onDismiss = { editBio = false },
+            onDismiss = { editBio.value = false },
             onConfirm = {
-                onUpdateBio(draftBio)
-                editBio = false
+                onUpdateBio(draftBio.value)
+                editBio.value = false
             }
         )
     }

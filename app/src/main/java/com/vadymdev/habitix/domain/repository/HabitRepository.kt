@@ -2,8 +2,8 @@ package com.vadymdev.habitix.domain.repository
 
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
-import com.vadymdev.habitix.domain.model.ProfileAnalytics
 import com.vadymdev.habitix.domain.model.HabitStatsSnapshot
+import com.vadymdev.habitix.domain.model.ProfileAnalytics
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 

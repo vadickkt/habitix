@@ -1,7 +1,7 @@
 package com.vadymdev.habitix.presentation.habit.create
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable

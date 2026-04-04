@@ -8,8 +8,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.DayOfWeek
-import java.time.ZoneOffset
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 class HabitInsightsCalculatorTest {
 
