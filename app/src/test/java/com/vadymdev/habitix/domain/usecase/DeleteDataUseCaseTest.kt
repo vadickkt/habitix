@@ -241,8 +241,10 @@ class DeleteDataUseCaseTest {
             override suspend fun clearUserData(userId: String) = onRemoteClearAchievements()
         }
 
+        val deleteAllHabitsUseCase = DeleteAllHabitsUseCase(habitRepository)
+
         return DeleteDataUseCase(
-            habitRepository = habitRepository,
+            deleteAllHabitsUseCase = deleteAllHabitsUseCase,
             profileRepository = profileRepository,
             settingsRepository = settingsRepository,
             habitSyncRepository = habitSyncRepository,

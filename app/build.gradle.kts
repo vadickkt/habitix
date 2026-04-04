@@ -1,10 +1,10 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
-
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
@@ -42,11 +42,11 @@ android {
     buildFeatures {
         compose = true
     }
+}
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -78,6 +78,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.tracing.ktx)
+    implementation(libs.androidx.profileinstaller)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)

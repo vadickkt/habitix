@@ -2,7 +2,6 @@ package com.vadymdev.habitix.presentation.dashboard
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
@@ -143,27 +142,3 @@ data class DashboardAchievementEvent(
     val title: String,
     val xpReward: Int
 )
-
-class DashboardViewModelFactory(
-    private val observeHabitsForDateUseCase: ObserveHabitsForDateUseCase,
-    private val observeProfileAnalyticsUseCase: ObserveProfileAnalyticsUseCase,
-    private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
-    private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
-    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return DashboardViewModel(
-                observeHabitsForDateUseCase = observeHabitsForDateUseCase,
-                observeProfileAnalyticsUseCase = observeProfileAnalyticsUseCase,
-                toggleHabitCompletionUseCase = toggleHabitCompletionUseCase,
-                deactivateHabitFromDateUseCase = deactivateHabitFromDateUseCase,
-                observeAuthSessionUseCase = observeAuthSessionUseCase,
-                syncOrchestratorUseCase = syncOrchestratorUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
-}

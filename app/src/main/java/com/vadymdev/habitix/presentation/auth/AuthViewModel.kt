@@ -2,7 +2,6 @@ package com.vadymdev.habitix.presentation.auth
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.UserSession
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
@@ -114,21 +113,3 @@ data class AuthUiState(
     val showLoadingFlow: Boolean = false,
     val loadingStepIndex: Int = -1
 )
-
-class AuthViewModelFactory(
-    private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
-    private val continueAsGuestUseCase: ContinueAsGuestUseCase,
-    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return AuthViewModel(
-                signInWithGoogleUseCase = signInWithGoogleUseCase,
-                continueAsGuestUseCase = continueAsGuestUseCase,
-                syncOrchestratorUseCase = syncOrchestratorUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
-}

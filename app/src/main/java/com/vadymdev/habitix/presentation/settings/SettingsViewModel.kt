@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.AccentPalette
 import com.vadymdev.habitix.domain.model.AppLanguage
@@ -48,14 +47,7 @@ class SettingsViewModel(
     private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val deleteDataUseCase: DeleteDataUseCase,
-    private val languageApplier: (AppLanguage) -> Unit = { language ->
-        val tag = when (language) {
-            AppLanguage.UK -> "uk"
-            AppLanguage.EN -> "en"
-        }
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
-    }
+    private val deleteDataUseCase: DeleteDataUseCase
 ) : ViewModel() {
 
     private companion object {
@@ -195,7 +187,11 @@ class SettingsViewModel(
     }
 
     private fun applyLanguage(language: AppLanguage) {
-        languageApplier(language)
+        val tag = when (language) {
+            AppLanguage.UK -> "uk"
+            AppLanguage.EN -> "en"
+        }
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
     }
 }
 
@@ -217,45 +213,3 @@ data class DeleteDataUiState(
     val stepIndex: Int = 0,
     val errorMessage: String? = null
 )
-
-class SettingsViewModelFactory(
-    private val observeSettingsUseCase: ObserveSettingsUseCase,
-    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val setThemeModeUseCase: SetThemeModeUseCase,
-    private val setAccentPaletteUseCase: SetAccentPaletteUseCase,
-    private val setLanguageUseCase: SetLanguageUseCase,
-    private val setPushEnabledUseCase: SetPushEnabledUseCase,
-    private val setReminderTimeUseCase: SetReminderTimeUseCase,
-    private val setSoundsEnabledUseCase: SetSoundsEnabledUseCase,
-    private val setVibrationEnabledUseCase: SetVibrationEnabledUseCase,
-    private val setBiometricEnabledUseCase: SetBiometricEnabledUseCase,
-    private val setAutoSyncEnabledUseCase: SetAutoSyncEnabledUseCase,
-    private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
-    private val signOutUseCase: SignOutUseCase,
-    private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val deleteDataUseCase: DeleteDataUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(
-                observeSettingsUseCase = observeSettingsUseCase,
-                observeAuthSessionUseCase = observeAuthSessionUseCase,
-                setThemeModeUseCase = setThemeModeUseCase,
-                setAccentPaletteUseCase = setAccentPaletteUseCase,
-                setLanguageUseCase = setLanguageUseCase,
-                setPushEnabledUseCase = setPushEnabledUseCase,
-                setReminderTimeUseCase = setReminderTimeUseCase,
-                setSoundsEnabledUseCase = setSoundsEnabledUseCase,
-                setVibrationEnabledUseCase = setVibrationEnabledUseCase,
-                setBiometricEnabledUseCase = setBiometricEnabledUseCase,
-                setAutoSyncEnabledUseCase = setAutoSyncEnabledUseCase,
-                syncOrchestratorUseCase = syncOrchestratorUseCase,
-                signOutUseCase = signOutUseCase,
-                deleteAccountUseCase = deleteAccountUseCase,
-                deleteDataUseCase = deleteDataUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
-}

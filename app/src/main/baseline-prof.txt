@@ -1,0 +1,6 @@
+HSPLcom/vadymdev/habitix/HabitixApplication;->onCreate()V
+HSPLcom/vadymdev/habitix/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/vadymdev/habitix/presentation/HabitixAppKt;->HabitixApp()V
+HSPLcom/vadymdev/habitix/presentation/startup/StartupViewModel;-><init>(Lcom/vadymdev/habitix/domain/usecase/ObserveSettingsUseCase;Lcom/vadymdev/habitix/domain/usecase/ObserveAuthSessionUseCase;)V
+HSPLcom/vadymdev/habitix/notifications/HabitReminderWorker;->doWork(Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+HSPLcom/vadymdev/habitix/sync/CloudSyncWorker;->doWork(Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

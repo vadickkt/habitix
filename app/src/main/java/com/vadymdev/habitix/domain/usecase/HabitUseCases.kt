@@ -27,12 +27,6 @@ class UpdateHabitUseCase(private val repository: HabitRepository) {
     }
 }
 
-class HideHabitForDateUseCase(private val repository: HabitRepository) {
-    suspend operator fun invoke(habitId: Long, date: LocalDate) {
-        repository.hideHabitForDate(habitId, date)
-    }
-}
-
 class DeactivateHabitFromDateUseCase(private val repository: HabitRepository) {
     suspend operator fun invoke(habitId: Long, date: LocalDate) {
         repository.deactivateHabitFromDate(habitId, date)
@@ -47,10 +41,6 @@ class DeleteAllHabitsUseCase(private val repository: HabitRepository) {
 
 class CreateHabitUseCase(private val repository: HabitRepository) {
     suspend operator fun invoke(draft: HabitCreateDraft) = repository.createHabit(draft)
-}
-
-class SeedOnboardingHabitsUseCase(private val repository: HabitRepository) {
-    suspend operator fun invoke(habitKeys: Set<String>) = repository.seedOnboardingHabits(habitKeys)
 }
 
 class GetIncompleteHabitsForDateUseCase(private val repository: HabitRepository) {

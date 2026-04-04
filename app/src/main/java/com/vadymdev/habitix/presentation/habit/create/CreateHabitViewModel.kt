@@ -1,7 +1,6 @@
 package com.vadymdev.habitix.presentation.habit.create
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.DuplicateActiveHabitException
 import com.vadymdev.habitix.domain.model.Habit
@@ -154,25 +153,3 @@ data class CreateHabitUiState(
     val reminderEnabled: Boolean = true,
     val isSaving: Boolean = false
 )
-
-class CreateHabitViewModelFactory(
-    private val createHabitUseCase: CreateHabitUseCase,
-    private val updateHabitUseCase: UpdateHabitUseCase,
-    private val validateHabitTitleUseCase: ValidateHabitTitleUseCase,
-    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(CreateHabitViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return CreateHabitViewModel(
-                createHabitUseCase = createHabitUseCase,
-                updateHabitUseCase = updateHabitUseCase,
-                validateHabitTitleUseCase = validateHabitTitleUseCase,
-                observeAuthSessionUseCase = observeAuthSessionUseCase,
-                syncUserHabitsUseCase = syncUserHabitsUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
-}

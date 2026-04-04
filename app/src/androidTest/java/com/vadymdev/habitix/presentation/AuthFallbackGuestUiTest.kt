@@ -11,9 +11,9 @@ import com.vadymdev.habitix.domain.model.UserSession
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
 import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
-import com.vadymdev.habitix.presentation.auth.GoogleSignInOutcome
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
+import com.vadymdev.habitix.presentation.auth.GoogleSignInOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

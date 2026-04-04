@@ -1,7 +1,6 @@
 package com.vadymdev.habitix.presentation
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveGuestModeUseCase
@@ -33,22 +32,4 @@ class AppViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = AppRoute.Loading
     )
-}
-
-class AppViewModelFactory(
-    private val observeOnboardingUseCase: ObserveOnboardingUseCase,
-    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val observeGuestModeUseCase: ObserveGuestModeUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(AppViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return AppViewModel(
-                observeOnboardingUseCase = observeOnboardingUseCase,
-                observeAuthSessionUseCase = observeAuthSessionUseCase,
-                observeGuestModeUseCase = observeGuestModeUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
 }

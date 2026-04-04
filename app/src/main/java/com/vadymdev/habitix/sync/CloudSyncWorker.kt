@@ -6,14 +6,16 @@ import androidx.work.CoroutineWorker
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
-import com.vadymdev.habitix.di.AppContainer
 import com.vadymdev.habitix.domain.model.SyncDomainException
 import com.vadymdev.habitix.domain.model.SyncFailureKind
+import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
 import com.vadymdev.habitix.domain.usecase.SyncScope
 
 class CloudSyncWorker(
     appContext: Context,
-    params: WorkerParameters
+    params: WorkerParameters,
+    private val firebaseAuth: FirebaseAuth,
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
 ) : CoroutineWorker(appContext, params) {
 
     companion object {
@@ -25,13 +27,12 @@ class CloudSyncWorker(
         maxRetryAttempts = MAX_RETRY_ATTEMPTS,
         syncScope = SyncScope.FULL,
         syncAction = { uid ->
-            val container = AppContainer(applicationContext)
-            container.syncOrchestratorUseCase(uid, SyncScope.FULL).getOrThrow()
+            syncOrchestratorUseCase(uid, SyncScope.FULL).getOrThrow()
         }
     )
 
     override suspend fun doWork(): Result {
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val uid = firebaseAuth.currentUser?.uid
         return policy.execute(runAttemptCount, uid) { level, message, error ->
             when (level) {
                 CloudSyncLogLevel.DEBUG -> Log.d(TAG, message)

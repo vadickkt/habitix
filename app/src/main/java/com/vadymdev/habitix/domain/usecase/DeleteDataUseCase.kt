@@ -1,7 +1,6 @@
 package com.vadymdev.habitix.domain.usecase
 
 import com.vadymdev.habitix.domain.repository.AchievementSyncRepository
-import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import com.vadymdev.habitix.domain.repository.ProfileRepository
 import com.vadymdev.habitix.domain.repository.ProfileSyncRepository
@@ -9,7 +8,7 @@ import com.vadymdev.habitix.domain.repository.SettingsRepository
 import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
 
 class DeleteDataUseCase(
-    private val habitRepository: HabitRepository,
+    private val deleteAllHabitsUseCase: DeleteAllHabitsUseCase,
     private val profileRepository: ProfileRepository,
     private val settingsRepository: SettingsRepository,
     private val habitSyncRepository: HabitSyncRepository,
@@ -21,7 +20,7 @@ class DeleteDataUseCase(
         var firstError: Throwable? = null
 
         runCatching {
-            habitRepository.deleteAllHabits()
+            deleteAllHabitsUseCase()
             profileRepository.clearLocalData()
             settingsRepository.resetToDefaults()
         }.onFailure { firstError = it }

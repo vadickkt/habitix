@@ -1,7 +1,6 @@
 package com.vadymdev.habitix.presentation.stats
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.HabitBadge
 import com.vadymdev.habitix.domain.model.HabitCategoryStat
@@ -132,16 +131,4 @@ enum class StatsMetric {
     BADGES,
     SUCCESS,
     COMPLETED
-}
-
-class StatsViewModelFactory(
-    private val observeStatsUseCase: ObserveStatsUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(StatsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return StatsViewModel(observeStatsUseCase = observeStatsUseCase) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
 }

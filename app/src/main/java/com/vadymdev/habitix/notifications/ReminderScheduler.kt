@@ -16,10 +16,12 @@ object ReminderScheduler {
 
     fun schedule(context: Context, hour: Int, minute: Int) {
         val workManager = WorkManager.getInstance(context)
+        val safeHour = hour.coerceIn(0, 23)
+        val safeMinute = minute.coerceIn(0, 59)
         val now = LocalDateTime.now()
         var nextRun = now
-            .withHour(hour)
-            .withMinute(minute)
+            .withHour(safeHour)
+            .withMinute(safeMinute)
             .withSecond(0)
             .withNano(0)
 

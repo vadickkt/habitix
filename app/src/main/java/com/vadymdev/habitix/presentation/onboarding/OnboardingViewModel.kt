@@ -1,7 +1,6 @@
 package com.vadymdev.habitix.presentation.onboarding
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.HabitTemplate
 import com.vadymdev.habitix.domain.model.InterestCategory
@@ -96,23 +95,3 @@ data class OnboardingUiState(
         HabitTemplate("gratitude", "Вдячність", "🙏")
     )
 )
-
-class OnboardingViewModelFactory(
-    private val observeOnboardingUseCase: ObserveOnboardingUseCase,
-    private val updateInterestsUseCase: UpdateInterestsUseCase,
-    private val updateHabitsUseCase: UpdateHabitsUseCase,
-    private val completeOnboardingUseCase: CompleteOnboardingUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(OnboardingViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return OnboardingViewModel(
-                observeOnboardingUseCase = observeOnboardingUseCase,
-                updateInterestsUseCase = updateInterestsUseCase,
-                updateHabitsUseCase = updateHabitsUseCase,
-                completeOnboardingUseCase = completeOnboardingUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
-}

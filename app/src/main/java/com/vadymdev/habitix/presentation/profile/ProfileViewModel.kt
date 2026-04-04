@@ -2,7 +2,6 @@ package com.vadymdev.habitix.presentation.profile
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.domain.model.ProfileAnalytics
@@ -15,6 +14,7 @@ import com.vadymdev.habitix.domain.usecase.SyncScope
 import com.vadymdev.habitix.domain.usecase.UpdateProfileAvatarUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileBioUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateProfileNameUseCase
+import com.vadymdev.habitix.domain.usecase.ValidateProfileNameUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +29,8 @@ class ProfileViewModel(
     private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
     private val updateProfileNameUseCase: UpdateProfileNameUseCase,
     private val updateProfileBioUseCase: UpdateProfileBioUseCase,
-    private val updateProfileAvatarUseCase: UpdateProfileAvatarUseCase
+    private val updateProfileAvatarUseCase: UpdateProfileAvatarUseCase,
+    private val validateProfileNameUseCase: ValidateProfileNameUseCase
 ) : ViewModel() {
 
     private companion object {
@@ -92,6 +93,12 @@ class ProfileViewModel(
 
     fun updateName(value: String) {
         viewModelScope.launch {
+            val validation = validateProfileNameUseCase(value)
+            if (!validation.isValid) {
+                Log.d(TAG, "Skip profile name update: ${validation.errorMessage}")
+                return@launch
+            }
+
             updateProfileNameUseCase(value)
             currentUserId.value?.let { uid ->
                 syncOrchestratorUseCase(uid, SyncScope.PROFILE_ONLY)
@@ -165,29 +172,3 @@ data class ProfileUiState(
     val unlockedCount: Int = 0,
     val isAvatarUpdating: Boolean = false
 )
-
-class ProfileViewModelFactory(
-    private val observeProfileIdentityUseCase: ObserveProfileIdentityUseCase,
-    private val observeProfileAnalyticsUseCase: ObserveProfileAnalyticsUseCase,
-    private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
-    private val updateProfileNameUseCase: UpdateProfileNameUseCase,
-    private val updateProfileBioUseCase: UpdateProfileBioUseCase,
-    private val updateProfileAvatarUseCase: UpdateProfileAvatarUseCase
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ProfileViewModel(
-                observeProfileIdentityUseCase = observeProfileIdentityUseCase,
-                observeProfileAnalyticsUseCase = observeProfileAnalyticsUseCase,
-                observeAuthSessionUseCase = observeAuthSessionUseCase,
-                syncOrchestratorUseCase = syncOrchestratorUseCase,
-                updateProfileNameUseCase = updateProfileNameUseCase,
-                updateProfileBioUseCase = updateProfileBioUseCase,
-                updateProfileAvatarUseCase = updateProfileAvatarUseCase
-            ) as T
-        }
-        error("Unknown ViewModel class: ${modelClass.simpleName}")
-    }
-}

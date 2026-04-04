@@ -11,30 +11,23 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
-import com.vadymdev.habitix.data.local.room.HabitixDatabase
-import com.vadymdev.habitix.data.repository.HabitRepositoryImpl
 import com.vadymdev.habitix.domain.model.AppLanguage
+import com.vadymdev.habitix.domain.usecase.GetCurrentSettingsUseCase
+import com.vadymdev.habitix.domain.usecase.GetIncompleteHabitsForDateUseCase
 import java.time.LocalDate
 
 class HabitReminderWorker(
     appContext: Context,
-    params: WorkerParameters
+    params: WorkerParameters,
+    private val getCurrentSettingsUseCase: GetCurrentSettingsUseCase,
+    private val getIncompleteHabitsForDateUseCase: GetIncompleteHabitsForDateUseCase
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
-        val database = HabitixDatabase.get(applicationContext)
-        val repository = HabitRepositoryImpl(
-            habitDao = database.habitDao(),
-            completionDao = database.habitCompletionDao(),
-            hiddenDayDao = database.hiddenHabitDayDao(),
-            achievementUnlockDao = database.achievementUnlockDao()
-        )
-
-        val settings = SettingsPreferencesDataSource(applicationContext).getCurrentSettings()
+        val settings = getCurrentSettingsUseCase()
         if (!settings.pushEnabled) return Result.success()
 
-        val incomplete = repository.getIncompleteHabitsForDate(LocalDate.now())
+        val incomplete = getIncompleteHabitsForDateUseCase(LocalDate.now())
             .filter { it.reminderEnabled }
         if (incomplete.isEmpty()) return Result.success()
 
@@ -67,6 +60,8 @@ class HabitReminderWorker(
     }
 
     private fun createChannelIfNeeded(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
         val channel = NotificationChannel(
             CHANNEL_ID,
             "Habit reminders",

@@ -19,6 +19,7 @@ import com.vadymdev.habitix.domain.repository.ProfileSyncRepository
 import com.vadymdev.habitix.domain.repository.SettingsRepository
 import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
 import com.vadymdev.habitix.domain.usecase.DeleteAccountUseCase
+import com.vadymdev.habitix.domain.usecase.DeleteAllHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.DeleteDataUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveAuthSessionUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
@@ -218,8 +219,10 @@ class SettingsViewModelIntegrationTest {
             override suspend fun clearUserData(userId: String) = Unit
         }
 
+        val deleteAllHabitsUseCase = DeleteAllHabitsUseCase(habitRepo)
+
         val deleteDataUseCase = DeleteDataUseCase(
-            habitRepository = habitRepo,
+            deleteAllHabitsUseCase = deleteAllHabitsUseCase,
             profileRepository = profileRepo,
             settingsRepository = settingsRepo,
             habitSyncRepository = habitSync,
@@ -243,8 +246,7 @@ class SettingsViewModelIntegrationTest {
             syncOrchestratorUseCase = orchestrator,
             signOutUseCase = SignOutUseCase(authRepo),
             deleteAccountUseCase = DeleteAccountUseCase(authRepo),
-            deleteDataUseCase = deleteDataUseCase,
-            languageApplier = {}
+            deleteDataUseCase = deleteDataUseCase
         )
     }
 
