@@ -1,6 +1,7 @@
 package com.vadymdev.habitix
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,6 +18,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
 
+    private companion object {
+        private const val TAG = "MainActivity"
+    }
+
     private val startupViewModel: StartupViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,20 +31,27 @@ class MainActivity : ComponentActivity() {
             lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     startupViewModel.startupState.collect { state ->
+                        if (!state.isReady) return@collect
+
                         if (state.pushEnabled) {
-                            ReminderScheduler.schedule(
-                                context = this@MainActivity,
-                                hour = state.reminderHour,
-                                minute = state.reminderMinute
-                            )
+                            runCatching {
+                                ReminderScheduler.schedule(
+                                    context = this@MainActivity,
+                                    hour = state.reminderHour,
+                                    minute = state.reminderMinute
+                                )
+                            }.onFailure { Log.w(TAG, "Reminder scheduling failed", it) }
                         } else {
-                            ReminderScheduler.cancel(this@MainActivity)
+                            runCatching { ReminderScheduler.cancel(this@MainActivity) }
+                                .onFailure { Log.w(TAG, "Reminder cancel failed", it) }
                         }
 
-                        updateCloudSync(
-                            autoSyncEnabled = state.autoSyncEnabled,
-                            hasAuthorizedUser = state.hasAuthorizedUser
-                        )
+                        runCatching {
+                            updateCloudSync(
+                                autoSyncEnabled = state.autoSyncEnabled,
+                                hasAuthorizedUser = state.hasAuthorizedUser
+                            )
+                        }.onFailure { Log.w(TAG, "Cloud sync scheduling failed", it) }
                     }
                 }
             }

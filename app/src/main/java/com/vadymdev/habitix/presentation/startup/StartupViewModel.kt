@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 
 data class StartupState(
+    val isReady: Boolean = false,
     val pushEnabled: Boolean = false,
     val reminderHour: Int = 20,
     val reminderMinute: Int = 0,
@@ -28,6 +29,7 @@ class StartupViewModel(
         observeAuthSessionUseCase()
     ) { settings, session ->
         StartupState(
+            isReady = true,
             pushEnabled = settings.pushEnabled,
             reminderHour = settings.reminderHour,
             reminderMinute = settings.reminderMinute,

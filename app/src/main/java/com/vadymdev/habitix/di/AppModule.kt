@@ -1,5 +1,6 @@
 package com.vadymdev.habitix.di
 
+import androidx.work.WorkerFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.vadymdev.habitix.data.local.AuthPreferencesDataSource
@@ -198,7 +199,7 @@ val appModule = module {
             getCurrentSettingsUseCase = get(),
             getIncompleteHabitsForDateUseCase = get()
         )
-    }
+    } bind WorkerFactory::class
 
     single {
         DeleteDataUseCase(
