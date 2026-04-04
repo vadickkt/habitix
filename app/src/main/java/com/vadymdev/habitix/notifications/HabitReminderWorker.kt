@@ -68,8 +68,6 @@ class HabitReminderWorker(
     }
 
     private fun createChannelIfNeeded(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
         val channel = NotificationChannel(
             CHANNEL_ID,
             "Habit reminders",
