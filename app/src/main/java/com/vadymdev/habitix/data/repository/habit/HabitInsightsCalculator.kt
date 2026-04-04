@@ -118,15 +118,15 @@ class HabitInsightsCalculator {
         val successRate = if (totalPossible == 0) 0 else ((totalDone * 100f) / totalPossible).toInt().coerceIn(0, 100)
 
         val heatmapCounts = buildList {
-            repeat(15 * 7) { idx ->
-                val date = today.minusDays((15 * 7 - 1 - idx).toLong())
+            repeat(periodDays) { idx ->
+                val date = today.minusDays((periodDays - 1 - idx).toLong())
                 add(completionByDate[date.toEpochDay()]?.size ?: 0)
             }
         }
 
         val heatmapLevels = buildList {
             val maxCount = heatmapCounts.maxOrNull()?.coerceAtLeast(1) ?: 1
-            repeat(15 * 7) { idx ->
+            repeat(periodDays) { idx ->
                 val count = heatmapCounts[idx]
                 val ratio = count.toFloat() / maxCount.toFloat()
                 add(
@@ -151,7 +151,7 @@ class HabitInsightsCalculator {
             completedTasksCount = completedTasks,
             heatmapLevels = heatmapLevels,
             heatmapCounts = heatmapCounts,
-            heatmapStartEpochDay = today.minusDays((15 * 7 - 1).toLong()).toEpochDay(),
+            heatmapStartEpochDay = today.minusDays((periodDays - 1).toLong()).toEpochDay(),
             categoryStats = categoryStats,
             badges = badges
         )

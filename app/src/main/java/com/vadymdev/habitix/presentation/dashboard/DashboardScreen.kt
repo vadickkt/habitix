@@ -319,7 +319,7 @@ private fun HeaderBlock(state: DashboardUiState, isUk: Boolean) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "${state.completedCount}/${if (state.totalCount == 0) 1 else state.totalCount}",
+                text = "${state.completedCount}/${state.totalCount}",
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )

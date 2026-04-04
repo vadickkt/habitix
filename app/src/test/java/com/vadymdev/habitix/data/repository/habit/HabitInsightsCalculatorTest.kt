@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.DayOfWeek
+import java.time.ZoneOffset
 import java.time.LocalDate
 
 class HabitInsightsCalculatorTest {
@@ -92,4 +93,56 @@ class HabitInsightsCalculatorTest {
         assertTrue(week7.unlocked)
         assertEquals(LocalDate.of(2026, 3, 2), week7.unlockedDate)
     }
+
+    @Test
+    fun buildStatsSnapshot_period7_builds7HeatmapCellsAndStartDate() {
+        val today = LocalDate.of(2026, 4, 4)
+        val habit = testHabit(id = 1, createdAtMillis = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000)
+
+        val snapshot = calculator.buildStatsSnapshot(
+            habits = listOf(habit),
+            completions = emptyList(),
+            periodDays = 7,
+            today = today
+        )
+
+        assertEquals(7, snapshot.heatmapLevels.size)
+        assertEquals(7, snapshot.heatmapCounts.size)
+        assertEquals(today.minusDays(6).toEpochDay(), snapshot.heatmapStartEpochDay)
+    }
+
+    @Test
+    fun buildStatsSnapshot_period90_builds90HeatmapCellsAndStartDate() {
+        val today = LocalDate.of(2026, 4, 4)
+        val habit = testHabit(id = 1, createdAtMillis = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000)
+
+        val snapshot = calculator.buildStatsSnapshot(
+            habits = listOf(habit),
+            completions = emptyList(),
+            periodDays = 90,
+            today = today
+        )
+
+        assertEquals(90, snapshot.heatmapLevels.size)
+        assertEquals(90, snapshot.heatmapCounts.size)
+        assertEquals(today.minusDays(89).toEpochDay(), snapshot.heatmapStartEpochDay)
+    }
+
+    private fun testHabit(id: Long, createdAtMillis: Long): HabitEntity = HabitEntity(
+        id = id,
+        cloudId = "c$id",
+        title = "Habit $id",
+        iconKey = "water",
+        colorKey = "mint",
+        frequencyType = "DAILY",
+        customDaysCsv = "",
+        reminderEnabled = true,
+        reminderHour = 9,
+        reminderMinute = 0,
+        createdAt = createdAtMillis,
+        startEpochDay = LocalDate.of(2026, 1, 1).toEpochDay(),
+        activeUntilEpochDay = null,
+        isArchived = false,
+        source = "manual"
+    )
 }

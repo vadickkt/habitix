@@ -114,9 +114,9 @@ data class StatsUiState(
         earnedBadgesCount = 0,
         successRatePercent = 0,
         completedTasksCount = 0,
-        heatmapLevels = List(15 * 7) { 0 },
-        heatmapCounts = List(15 * 7) { 0 },
-        heatmapStartEpochDay = LocalDate.now().minusDays((15 * 7 - 1).toLong()).toEpochDay(),
+        heatmapLevels = List(30) { 0 },
+        heatmapCounts = List(30) { 0 },
+        heatmapStartEpochDay = LocalDate.now().minusDays(29L).toEpochDay(),
         categoryStats = emptyList(),
         badges = emptyList()
     )

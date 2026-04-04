@@ -81,6 +81,35 @@ class AuthDashboardSettingsUiTest {
     }
 
     @Test
+    fun dashboard_withNoHabits_showsZeroOfZeroCounter() {
+        val state = DashboardUiState(
+            selectedDate = LocalDate.of(2026, 4, 4),
+            habits = emptyList(),
+            completedCount = 0,
+            totalCount = 0
+        )
+
+        composeRule.setContent {
+            DashboardScreen(
+                state = state,
+                language = AppLanguage.UK,
+                onDateSelected = {},
+                onToggleHabit = {},
+                vibrationEnabled = false,
+                onConsumeAchievementEvent = {},
+                onDeleteHabit = {},
+                onEditHabit = {},
+                onCreateHabit = {},
+                onOpenSettings = {},
+                onOpenStats = {},
+                onOpenProfile = {}
+            )
+        }
+
+        composeRule.onNodeWithText("0/0").assertIsDisplayed()
+    }
+
+    @Test
     fun settings_signOutDialog_confirm_invokesCallback() {
         val signOutCalls = AtomicInteger(0)
 

@@ -17,9 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -225,6 +222,7 @@ private fun StatCard(modifier: Modifier, card: StatCardData, onClick: () -> Unit
 @Composable
 private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
+    val rows = levels.chunked(7)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -234,17 +232,15 @@ private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> U
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(t(isUk, "Активність", "Activity"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.fillMaxWidth()) {
-            repeat(15) { week ->
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    repeat(7) { day ->
-                        val index = week * 7 + day
-                        val level = levels.getOrElse(index) { 0 }
-                        val color = heatmapColor(level, primary)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            rows.forEachIndexed { rowIndex, row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    row.forEachIndexed { dayIndex, level ->
+                        val index = rowIndex * 7 + dayIndex
                         Box(
                             modifier = Modifier
                                 .size(13.dp)
-                                .background(color, CircleShape)
+                                .background(heatmapColor(level, primary), CircleShape)
                                 .clickable { onDayClick(index) }
                         )
                     }
@@ -317,6 +313,7 @@ private fun CategoryCard(categories: List<HabitCategoryStat>, isUk: Boolean, onC
 @Composable
 private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (HabitBadge) -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
+    val badgeRows = badges.chunked(3)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -327,28 +324,36 @@ private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (H
     ) {
         Text(t(isUk, "Досягнення", "Achievements"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.height(180.dp)
-        ) {
-            items(badges) { badge ->
-                Column(
-                    modifier = Modifier
-                        .background(if (badge.earned) primary.copy(alpha = 0.12f) else Color(0xFFF0EFEC), RoundedCornerShape(14.dp))
-                        .clickable { onBadgeClick(badge) }
-                        .padding(vertical = 10.dp, horizontal = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            badgeRows.forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(badge.emoji, style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        localizedBadgeTitle(badge, isUk),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (badge.earned) TextPrimary else TextSecondary,
-                        fontWeight = if (badge.earned) FontWeight.SemiBold else FontWeight.Normal
-                    )
+                    row.forEach { badge ->
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(96.dp)
+                                .background(if (badge.earned) primary.copy(alpha = 0.12f) else Color(0xFFF0EFEC), RoundedCornerShape(14.dp))
+                                .clickable { onBadgeClick(badge) }
+                                .padding(vertical = 10.dp, horizontal = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)
+                        ) {
+                            Text(badge.emoji, style = MaterialTheme.typography.headlineSmall)
+                            Text(
+                                localizedBadgeTitle(badge, isUk),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (badge.earned) TextPrimary else TextSecondary,
+                                fontWeight = if (badge.earned) FontWeight.SemiBold else FontWeight.Normal,
+                                maxLines = 2
+                            )
+                        }
+                    }
+                    repeat(3 - row.size) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
