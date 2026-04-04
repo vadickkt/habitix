@@ -27,11 +27,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Run unit tests
-        run: ./gradlew :app:testDebugUnitTest
+        run: bash ./gradlew :app:testDebugUnitTest
 
       - name: Compile Android tests
-        run: ./gradlew :app:compileDebugAndroidTestKotlin
+        run: bash ./gradlew :app:compileDebugAndroidTestKotlin
 
   instrumentation:
     name: Connected Android Tests
@@ -52,10 +55,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Run instrumentation tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           profile: pixel_6
-          script: ./gradlew :app:connectedDebugAndroidTest
+          script: bash ./gradlew :app:connectedDebugAndroidTest
