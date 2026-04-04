@@ -5,8 +5,9 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestoreException
 import com.vadymdev.habitix.di.AppContainer
+import com.vadymdev.habitix.domain.model.SyncDomainException
+import com.vadymdev.habitix.domain.model.SyncFailureKind
 import com.vadymdev.habitix.domain.usecase.SyncScope
 
 class CloudSyncWorker(
@@ -45,18 +46,12 @@ class CloudSyncWorker(
     }
 
     private fun shouldRetry(error: Throwable): Boolean {
-        val firestoreError = generateSequence(error) { it.cause }
-            .filterIsInstance<FirebaseFirestoreException>()
+        val syncError = generateSequence(error) { it.cause }
+            .filterIsInstance<SyncDomainException>()
             .firstOrNull()
 
-        if (firestoreError != null) {
-            return when (firestoreError.code) {
-                FirebaseFirestoreException.Code.PERMISSION_DENIED,
-                FirebaseFirestoreException.Code.INVALID_ARGUMENT,
-                FirebaseFirestoreException.Code.FAILED_PRECONDITION,
-                FirebaseFirestoreException.Code.UNAUTHENTICATED -> false
-                else -> true
-            }
+        if (syncError != null) {
+            return syncError.kind == SyncFailureKind.TRANSIENT
         }
 
         return true

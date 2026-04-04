@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -51,6 +52,23 @@ interface HabitDao {
 
     @Query("DELETE FROM habits")
     suspend fun deleteAllHabits()
+
+    @Query("DELETE FROM habit_completions")
+    suspend fun deleteAllCompletions()
+
+    @Query("DELETE FROM hidden_habit_days")
+    suspend fun deleteAllHiddenDays()
+
+    @Query("DELETE FROM achievement_unlocks")
+    suspend fun deleteAllAchievementUnlocks()
+
+    @Transaction
+    suspend fun deleteAllHabitGraph() {
+        deleteAllCompletions()
+        deleteAllHiddenDays()
+        deleteAllAchievementUnlocks()
+        deleteAllHabits()
+    }
 
     @Query(
         "UPDATE habits SET title = :title, iconKey = :iconKey, colorKey = :colorKey, frequencyType = :frequencyType, customDaysCsv = :customDaysCsv, reminderEnabled = :reminderEnabled, reminderHour = :reminderHour, reminderMinute = :reminderMinute, startEpochDay = :startEpochDay, activeUntilEpochDay = :activeUntilEpochDay, isArchived = :isArchived WHERE id = :id"

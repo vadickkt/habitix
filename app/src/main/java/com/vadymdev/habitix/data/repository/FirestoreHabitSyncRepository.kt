@@ -2,12 +2,14 @@ package com.vadymdev.habitix.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.vadymdev.habitix.data.repository.sync.mapSyncThrowable
 import com.vadymdev.habitix.data.local.room.HabitCompletionDao
 import com.vadymdev.habitix.data.local.room.HabitCompletionEntity
 import com.vadymdev.habitix.data.local.room.HabitDao
 import com.vadymdev.habitix.data.local.room.HabitEntity
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
+import com.vadymdev.habitix.domain.model.SyncTarget
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,20 +31,24 @@ class FirestoreHabitSyncRepository(
     }
 
     override suspend fun clearUserData(userId: String) {
-        deleteCollection("users/$userId/habits")
-        deleteCollection("users/$userId/habit_completions")
-        deleteCollection("users/$userId/habit_hidden_days")
+        runCatching {
+            deleteCollection("users/$userId/habits")
+            deleteCollection("users/$userId/habit_completions")
+            deleteCollection("users/$userId/habit_hidden_days")
+        }.getOrElse { throw mapSyncThrowable(SyncTarget.HABITS, it) }
     }
 
     override suspend fun syncUserHabits(userId: String) {
-        syncMutex.withLock {
-            uploadLocalHabits(userId)
-            downloadCloudHabits(userId)
-            uploadLocalCompletions(userId)
-            downloadCloudCompletions(userId)
-            uploadLocalHiddenDays(userId)
-            downloadCloudHiddenDays(userId)
-        }
+        runCatching {
+            syncMutex.withLock {
+                uploadLocalHabits(userId)
+                downloadCloudHabits(userId)
+                uploadLocalCompletions(userId)
+                downloadCloudCompletions(userId)
+                uploadLocalHiddenDays(userId)
+                downloadCloudHiddenDays(userId)
+            }
+        }.getOrElse { throw mapSyncThrowable(SyncTarget.HABITS, it) }
     }
 
     private suspend fun uploadLocalHabits(userId: String) {

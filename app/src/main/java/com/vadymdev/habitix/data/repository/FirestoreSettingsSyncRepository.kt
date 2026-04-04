@@ -1,9 +1,11 @@
 package com.vadymdev.habitix.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.vadymdev.habitix.data.repository.sync.mapSyncThrowable
 import com.vadymdev.habitix.domain.model.AccentPalette
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.AppSettings
+import com.vadymdev.habitix.domain.model.SyncTarget
 import com.vadymdev.habitix.domain.model.ThemeMode
 import com.vadymdev.habitix.domain.repository.SettingsRepository
 import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
@@ -21,32 +23,36 @@ class FirestoreSettingsSyncRepository(
     }
 
     override suspend fun clearUserData(userId: String) {
-        firestore.collection("users")
-            .document(userId)
-            .collection("meta")
-            .document("settings")
-            .delete()
-            .await()
+        runCatching {
+            firestore.collection("users")
+                .document(userId)
+                .collection("meta")
+                .document("settings")
+                .delete()
+                .await()
+        }.getOrElse { throw mapSyncThrowable(SyncTarget.SETTINGS, it) }
     }
 
     override suspend fun sync(userId: String) {
-        syncMutex.withLock {
-            val local = settingsRepository.getCurrentSettings()
-            val docRef = firestore.collection("users").document(userId).collection("meta").document("settings")
-            val cloudDoc = docRef.get().await()
+        runCatching {
+            syncMutex.withLock {
+                val local = settingsRepository.getCurrentSettings()
+                val docRef = firestore.collection("users").document(userId).collection("meta").document("settings")
+                val cloudDoc = docRef.get().await()
 
-            if (!cloudDoc.exists()) {
-                upload(docRef = docRef.path, settings = local)
-                return
-            }
+                if (!cloudDoc.exists()) {
+                    upload(docRef = docRef.path, settings = local)
+                    return
+                }
 
-            val remote = cloudDoc.toSettings()
-            if (remote.updatedAtMillis > local.updatedAtMillis) {
-                settingsRepository.replaceAll(remote)
-            } else {
-                upload(docRef.path, local)
+                val remote = cloudDoc.toSettings()
+                if (remote.updatedAtMillis > local.updatedAtMillis) {
+                    settingsRepository.replaceAll(remote)
+                } else {
+                    upload(docRef.path, local)
+                }
             }
-        }
+        }.getOrElse { throw mapSyncThrowable(SyncTarget.SETTINGS, it) }
     }
 
     private suspend fun upload(docRef: String, settings: AppSettings) {

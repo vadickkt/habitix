@@ -3,7 +3,7 @@ package com.vadymdev.habitix.presentation.habit.create
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.vadymdev.habitix.domain.model.DUPLICATE_ACTIVE_HABIT_ERROR
+import com.vadymdev.habitix.domain.model.DuplicateActiveHabitException
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.domain.model.Habit
@@ -129,15 +129,11 @@ class CreateHabitViewModel(
                 }
                 resetDraft()
                 onSaved()
-            } catch (error: IllegalArgumentException) {
-                if (error.message == DUPLICATE_ACTIVE_HABIT_ERROR) {
-                    _state.update {
-                        it.copy(
-                            titleError = "Така звичка вже існує на сьогодні"
-                        )
-                    }
-                } else {
-                    throw error
+            } catch (_: DuplicateActiveHabitException) {
+                _state.update {
+                    it.copy(
+                        titleError = "Така звичка вже існує на сьогодні"
+                    )
                 }
             } finally {
                 _state.update { it.copy(isSaving = false) }

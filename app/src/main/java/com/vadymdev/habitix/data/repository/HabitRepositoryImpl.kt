@@ -8,7 +8,7 @@ import com.vadymdev.habitix.data.local.room.HabitEntity
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
 import com.vadymdev.habitix.data.repository.habit.HabitInsightsCalculator
-import com.vadymdev.habitix.domain.model.DUPLICATE_ACTIVE_HABIT_ERROR
+import com.vadymdev.habitix.domain.model.DuplicateActiveHabitException
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
@@ -134,10 +134,7 @@ class HabitRepositoryImpl(
     }
 
     override suspend fun deleteAllHabits() {
-        completionDao.removeAll()
-        hiddenDayDao.deleteAll()
-        habitDao.deleteAllHabits()
-        achievementUnlockDao.deleteAll()
+        habitDao.deleteAllHabitGraph()
     }
 
     override suspend fun createHabit(draft: HabitCreateDraft) {
@@ -147,7 +144,7 @@ class HabitRepositoryImpl(
             insightsCalculator.matches(existing, today) && normalizeTitle(existing.title) == normalizedTitle
         }
         if (duplicateExists) {
-            throw IllegalArgumentException(DUPLICATE_ACTIVE_HABIT_ERROR)
+            throw DuplicateActiveHabitException()
         }
 
         val customDaysCsv = draft.customDays

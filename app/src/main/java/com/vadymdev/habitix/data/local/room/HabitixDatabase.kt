@@ -2,12 +2,14 @@ package com.vadymdev.habitix.data.local.room
 
 import android.content.Context
 import androidx.room.Database
+import androidx.room.migration.Migration
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [HabitEntity::class, HabitCompletionEntity::class, HiddenHabitDayEntity::class, AchievementUnlockEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class HabitixDatabase : RoomDatabase() {
@@ -18,6 +20,12 @@ abstract class HabitixDatabase : RoomDatabase() {
     abstract fun achievementUnlockDao(): AchievementUnlockDao
 
     companion object {
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // No schema changes; explicit migration removes destructive fallback strategy.
+            }
+        }
+
         @Volatile
         private var instance: HabitixDatabase? = null
 
@@ -27,7 +35,7 @@ abstract class HabitixDatabase : RoomDatabase() {
                     context.applicationContext,
                     HabitixDatabase::class.java,
                     "habitix.db"
-                ).fallbackToDestructiveMigration(true).build().also { instance = it }
+                ).addMigrations(MIGRATION_5_6).build().also { instance = it }
             }
         }
     }

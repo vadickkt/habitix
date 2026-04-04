@@ -4,6 +4,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.vadymdev.habitix.data.local.room.AchievementUnlockDao
 import com.vadymdev.habitix.data.local.room.AchievementUnlockEntity
+import com.vadymdev.habitix.data.repository.sync.mapSyncThrowable
+import com.vadymdev.habitix.domain.model.SyncTarget
 import com.vadymdev.habitix.domain.repository.AchievementSyncRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -23,56 +25,60 @@ class FirestoreAchievementSyncRepository(
     }
 
     override suspend fun clearUserData(userId: String) {
-        deleteCollection("users/$userId/achievements")
+        runCatching {
+            deleteCollection("users/$userId/achievements")
+        }.getOrElse { throw mapSyncThrowable(SyncTarget.ACHIEVEMENTS, it) }
     }
 
     override suspend fun sync(userId: String) {
-        syncMutex.withLock {
-            val localUnlocks = achievementUnlockDao.getAllUnlocks().associateBy { it.achievementId }
-            val remoteDocs = firestore.collection("users")
-                .document(userId)
-                .collection("achievements")
-                .get()
-                .await()
-                .documents
+        runCatching {
+            syncMutex.withLock {
+                val localUnlocks = achievementUnlockDao.getAllUnlocks().associateBy { it.achievementId }
+                val remoteDocs = firestore.collection("users")
+                    .document(userId)
+                    .collection("achievements")
+                    .get()
+                    .await()
+                    .documents
 
-            val remoteById = remoteDocs.associateBy { it.id }
+                val remoteById = remoteDocs.associateBy { it.id }
 
-            localUnlocks.values.forEach { local ->
-                val remote = remoteById[local.achievementId]
-                val localUpdatedAt = epochDayToMillis(local.unlockedEpochDay)
-                val remoteUpdatedAt = remote?.getLong("updatedAtMillis") ?: 0L
-                if (remote == null || localUpdatedAt >= remoteUpdatedAt) {
-                    uploadUnlock(userId = userId, unlock = local, updatedAtMillis = localUpdatedAt)
+                localUnlocks.values.forEach { local ->
+                    val remote = remoteById[local.achievementId]
+                    val localUpdatedAt = epochDayToMillis(local.unlockedEpochDay)
+                    val remoteUpdatedAt = remote?.getLong("updatedAtMillis") ?: 0L
+                    if (remote == null || localUpdatedAt >= remoteUpdatedAt) {
+                        uploadUnlock(userId = userId, unlock = local, updatedAtMillis = localUpdatedAt)
+                    }
+                }
+
+                remoteDocs.forEach { doc ->
+                    val achievementId = doc.getString("achievementId") ?: doc.id
+                    val remoteEpochDay = doc.getLong("unlockedEpochDay") ?: return@forEach
+                    val remoteUpdatedAt = doc.getLong("updatedAtMillis") ?: epochDayToMillis(remoteEpochDay)
+                    val local = localUnlocks[achievementId]
+                    if (local == null) {
+                        achievementUnlockDao.insertIgnore(
+                            AchievementUnlockEntity(
+                                achievementId = achievementId,
+                                unlockedEpochDay = remoteEpochDay
+                            )
+                        )
+                        return@forEach
+                    }
+
+                    val localUpdatedAt = epochDayToMillis(local.unlockedEpochDay)
+                    if (remoteUpdatedAt > localUpdatedAt) {
+                        achievementUnlockDao.insertOrReplace(
+                            AchievementUnlockEntity(
+                                achievementId = achievementId,
+                                unlockedEpochDay = remoteEpochDay
+                            )
+                        )
+                    }
                 }
             }
-
-            remoteDocs.forEach { doc ->
-                val achievementId = doc.getString("achievementId") ?: doc.id
-                val remoteEpochDay = doc.getLong("unlockedEpochDay") ?: return@forEach
-                val remoteUpdatedAt = doc.getLong("updatedAtMillis") ?: epochDayToMillis(remoteEpochDay)
-                val local = localUnlocks[achievementId]
-                if (local == null) {
-                    achievementUnlockDao.insertIgnore(
-                        AchievementUnlockEntity(
-                            achievementId = achievementId,
-                            unlockedEpochDay = remoteEpochDay
-                        )
-                    )
-                    return@forEach
-                }
-
-                val localUpdatedAt = epochDayToMillis(local.unlockedEpochDay)
-                if (remoteUpdatedAt > localUpdatedAt) {
-                    achievementUnlockDao.insertOrReplace(
-                        AchievementUnlockEntity(
-                            achievementId = achievementId,
-                            unlockedEpochDay = remoteEpochDay
-                        )
-                    )
-                }
-            }
-        }
+        }.getOrElse { throw mapSyncThrowable(SyncTarget.ACHIEVEMENTS, it) }
     }
 
     private suspend fun uploadUnlock(userId: String, unlock: AchievementUnlockEntity, updatedAtMillis: Long) {
