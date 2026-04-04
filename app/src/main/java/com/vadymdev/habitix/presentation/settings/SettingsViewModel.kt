@@ -48,7 +48,14 @@ class SettingsViewModel(
     private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val deleteDataUseCase: DeleteDataUseCase
+    private val deleteDataUseCase: DeleteDataUseCase,
+    private val languageApplier: (AppLanguage) -> Unit = { language ->
+        val tag = when (language) {
+            AppLanguage.UK -> "uk"
+            AppLanguage.EN -> "en"
+        }
+        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+    }
 ) : ViewModel() {
 
     private companion object {
@@ -188,11 +195,7 @@ class SettingsViewModel(
     }
 
     private fun applyLanguage(language: AppLanguage) {
-        val tag = when (language) {
-            AppLanguage.UK -> "uk"
-            AppLanguage.EN -> "en"
-        }
-        AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+        languageApplier(language)
     }
 }
 

@@ -1,6 +1,8 @@
 package com.vadymdev.habitix.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.vadymdev.habitix.data.repository.sync.FirestoreProfileCloudStore
+import com.vadymdev.habitix.data.repository.sync.ProfileSyncContract
 import com.vadymdev.habitix.data.repository.sync.mapSyncThrowable
 import com.vadymdev.habitix.domain.model.SyncTarget
 import com.vadymdev.habitix.domain.repository.ProfileRepository
@@ -20,53 +22,21 @@ class FirestoreProfileSyncRepository(
 
     override suspend fun clearUserData(userId: String) {
         runCatching {
-            firestore.collection("users")
-                .document(userId)
-                .collection("meta")
-                .document("profile")
-                .delete()
-                .await()
+            ProfileSyncContract(
+                profileRepository = profileRepository,
+                cloudStore = FirestoreProfileCloudStore(firestore)
+            ).clearUserData(userId)
         }.getOrElse { throw mapSyncThrowable(SyncTarget.PROFILE, it) }
     }
 
     override suspend fun sync(userId: String) {
         runCatching {
             syncMutex.withLock {
-                val local = profileRepository.getCurrentProfileIdentity()
-                val docRef = firestore.collection("users").document(userId).collection("meta").document("profile")
-                val cloudDoc = docRef.get().await()
-
-                if (!cloudDoc.exists()) {
-                    upload(docPath = docRef.path, name = local.displayName, bio = local.bio, updatedAtMillis = local.updatedAtMillis)
-                    return
-                }
-
-                val remoteName = cloudDoc.getString("displayName").orEmpty()
-                val remoteBio = cloudDoc.getString("bio").orEmpty()
-                val remoteUpdatedAt = cloudDoc.getLong("updatedAtMillis") ?: 0L
-
-                if (remoteUpdatedAt > local.updatedAtMillis) {
-                    profileRepository.replaceProfileIdentity(
-                        displayName = remoteName,
-                        bio = remoteBio.ifBlank { "Будую кращу версію себе" },
-                        updatedAtMillis = remoteUpdatedAt
-                    )
-                } else {
-                    upload(docPath = docRef.path, name = local.displayName, bio = local.bio, updatedAtMillis = local.updatedAtMillis)
-                }
+                ProfileSyncContract(
+                    profileRepository = profileRepository,
+                    cloudStore = FirestoreProfileCloudStore(firestore)
+                ).sync(userId)
             }
         }.getOrElse { throw mapSyncThrowable(SyncTarget.PROFILE, it) }
-    }
-
-    private suspend fun upload(docPath: String, name: String, bio: String, updatedAtMillis: Long) {
-        firestore.document(docPath)
-            .set(
-                mapOf(
-                    "displayName" to name,
-                    "bio" to bio,
-                    "updatedAtMillis" to updatedAtMillis
-                )
-            )
-            .await()
     }
 }

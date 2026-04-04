@@ -1,0 +1,61 @@
+name: Manual Test Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_instrumentation:
+        description: "Run connected Android instrumentation tests"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  unit-and-compile:
+    name: Unit + AndroidTest Compile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest
+
+      - name: Compile Android tests
+        run: ./gradlew :app:compileDebugAndroidTestKotlin
+
+  instrumentation:
+    name: Connected Android Tests
+    needs: unit-and-compile
+    if: ${{ inputs.run_instrumentation }}
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run instrumentation tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: ./gradlew :app:connectedDebugAndroidTest

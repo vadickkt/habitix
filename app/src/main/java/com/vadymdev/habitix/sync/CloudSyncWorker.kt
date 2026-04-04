@@ -3,6 +3,7 @@ package com.vadymdev.habitix.sync
 import android.util.Log
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.vadymdev.habitix.di.AppContainer
@@ -20,27 +21,58 @@ class CloudSyncWorker(
         private const val MAX_RETRY_ATTEMPTS = 5
     }
 
+    private val policy = CloudSyncExecutionPolicy(
+        maxRetryAttempts = MAX_RETRY_ATTEMPTS,
+        syncScope = SyncScope.FULL,
+        syncAction = { uid ->
+            val container = AppContainer(applicationContext)
+            container.syncOrchestratorUseCase(uid, SyncScope.FULL).getOrThrow()
+        }
+    )
+
     override suspend fun doWork(): Result {
-        if (runAttemptCount >= MAX_RETRY_ATTEMPTS) {
-            Log.w(TAG, "Max retry attempts reached for current run window")
-            return Result.success()
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        return policy.execute(runAttemptCount, uid) { level, message, error ->
+            when (level) {
+                CloudSyncLogLevel.DEBUG -> Log.d(TAG, message)
+                CloudSyncLogLevel.WARN -> Log.w(TAG, message, error)
+            }
+        }
+    }
+}
+
+internal enum class CloudSyncLogLevel {
+    DEBUG,
+    WARN
+}
+
+internal class CloudSyncExecutionPolicy(
+    private val maxRetryAttempts: Int,
+    private val syncScope: SyncScope,
+    private val syncAction: suspend (userId: String) -> Unit
+) {
+    suspend fun execute(
+        runAttemptCount: Int,
+        userId: String?,
+        log: (CloudSyncLogLevel, String, Throwable?) -> Unit
+    ): ListenableWorker.Result {
+        if (runAttemptCount >= maxRetryAttempts) {
+            log(CloudSyncLogLevel.WARN, "Max retry attempts reached for current run window", null)
+            return ListenableWorker.Result.success()
         }
 
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-        if (uid.isNullOrBlank()) return Result.success()
-
-        val container = AppContainer(applicationContext)
+        if (userId.isNullOrBlank()) return ListenableWorker.Result.success()
 
         return runCatching {
-            container.syncOrchestratorUseCase(uid, SyncScope.FULL).getOrThrow()
+            syncAction(userId)
         }.fold(
             onSuccess = {
-                Log.d(TAG, "Periodic sync completed successfully")
-                Result.success()
+                log(CloudSyncLogLevel.DEBUG, "Periodic sync completed successfully for $syncScope", null)
+                ListenableWorker.Result.success()
             },
             onFailure = { error ->
-                Log.w(TAG, "Periodic sync failed on attempt ${runAttemptCount + 1}", error)
-                if (shouldRetry(error)) Result.retry() else Result.success()
+                log(CloudSyncLogLevel.WARN, "Periodic sync failed on attempt ${runAttemptCount + 1}", error)
+                if (shouldRetry(error)) ListenableWorker.Result.retry() else ListenableWorker.Result.success()
             }
         )
     }
