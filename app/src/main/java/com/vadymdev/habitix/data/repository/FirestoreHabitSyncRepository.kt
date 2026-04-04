@@ -8,6 +8,8 @@ import com.vadymdev.habitix.data.local.room.HabitEntity
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.util.UUID
@@ -19,6 +21,10 @@ class FirestoreHabitSyncRepository(
     private val hiddenDayDao: HiddenHabitDayDao
 ) : HabitSyncRepository {
 
+    companion object {
+        private val syncMutex = Mutex()
+    }
+
     override suspend fun clearUserData(userId: String) {
         deleteCollection("users/$userId/habits")
         deleteCollection("users/$userId/habit_completions")
@@ -26,12 +32,14 @@ class FirestoreHabitSyncRepository(
     }
 
     override suspend fun syncUserHabits(userId: String) {
-        uploadLocalHabits(userId)
-        downloadCloudHabits(userId)
-        uploadLocalCompletions(userId)
-        downloadCloudCompletions(userId)
-        uploadLocalHiddenDays(userId)
-        downloadCloudHiddenDays(userId)
+        syncMutex.withLock {
+            uploadLocalHabits(userId)
+            downloadCloudHabits(userId)
+            uploadLocalCompletions(userId)
+            downloadCloudCompletions(userId)
+            uploadLocalHiddenDays(userId)
+            downloadCloudHiddenDays(userId)
+        }
     }
 
     private suspend fun uploadLocalHabits(userId: String) {

@@ -9,6 +9,7 @@ import com.vadymdev.habitix.data.local.ProfilePreferencesDataSource
 import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
 import com.vadymdev.habitix.data.local.room.HabitixDatabase
 import com.vadymdev.habitix.data.repository.FirebaseAuthRepository
+import com.vadymdev.habitix.data.repository.FirestoreAchievementSyncRepository
 import com.vadymdev.habitix.data.repository.FirestoreHabitSyncRepository
 import com.vadymdev.habitix.data.repository.FirestoreProfileSyncRepository
 import com.vadymdev.habitix.data.repository.FirestoreSettingsSyncRepository
@@ -17,6 +18,7 @@ import com.vadymdev.habitix.data.repository.OnboardingRepositoryImpl
 import com.vadymdev.habitix.data.repository.ProfileRepositoryImpl
 import com.vadymdev.habitix.data.repository.SettingsRepositoryImpl
 import com.vadymdev.habitix.domain.repository.AuthRepository
+import com.vadymdev.habitix.domain.repository.AchievementSyncRepository
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.HabitSyncRepository
 import com.vadymdev.habitix.domain.repository.OnboardingRepository
@@ -41,6 +43,7 @@ import com.vadymdev.habitix.domain.usecase.ObserveStatsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
+import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncProfileUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
 import com.vadymdev.habitix.domain.usecase.SetAutoSyncEnabledUseCase
@@ -126,6 +129,13 @@ class AppContainer(context: Context) {
         )
     }
 
+    private val achievementSyncRepository: AchievementSyncRepository by lazy {
+        FirestoreAchievementSyncRepository(
+            firestore = firestore,
+            achievementUnlockDao = database.achievementUnlockDao()
+        )
+    }
+
     val observeAuthSessionUseCase by lazy { ObserveAuthSessionUseCase(authRepository) }
     val observeGuestModeUseCase by lazy { ObserveGuestModeUseCase(authRepository) }
     val signInWithGoogleUseCase by lazy { SignInWithGoogleUseCase(authRepository) }
@@ -139,7 +149,8 @@ class AppContainer(context: Context) {
             settingsRepository = settingsRepository,
             habitSyncRepository = habitSyncRepository,
             profileSyncRepository = profileSyncRepository,
-            settingsSyncRepository = settingsSyncRepository
+            settingsSyncRepository = settingsSyncRepository,
+            achievementSyncRepository = achievementSyncRepository
         )
     }
     val observeOnboardingUseCase by lazy { ObserveOnboardingUseCase(onboardingRepository) }
@@ -174,4 +185,5 @@ class AppContainer(context: Context) {
     val setBiometricEnabledUseCase by lazy { SetBiometricEnabledUseCase(settingsRepository) }
     val setAutoSyncEnabledUseCase by lazy { SetAutoSyncEnabledUseCase(settingsRepository) }
     val syncSettingsUseCase by lazy { SyncSettingsUseCase(settingsSyncRepository, settingsRepository) }
+    val syncAchievementsUseCase by lazy { SyncAchievementsUseCase(achievementSyncRepository, settingsRepository) }
 }

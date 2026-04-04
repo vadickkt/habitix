@@ -72,7 +72,8 @@ fun HabitixApp() {
             signInWithGoogleUseCase = container.signInWithGoogleUseCase,
             continueAsGuestUseCase = container.continueAsGuestUseCase,
             syncUserHabitsUseCase = container.syncUserHabitsUseCase,
-            syncSettingsUseCase = container.syncSettingsUseCase
+            syncSettingsUseCase = container.syncSettingsUseCase,
+            syncAchievementsUseCase = container.syncAchievementsUseCase
         )
     )
 
@@ -111,7 +112,8 @@ fun HabitixApp() {
             toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase,
             deactivateHabitFromDateUseCase = container.deactivateHabitFromDateUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
-            syncUserHabitsUseCase = container.syncUserHabitsUseCase
+            syncUserHabitsUseCase = container.syncUserHabitsUseCase,
+            syncAchievementsUseCase = container.syncAchievementsUseCase
         )
     )
 

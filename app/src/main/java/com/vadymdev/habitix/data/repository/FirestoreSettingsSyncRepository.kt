@@ -7,12 +7,18 @@ import com.vadymdev.habitix.domain.model.AppSettings
 import com.vadymdev.habitix.domain.model.ThemeMode
 import com.vadymdev.habitix.domain.repository.SettingsRepository
 import com.vadymdev.habitix.domain.repository.SettingsSyncRepository
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 
 class FirestoreSettingsSyncRepository(
     private val firestore: FirebaseFirestore,
     private val settingsRepository: SettingsRepository
 ) : SettingsSyncRepository {
+
+    companion object {
+        private val syncMutex = Mutex()
+    }
 
     override suspend fun clearUserData(userId: String) {
         firestore.collection("users")
@@ -24,20 +30,22 @@ class FirestoreSettingsSyncRepository(
     }
 
     override suspend fun sync(userId: String) {
-        val local = settingsRepository.getCurrentSettings()
-        val docRef = firestore.collection("users").document(userId).collection("meta").document("settings")
-        val cloudDoc = docRef.get().await()
+        syncMutex.withLock {
+            val local = settingsRepository.getCurrentSettings()
+            val docRef = firestore.collection("users").document(userId).collection("meta").document("settings")
+            val cloudDoc = docRef.get().await()
 
-        if (!cloudDoc.exists()) {
-            upload(docRef = docRef.path, settings = local)
-            return
-        }
+            if (!cloudDoc.exists()) {
+                upload(docRef = docRef.path, settings = local)
+                return
+            }
 
-        val remote = cloudDoc.toSettings()
-        if (remote.updatedAtMillis > local.updatedAtMillis) {
-            settingsRepository.replaceAll(remote)
-        } else {
-            upload(docRef.path, local)
+            val remote = cloudDoc.toSettings()
+            if (remote.updatedAtMillis > local.updatedAtMillis) {
+                settingsRepository.replaceAll(remote)
+            } else {
+                upload(docRef.path, local)
+            }
         }
     }
 

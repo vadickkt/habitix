@@ -18,6 +18,9 @@ interface AchievementUnlockDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(entity: AchievementUnlockEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrReplace(entity: AchievementUnlockEntity)
+
     @Query("DELETE FROM achievement_unlocks")
     suspend fun deleteAll()
 }

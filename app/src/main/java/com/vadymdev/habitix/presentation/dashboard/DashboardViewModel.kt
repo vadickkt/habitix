@@ -8,6 +8,7 @@ import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +27,8 @@ class DashboardViewModel(
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
     private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
+    private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
+    private val syncAchievementsUseCase: SyncAchievementsUseCase
 ) : ViewModel() {
 
     private val selectedDate = MutableStateFlow(LocalDate.now())
@@ -119,6 +121,7 @@ class DashboardViewModel(
     private suspend fun syncIfAuthorized() {
         currentUserId.value?.let { uid ->
             runCatching { syncUserHabitsUseCase(uid) }
+            runCatching { syncAchievementsUseCase(uid) }
         }
     }
 }
@@ -143,7 +146,8 @@ class DashboardViewModelFactory(
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
     private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase
+    private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
+    private val syncAchievementsUseCase: SyncAchievementsUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
@@ -154,7 +158,8 @@ class DashboardViewModelFactory(
                 toggleHabitCompletionUseCase = toggleHabitCompletionUseCase,
                 deactivateHabitFromDateUseCase = deactivateHabitFromDateUseCase,
                 observeAuthSessionUseCase = observeAuthSessionUseCase,
-                syncUserHabitsUseCase = syncUserHabitsUseCase
+                syncUserHabitsUseCase = syncUserHabitsUseCase,
+                syncAchievementsUseCase = syncAchievementsUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

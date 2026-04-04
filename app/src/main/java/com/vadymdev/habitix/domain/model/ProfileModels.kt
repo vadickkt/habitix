@@ -6,7 +6,8 @@ data class ProfileIdentity(
     val displayName: String,
     val bio: String,
     val avatarInitials: String,
-    val avatarUri: String?
+    val avatarUri: String?,
+    val updatedAtMillis: Long = 0L
 )
 
 data class ProfileAchievement(

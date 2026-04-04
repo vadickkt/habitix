@@ -102,6 +102,7 @@ class ProfileViewModel(
             avatarUpdating.value = true
             try {
                 updateProfileAvatarUseCase(uri)
+                currentUserId.value?.let { uid -> runCatching { syncProfileUseCase(uid) } }
             } finally {
                 avatarUpdating.value = false
             }
@@ -127,7 +128,8 @@ data class ProfileUiState(
         displayName = "Користувач",
         bio = "Будую кращу версію себе",
         avatarInitials = "HU",
-        avatarUri = null
+        avatarUri = null,
+        updatedAtMillis = 0L
     ),
     val analytics: ProfileAnalytics = ProfileAnalytics(
         level = 1,

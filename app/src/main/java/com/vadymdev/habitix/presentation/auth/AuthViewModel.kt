@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.UserSession
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
+import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
 import kotlinx.coroutines.delay
@@ -19,7 +20,8 @@ class AuthViewModel(
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
     private val continueAsGuestUseCase: ContinueAsGuestUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
-    private val syncSettingsUseCase: SyncSettingsUseCase
+    private val syncSettingsUseCase: SyncSettingsUseCase,
+    private val syncAchievementsUseCase: SyncAchievementsUseCase
 ) : ViewModel() {
 
     companion object {
@@ -82,6 +84,7 @@ class AuthViewModel(
         _state.update { it.copy(loadingStepIndex = STEP_SETUP) }
         runCatching { syncUserHabitsUseCase(session.uid) }
         runCatching { syncSettingsUseCase(session.uid) }
+        runCatching { syncAchievementsUseCase(session.uid) }
         delay(700)
         _state.update { it.copy(loadingStepIndex = STEP_FINISH) }
         delay(700)
@@ -110,7 +113,8 @@ class AuthViewModelFactory(
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
     private val continueAsGuestUseCase: ContinueAsGuestUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
-    private val syncSettingsUseCase: SyncSettingsUseCase
+    private val syncSettingsUseCase: SyncSettingsUseCase,
+    private val syncAchievementsUseCase: SyncAchievementsUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
@@ -119,7 +123,8 @@ class AuthViewModelFactory(
                 signInWithGoogleUseCase = signInWithGoogleUseCase,
                 continueAsGuestUseCase = continueAsGuestUseCase,
                 syncUserHabitsUseCase = syncUserHabitsUseCase,
-                syncSettingsUseCase = syncSettingsUseCase
+                syncSettingsUseCase = syncSettingsUseCase,
+                syncAchievementsUseCase = syncAchievementsUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

@@ -2,6 +2,7 @@ package com.vadymdev.habitix.data.local
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.vadymdev.habitix.domain.model.ProfileIdentity
@@ -16,6 +17,7 @@ class ProfilePreferencesDataSource(private val context: Context) {
     private val nameKey = stringPreferencesKey("profile_name")
     private val bioKey = stringPreferencesKey("profile_bio")
     private val avatarUriKey = stringPreferencesKey("profile_avatar_uri")
+    private val updatedAtKey = longPreferencesKey("profile_updated_at")
 
     fun observeIdentity(): Flow<ProfileIdentity> {
         return context.profilePrefsDataStore.data.map { prefs ->
@@ -25,7 +27,8 @@ class ProfilePreferencesDataSource(private val context: Context) {
                 displayName = displayName,
                 bio = bio,
                 avatarInitials = initialsFor(displayName),
-                avatarUri = prefs[avatarUriKey]
+                avatarUri = prefs[avatarUriKey],
+                updatedAtMillis = prefs[updatedAtKey] ?: 0L
             )
         }
     }
@@ -34,10 +37,11 @@ class ProfilePreferencesDataSource(private val context: Context) {
         return observeIdentity().first()
     }
 
-    suspend fun replaceIdentity(displayName: String, bio: String) {
+    suspend fun replaceIdentity(displayName: String, bio: String, updatedAtMillis: Long = System.currentTimeMillis()) {
         context.profilePrefsDataStore.edit { prefs ->
             prefs[nameKey] = displayName.trim().ifBlank { "Користувач" }
             prefs[bioKey] = bio.trim().ifBlank { "Будую кращу версію себе" }
+            prefs[updatedAtKey] = updatedAtMillis
         }
     }
 
@@ -45,6 +49,7 @@ class ProfilePreferencesDataSource(private val context: Context) {
         val trimmed = name.trim().ifBlank { "Користувач" }
         context.profilePrefsDataStore.edit { prefs ->
             prefs[nameKey] = trimmed
+            prefs[updatedAtKey] = System.currentTimeMillis()
         }
     }
 
@@ -52,6 +57,7 @@ class ProfilePreferencesDataSource(private val context: Context) {
         val trimmed = bio.trim().ifBlank { "Будую кращу версію себе" }
         context.profilePrefsDataStore.edit { prefs ->
             prefs[bioKey] = trimmed
+            prefs[updatedAtKey] = System.currentTimeMillis()
         }
     }
 
@@ -62,6 +68,7 @@ class ProfilePreferencesDataSource(private val context: Context) {
             } else {
                 prefs[avatarUriKey] = uri
             }
+            prefs[updatedAtKey] = System.currentTimeMillis()
         }
     }
 
@@ -70,6 +77,7 @@ class ProfilePreferencesDataSource(private val context: Context) {
             prefs[nameKey] = "Користувач"
             prefs[bioKey] = "Будую кращу версію себе"
             prefs.remove(avatarUriKey)
+            prefs.remove(updatedAtKey)
         }
 
         val avatarsDir = java.io.File(context.filesDir, "avatars")

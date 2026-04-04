@@ -13,8 +13,8 @@ class ProfileRepositoryImpl(
 
     override suspend fun getCurrentProfileIdentity(): ProfileIdentity = local.getCurrentIdentity()
 
-    override suspend fun replaceProfileIdentity(displayName: String, bio: String) {
-        local.replaceIdentity(displayName = displayName, bio = bio)
+    override suspend fun replaceProfileIdentity(displayName: String, bio: String, updatedAtMillis: Long) {
+        local.replaceIdentity(displayName = displayName, bio = bio, updatedAtMillis = updatedAtMillis)
     }
 
     override suspend fun updateDisplayName(name: String) {

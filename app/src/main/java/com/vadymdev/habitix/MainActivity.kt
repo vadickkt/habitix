@@ -7,17 +7,31 @@ import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.firebase.auth.FirebaseAuth
 import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
+import com.vadymdev.habitix.domain.model.AppSettings
 import com.vadymdev.habitix.notifications.ReminderScheduler
 import com.vadymdev.habitix.presentation.HabitixApp
+import com.vadymdev.habitix.sync.CloudSyncScheduler
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private lateinit var authStateListener: FirebaseAuth.AuthStateListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val settingsDataSource = SettingsPreferencesDataSource(this)
+
+        authStateListener = FirebaseAuth.AuthStateListener { auth ->
+            lifecycleScope.launch {
+                val settings = settingsDataSource.getCurrentSettings()
+                updateCloudSync(settings = settings, hasAuthorizedUser = auth.currentUser != null)
+            }
+        }
+        firebaseAuth.addAuthStateListener(authStateListener)
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -33,6 +47,11 @@ class MainActivity : ComponentActivity() {
                         } else {
                             ReminderScheduler.cancel(this@MainActivity)
                         }
+
+                        updateCloudSync(
+                            settings = settings,
+                            hasAuthorizedUser = firebaseAuth.currentUser != null
+                        )
                     }
             }
         }
@@ -40,6 +59,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HabitixApp()
+        }
+    }
+
+    override fun onDestroy() {
+        firebaseAuth.removeAuthStateListener(authStateListener)
+        super.onDestroy()
+    }
+
+    private fun updateCloudSync(settings: AppSettings, hasAuthorizedUser: Boolean) {
+        if (hasAuthorizedUser && settings.autoSyncEnabled) {
+            CloudSyncScheduler.schedule(this)
+        } else {
+            CloudSyncScheduler.cancel(this)
         }
     }
 }

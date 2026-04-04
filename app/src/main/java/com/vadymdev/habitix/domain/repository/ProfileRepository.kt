@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 interface ProfileRepository {
     fun observeProfileIdentity(): Flow<ProfileIdentity>
     suspend fun getCurrentProfileIdentity(): ProfileIdentity
-    suspend fun replaceProfileIdentity(displayName: String, bio: String)
+    suspend fun replaceProfileIdentity(displayName: String, bio: String, updatedAtMillis: Long)
     suspend fun updateDisplayName(name: String)
     suspend fun updateBio(bio: String)
     suspend fun updateAvatarUri(uri: String?)
