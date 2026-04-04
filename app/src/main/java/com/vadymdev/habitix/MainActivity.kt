@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
         val settingsDataSource = SettingsPreferencesDataSource(this)
 
         authStateListener = FirebaseAuth.AuthStateListener { auth ->
+            if (isDestroyed) return@AuthStateListener
             lifecycleScope.launch {
                 val settings = settingsDataSource.getCurrentSettings()
                 updateCloudSync(settings = settings, hasAuthorizedUser = auth.currentUser != null)

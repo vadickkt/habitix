@@ -1,5 +1,6 @@
 package com.vadymdev.habitix.presentation.dashboard
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,8 +9,8 @@ import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.usecase.DeactivateHabitFromDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveHabitsForDateUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
-import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
-import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
+import com.vadymdev.habitix.domain.usecase.SyncScope
 import com.vadymdev.habitix.domain.usecase.ToggleHabitCompletionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,9 +28,12 @@ class DashboardViewModel(
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
     private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
-    private val syncAchievementsUseCase: SyncAchievementsUseCase
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
 ) : ViewModel() {
+
+    private companion object {
+        private const val TAG = "DashboardViewModel"
+    }
 
     private val selectedDate = MutableStateFlow(LocalDate.now())
     private val currentUserId = MutableStateFlow<String?>(null)
@@ -120,8 +124,8 @@ class DashboardViewModel(
 
     private suspend fun syncIfAuthorized() {
         currentUserId.value?.let { uid ->
-            runCatching { syncUserHabitsUseCase(uid) }
-            runCatching { syncAchievementsUseCase(uid) }
+            syncOrchestratorUseCase(uid, SyncScope.HABITS_AND_ACHIEVEMENTS)
+                .onFailure { Log.w(TAG, "Dashboard sync failed after mutation", it) }
         }
     }
 }
@@ -146,8 +150,7 @@ class DashboardViewModelFactory(
     private val toggleHabitCompletionUseCase: ToggleHabitCompletionUseCase,
     private val deactivateHabitFromDateUseCase: DeactivateHabitFromDateUseCase,
     private val observeAuthSessionUseCase: ObserveAuthSessionUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
-    private val syncAchievementsUseCase: SyncAchievementsUseCase
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
@@ -158,8 +161,7 @@ class DashboardViewModelFactory(
                 toggleHabitCompletionUseCase = toggleHabitCompletionUseCase,
                 deactivateHabitFromDateUseCase = deactivateHabitFromDateUseCase,
                 observeAuthSessionUseCase = observeAuthSessionUseCase,
-                syncUserHabitsUseCase = syncUserHabitsUseCase,
-                syncAchievementsUseCase = syncAchievementsUseCase
+                syncOrchestratorUseCase = syncOrchestratorUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

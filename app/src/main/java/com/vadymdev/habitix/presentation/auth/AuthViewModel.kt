@@ -1,14 +1,14 @@
 package com.vadymdev.habitix.presentation.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vadymdev.habitix.domain.model.UserSession
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
-import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
-import com.vadymdev.habitix.domain.usecase.SyncSettingsUseCase
-import com.vadymdev.habitix.domain.usecase.SyncUserHabitsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
+import com.vadymdev.habitix.domain.usecase.SyncScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,12 +19,11 @@ import kotlinx.coroutines.launch
 class AuthViewModel(
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
     private val continueAsGuestUseCase: ContinueAsGuestUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
-    private val syncSettingsUseCase: SyncSettingsUseCase,
-    private val syncAchievementsUseCase: SyncAchievementsUseCase
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
 ) : ViewModel() {
 
     companion object {
+        private const val TAG = "AuthViewModel"
         private const val STEP_INITIAL = -1
         private const val STEP_CONNECTION = 0
         private const val STEP_PROFILE = 1
@@ -82,9 +81,8 @@ class AuthViewModel(
         _state.update { it.copy(loadingStepIndex = STEP_PROFILE) }
         delay(700)
         _state.update { it.copy(loadingStepIndex = STEP_SETUP) }
-        runCatching { syncUserHabitsUseCase(session.uid) }
-        runCatching { syncSettingsUseCase(session.uid) }
-        runCatching { syncAchievementsUseCase(session.uid) }
+        syncOrchestratorUseCase(userId = session.uid, scope = SyncScope.FULL)
+            .onFailure { Log.w(TAG, "Post-auth sync failed", it) }
         delay(700)
         _state.update { it.copy(loadingStepIndex = STEP_FINISH) }
         delay(700)
@@ -112,9 +110,7 @@ data class AuthUiState(
 class AuthViewModelFactory(
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase,
     private val continueAsGuestUseCase: ContinueAsGuestUseCase,
-    private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
-    private val syncSettingsUseCase: SyncSettingsUseCase,
-    private val syncAchievementsUseCase: SyncAchievementsUseCase
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
@@ -122,9 +118,7 @@ class AuthViewModelFactory(
             return AuthViewModel(
                 signInWithGoogleUseCase = signInWithGoogleUseCase,
                 continueAsGuestUseCase = continueAsGuestUseCase,
-                syncUserHabitsUseCase = syncUserHabitsUseCase,
-                syncSettingsUseCase = syncSettingsUseCase,
-                syncAchievementsUseCase = syncAchievementsUseCase
+                syncOrchestratorUseCase = syncOrchestratorUseCase
             ) as T
         }
         error("Unknown ViewModel class: ${modelClass.simpleName}")

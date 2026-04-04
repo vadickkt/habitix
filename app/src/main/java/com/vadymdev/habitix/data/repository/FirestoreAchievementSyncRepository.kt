@@ -1,9 +1,11 @@
 package com.vadymdev.habitix.data.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.vadymdev.habitix.data.local.room.AchievementUnlockDao
 import com.vadymdev.habitix.data.local.room.AchievementUnlockEntity
 import com.vadymdev.habitix.domain.repository.AchievementSyncRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
@@ -17,6 +19,7 @@ class FirestoreAchievementSyncRepository(
 
     companion object {
         private val syncMutex = Mutex()
+        private const val MAX_DELETE_RETRIES = 3
     }
 
     override suspend fun clearUserData(userId: String) {
@@ -93,19 +96,27 @@ class FirestoreAchievementSyncRepository(
     }
 
     private suspend fun deleteCollection(path: String) {
+        var retries = 0
         while (true) {
-            val batch = firestore.batch()
-            val snapshot = firestore.collection(path)
-                .limit(400)
-                .get()
-                .await()
+            try {
+                val batch = firestore.batch()
+                val snapshot = firestore.collection(path)
+                    .limit(200)
+                    .get()
+                    .await()
 
-            if (snapshot.isEmpty) return
+                if (snapshot.isEmpty) return
 
-            snapshot.documents.forEach { doc ->
-                batch.delete(doc.reference)
+                snapshot.documents.forEach { doc ->
+                    batch.delete(doc.reference)
+                }
+                batch.commit().await()
+                retries = 0
+            } catch (error: FirebaseFirestoreException) {
+                retries += 1
+                if (retries >= MAX_DELETE_RETRIES) throw error
+                delay(500L * retries)
             }
-            batch.commit().await()
         }
     }
 }

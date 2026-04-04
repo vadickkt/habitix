@@ -1,5 +1,6 @@
 package com.vadymdev.habitix.presentation.settings
 
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
@@ -23,7 +24,8 @@ import com.vadymdev.habitix.domain.usecase.SetSoundsEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SetThemeModeUseCase
 import com.vadymdev.habitix.domain.usecase.SetVibrationEnabledUseCase
 import com.vadymdev.habitix.domain.usecase.SignOutUseCase
-import com.vadymdev.habitix.domain.usecase.SyncSettingsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
+import com.vadymdev.habitix.domain.usecase.SyncScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,11 +45,15 @@ class SettingsViewModel(
     private val setVibrationEnabledUseCase: SetVibrationEnabledUseCase,
     private val setBiometricEnabledUseCase: SetBiometricEnabledUseCase,
     private val setAutoSyncEnabledUseCase: SetAutoSyncEnabledUseCase,
-    private val syncSettingsUseCase: SyncSettingsUseCase,
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val deleteDataUseCase: DeleteDataUseCase
 ) : ViewModel() {
+
+    private companion object {
+        private const val TAG = "SettingsViewModel"
+    }
 
     private val _state = MutableStateFlow(SettingsUiState())
     val state: StateFlow<SettingsUiState> = _state.asStateFlow()
@@ -93,7 +99,10 @@ class SettingsViewModel(
             setAutoSyncEnabledUseCase(value)
             if (value) {
                 val uid = _state.value.userId
-                if (uid != null) runCatching { syncSettingsUseCase(uid) }
+                if (uid != null) {
+                    syncOrchestratorUseCase(uid, SyncScope.SETTINGS_ONLY)
+                        .onFailure { Log.w(TAG, "Settings sync failed after auto-sync enabled", it) }
+                }
             }
         }
     }
@@ -174,7 +183,8 @@ class SettingsViewModel(
         val snapshot = _state.value
         val uid = snapshot.userId ?: return
         if (!snapshot.settings.autoSyncEnabled) return
-        runCatching { syncSettingsUseCase(uid) }
+        syncOrchestratorUseCase(uid, SyncScope.SETTINGS_ONLY)
+            .onFailure { Log.w(TAG, "Settings sync failed", it) }
     }
 
     private fun applyLanguage(language: AppLanguage) {
@@ -217,7 +227,7 @@ class SettingsViewModelFactory(
     private val setVibrationEnabledUseCase: SetVibrationEnabledUseCase,
     private val setBiometricEnabledUseCase: SetBiometricEnabledUseCase,
     private val setAutoSyncEnabledUseCase: SetAutoSyncEnabledUseCase,
-    private val syncSettingsUseCase: SyncSettingsUseCase,
+    private val syncOrchestratorUseCase: SyncOrchestratorUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
     private val deleteDataUseCase: DeleteDataUseCase
@@ -237,7 +247,7 @@ class SettingsViewModelFactory(
                 setVibrationEnabledUseCase = setVibrationEnabledUseCase,
                 setBiometricEnabledUseCase = setBiometricEnabledUseCase,
                 setAutoSyncEnabledUseCase = setAutoSyncEnabledUseCase,
-                syncSettingsUseCase = syncSettingsUseCase,
+                syncOrchestratorUseCase = syncOrchestratorUseCase,
                 signOutUseCase = signOutUseCase,
                 deleteAccountUseCase = deleteAccountUseCase,
                 deleteDataUseCase = deleteDataUseCase

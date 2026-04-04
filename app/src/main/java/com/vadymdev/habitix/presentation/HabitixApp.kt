@@ -71,9 +71,7 @@ fun HabitixApp() {
         factory = AuthViewModelFactory(
             signInWithGoogleUseCase = container.signInWithGoogleUseCase,
             continueAsGuestUseCase = container.continueAsGuestUseCase,
-            syncUserHabitsUseCase = container.syncUserHabitsUseCase,
-            syncSettingsUseCase = container.syncSettingsUseCase,
-            syncAchievementsUseCase = container.syncAchievementsUseCase
+            syncOrchestratorUseCase = container.syncOrchestratorUseCase
         )
     )
 
@@ -98,7 +96,7 @@ fun HabitixApp() {
             setVibrationEnabledUseCase = container.setVibrationEnabledUseCase,
             setBiometricEnabledUseCase = container.setBiometricEnabledUseCase,
             setAutoSyncEnabledUseCase = container.setAutoSyncEnabledUseCase,
-            syncSettingsUseCase = container.syncSettingsUseCase,
+            syncOrchestratorUseCase = container.syncOrchestratorUseCase,
             signOutUseCase = container.signOutUseCase,
             deleteAccountUseCase = container.deleteAccountUseCase,
             deleteDataUseCase = container.deleteDataUseCase
@@ -112,8 +110,7 @@ fun HabitixApp() {
             toggleHabitCompletionUseCase = container.toggleHabitCompletionUseCase,
             deactivateHabitFromDateUseCase = container.deactivateHabitFromDateUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
-            syncUserHabitsUseCase = container.syncUserHabitsUseCase,
-            syncAchievementsUseCase = container.syncAchievementsUseCase
+            syncOrchestratorUseCase = container.syncOrchestratorUseCase
         )
     )
 
@@ -138,7 +135,7 @@ fun HabitixApp() {
             observeProfileIdentityUseCase = container.observeProfileIdentityUseCase,
             observeProfileAnalyticsUseCase = container.observeProfileAnalyticsUseCase,
             observeAuthSessionUseCase = container.observeAuthSessionUseCase,
-            syncProfileUseCase = container.syncProfileUseCase,
+            syncOrchestratorUseCase = container.syncOrchestratorUseCase,
             updateProfileNameUseCase = container.updateProfileNameUseCase,
             updateProfileBioUseCase = container.updateProfileBioUseCase,
             updateProfileAvatarUseCase = container.updateProfileAvatarUseCase

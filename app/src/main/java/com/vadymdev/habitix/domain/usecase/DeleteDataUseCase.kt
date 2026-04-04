@@ -18,15 +18,27 @@ class DeleteDataUseCase(
     private val achievementSyncRepository: AchievementSyncRepository
 ) {
     suspend operator fun invoke(userId: String?) {
-        habitRepository.deleteAllHabits()
-        profileRepository.clearLocalData()
-        settingsRepository.resetToDefaults()
+        var firstError: Throwable? = null
 
-        if (userId.isNullOrBlank()) return
+        runCatching {
+            habitRepository.deleteAllHabits()
+            profileRepository.clearLocalData()
+            settingsRepository.resetToDefaults()
+        }.onFailure { firstError = it }
 
-        habitSyncRepository.clearUserData(userId)
-        profileSyncRepository.clearUserData(userId)
-        settingsSyncRepository.clearUserData(userId)
-        achievementSyncRepository.clearUserData(userId)
+        if (!userId.isNullOrBlank()) {
+            runCatching {
+                habitSyncRepository.clearUserData(userId)
+                profileSyncRepository.clearUserData(userId)
+                settingsSyncRepository.clearUserData(userId)
+                achievementSyncRepository.clearUserData(userId)
+            }.onFailure {
+                if (firstError == null) {
+                    firstError = it
+                }
+            }
+        }
+
+        firstError?.let { throw it }
     }
 }

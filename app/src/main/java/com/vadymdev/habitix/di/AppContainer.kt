@@ -44,6 +44,7 @@ import com.vadymdev.habitix.domain.usecase.ObserveSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileAnalyticsUseCase
 import com.vadymdev.habitix.domain.usecase.ObserveProfileIdentityUseCase
 import com.vadymdev.habitix.domain.usecase.SyncAchievementsUseCase
+import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
 import com.vadymdev.habitix.domain.usecase.SyncProfileUseCase
 import com.vadymdev.habitix.domain.usecase.SetAccentPaletteUseCase
 import com.vadymdev.habitix.domain.usecase.SetAutoSyncEnabledUseCase
@@ -186,4 +187,12 @@ class AppContainer(context: Context) {
     val setAutoSyncEnabledUseCase by lazy { SetAutoSyncEnabledUseCase(settingsRepository) }
     val syncSettingsUseCase by lazy { SyncSettingsUseCase(settingsSyncRepository, settingsRepository) }
     val syncAchievementsUseCase by lazy { SyncAchievementsUseCase(achievementSyncRepository, settingsRepository) }
+    val syncOrchestratorUseCase by lazy {
+        SyncOrchestratorUseCase(
+            syncSettingsUseCase = syncSettingsUseCase,
+            syncProfileUseCase = syncProfileUseCase,
+            syncUserHabitsUseCase = syncUserHabitsUseCase,
+            syncAchievementsUseCase = syncAchievementsUseCase
+        )
+    }
 }
