@@ -161,7 +161,8 @@ class CriticalFlowNavigationUiTest {
                     viewModel = viewModel,
                     language = AppLanguage.EN,
                     onAuthorized = { navController.navigate("dashboard") },
-                    onContinueAsGuest = { navController.navigate("dashboard") }
+                    onContinueAsGuest = { navController.navigate("dashboard") },
+                    onOpenPrivacyPolicy = {}
                 )
             }
 
@@ -214,6 +215,7 @@ class CriticalFlowNavigationUiTest {
                     onAutoSyncToggle = {},
                     onOpenPrivacyPolicy = {},
                     onSignOut = {},
+                    onReturnToAuth = {},
                     onDeleteData = {},
                     onResetDeleteDataState = {}
                 )

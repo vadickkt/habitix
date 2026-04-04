@@ -127,6 +127,7 @@ class AuthDashboardSettingsUiTest {
                 onAutoSyncToggle = {},
                 onOpenPrivacyPolicy = {},
                 onSignOut = {},
+                onReturnToAuth = {},
                 onDeleteData = {},
                 onResetDeleteDataState = {}
             )

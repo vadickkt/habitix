@@ -11,6 +11,7 @@ import com.vadymdev.habitix.domain.model.UserSession
 import com.vadymdev.habitix.domain.usecase.ContinueAsGuestUseCase
 import com.vadymdev.habitix.domain.usecase.SignInWithGoogleUseCase
 import com.vadymdev.habitix.domain.usecase.SyncOrchestratorUseCase
+import com.vadymdev.habitix.presentation.auth.GoogleSignInOutcome
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
 import org.junit.Assert.assertEquals
@@ -143,7 +144,8 @@ class AuthFallbackGuestUiTest {
                 language = AppLanguage.EN,
                 onAuthorized = {},
                 onContinueAsGuest = { guestDoneCalls.incrementAndGet() },
-                googleSignInRequest = { _, _ -> Result.failure(IllegalStateException("GetGoogleIdOperation failed with status CANCELED")) }
+                onOpenPrivacyPolicy = {},
+                googleSignInRequest = { _, _ -> GoogleSignInOutcome.Failure(IllegalStateException("GetGoogleIdOperation failed with status CANCELED")) }
             )
         }
 

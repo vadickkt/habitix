@@ -98,6 +98,7 @@ class EndToEndSettingsDashboardFlowTest {
                     onAutoSyncToggle = { settings = settings.copy(autoSyncEnabled = it) },
                     onOpenPrivacyPolicy = {},
                     onSignOut = {},
+                    onReturnToAuth = {},
                     onDeleteData = {},
                     onResetDeleteDataState = {}
                 )
