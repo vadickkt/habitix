@@ -46,8 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
 import com.vadymdev.habitix.presentation.habit.create.CreateHabitUiState
@@ -119,7 +121,7 @@ fun EditHabitScreen(
                     Text("←", style = MaterialTheme.typography.titleMedium)
                 }
                 Spacer(modifier = Modifier.size(10.dp))
-                Text(t(isUk, "Редагувати звичку", "Edit habit"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.create_habit_title_edit), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -138,7 +140,7 @@ fun EditHabitScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(t(isUk, "Попередній перегляд", "Live preview"), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.edit_habit_preview_title), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
                 Box(
                     modifier = Modifier
                         .size(76.dp)
@@ -159,7 +161,7 @@ fun EditHabitScreen(
                     }
                 }
                 Text(
-                    text = if (state.title.isBlank()) t(isUk, "Ваша звичка", "Your habit") else state.title,
+                    text = if (state.title.isBlank()) stringResource(R.string.edit_habit_preview_placeholder) else state.title,
                     color = TextPrimary,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
@@ -168,12 +170,12 @@ fun EditHabitScreen(
         }
 
         item {
-            Text(t(isUk, "Назва звички", "Habit title"), fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.create_habit_label_title), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(6.dp))
             OutlinedTextField(
                 value = state.title,
                 onValueChange = onTitle,
-                placeholder = { Text(t(isUk, "Наприклад: Пити воду", "For example: Drink water")) },
+                placeholder = { Text(stringResource(R.string.create_habit_placeholder_title)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 isError = state.titleError != null,
@@ -186,7 +188,7 @@ fun EditHabitScreen(
         }
 
         item {
-            Text(t(isUk, "Іконка", "Icon"), fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.create_habit_label_icon), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             LazyVerticalGrid(
                 columns = GridCells.Fixed(6),
@@ -216,7 +218,7 @@ fun EditHabitScreen(
         }
 
         item {
-            Text(t(isUk, "Колір", "Color"), fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.create_habit_label_color), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 colorKeys.forEach { key ->
@@ -233,24 +235,24 @@ fun EditHabitScreen(
         }
 
         item {
-            Text(t(isUk, "Частота", "Frequency"), fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.create_habit_label_frequency), fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FrequencyChip(t(isUk, "Щодня", "Daily"), state.frequency == HabitFrequencyType.DAILY) { onFrequency(HabitFrequencyType.DAILY) }
-                FrequencyChip(t(isUk, "Будні дні", "Weekdays"), state.frequency == HabitFrequencyType.WEEKDAYS) { onFrequency(HabitFrequencyType.WEEKDAYS) }
-                FrequencyChip(t(isUk, "Обрати дні", "Custom days"), state.frequency == HabitFrequencyType.CUSTOM) { onFrequency(HabitFrequencyType.CUSTOM) }
+                FrequencyChip(stringResource(R.string.create_habit_frequency_daily), state.frequency == HabitFrequencyType.DAILY) { onFrequency(HabitFrequencyType.DAILY) }
+                FrequencyChip(stringResource(R.string.create_habit_frequency_weekdays), state.frequency == HabitFrequencyType.WEEKDAYS) { onFrequency(HabitFrequencyType.WEEKDAYS) }
+                FrequencyChip(stringResource(R.string.create_habit_frequency_custom), state.frequency == HabitFrequencyType.CUSTOM) { onFrequency(HabitFrequencyType.CUSTOM) }
             }
 
             if (state.frequency == HabitFrequencyType.CUSTOM) {
                 Spacer(modifier = Modifier.height(10.dp))
                 val days = listOf(
-                    DayOfWeek.MONDAY to if (isUk) "Пн" else "Mo",
-                    DayOfWeek.TUESDAY to if (isUk) "Вт" else "Tu",
-                    DayOfWeek.WEDNESDAY to if (isUk) "Ср" else "We",
-                    DayOfWeek.THURSDAY to if (isUk) "Чт" else "Th",
-                    DayOfWeek.FRIDAY to if (isUk) "Пт" else "Fr",
-                    DayOfWeek.SATURDAY to if (isUk) "Сб" else "Sa",
-                    DayOfWeek.SUNDAY to if (isUk) "Нд" else "Su"
+                    DayOfWeek.MONDAY to if (isUk) stringResource(R.string.weekday_short_mon_uk) else stringResource(R.string.weekday_short_mon_en),
+                    DayOfWeek.TUESDAY to if (isUk) stringResource(R.string.weekday_short_tue_uk) else stringResource(R.string.weekday_short_tue_en),
+                    DayOfWeek.WEDNESDAY to if (isUk) stringResource(R.string.weekday_short_wed_uk) else stringResource(R.string.weekday_short_wed_en),
+                    DayOfWeek.THURSDAY to if (isUk) stringResource(R.string.weekday_short_thu_uk) else stringResource(R.string.weekday_short_thu_en),
+                    DayOfWeek.FRIDAY to if (isUk) stringResource(R.string.weekday_short_fri_uk) else stringResource(R.string.weekday_short_fri_en),
+                    DayOfWeek.SATURDAY to if (isUk) stringResource(R.string.weekday_short_sat_uk) else stringResource(R.string.weekday_short_sat_en),
+                    DayOfWeek.SUNDAY to if (isUk) stringResource(R.string.weekday_short_sun_uk) else stringResource(R.string.weekday_short_sun_en)
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     days.forEach { (day, label) ->
@@ -292,8 +294,8 @@ fun EditHabitScreen(
                 }
                 Spacer(modifier = Modifier.size(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(t(isUk, "Нагадування", "Reminder"), fontWeight = FontWeight.SemiBold)
-                    Text(if (state.reminderEnabled) t(isUk, "Увімкнено", "Enabled") else t(isUk, "Вимкнено", "Disabled"), color = TextSecondary)
+                    Text(stringResource(R.string.create_habit_label_reminder), fontWeight = FontWeight.SemiBold)
+                    Text(if (state.reminderEnabled) stringResource(R.string.create_habit_enabled) else stringResource(R.string.create_habit_disabled), color = TextSecondary)
                 }
                 Switch(checked = state.reminderEnabled, onCheckedChange = { onToggleReminder() })
             }
@@ -315,7 +317,7 @@ fun EditHabitScreen(
                 )
             ) {
                 Text(
-                    if (state.isSaving) t(isUk, "Збереження...", "Saving...") else t(isUk, "Зберегти зміни ✓", "Save changes ✓"),
+                    if (state.isSaving) stringResource(R.string.create_habit_action_saving) else stringResource(R.string.create_habit_action_save_changes),
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -323,8 +325,6 @@ fun EditHabitScreen(
         }
     }
 }
-
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun FrequencyChip(text: String, active: Boolean, onClick: () -> Unit) {

@@ -32,9 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.InterestCategory
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
@@ -68,14 +70,14 @@ fun OnboardingInterestsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = t(isUk, "Оберіть сфери інтересів", "Choose your interests"),
+            text = stringResource(R.string.onboarding_interests_title),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = t(isUk, "Що ви хочете покращити?", "What do you want to improve?"),
+            text = stringResource(R.string.onboarding_interests_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )
@@ -141,7 +143,7 @@ fun OnboardingInterestsScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = localizedInterestTitle(item, isUk),
+                            text = localizedInterestTitle(item.key, isUk),
                             style = MaterialTheme.typography.bodyLarge,
                             color = TextPrimary,
                             fontWeight = FontWeight.SemiBold
@@ -154,7 +156,7 @@ fun OnboardingInterestsScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = t(isUk, "Далі", "Next"),
+            text = stringResource(R.string.onboarding_next),
             enabled = selectedKeys.isNotEmpty(),
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth()
@@ -162,16 +164,14 @@ fun OnboardingInterestsScreen(
     }
 }
 
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
-
-private fun localizedInterestTitle(item: InterestCategory, isUk: Boolean): String {
-    if (isUk) return item.title
-    return when (item.key) {
-        "health" -> "Health"
-        "productivity" -> "Productivity"
-        "sport" -> "Sport"
-        "mindfulness" -> "Mindfulness"
-        else -> item.title
+@Composable
+private fun localizedInterestTitle(key: String, isUk: Boolean): String {
+    return when (key) {
+        "health" -> stringResource(if (isUk) R.string.interest_health_uk else R.string.interest_health_en)
+        "productivity" -> stringResource(if (isUk) R.string.interest_productivity_uk else R.string.interest_productivity_en)
+        "sport" -> stringResource(if (isUk) R.string.interest_sport_uk else R.string.interest_sport_en)
+        "mindfulness" -> stringResource(if (isUk) R.string.interest_mindfulness_uk else R.string.interest_mindfulness_en)
+        else -> key
     }
 }
 

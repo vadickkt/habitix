@@ -52,9 +52,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.annotation.StringRes
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.ui.theme.AppBackground
@@ -94,17 +97,13 @@ fun AchievementsScreen(
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = t(isUk, "Назад", "Back"))
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = localizedString(isUk, R.string.common_back_uk, R.string.common_back_en))
             }
 
             Column {
-                Text(t(isUk, "Досягнення", "Achievements"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(localizedString(isUk, R.string.achievements_title_uk, R.string.achievements_title_en), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
-                    if (isUk) {
-                        "${state.unlockedCount}/${state.analytics.allAchievements.size} отримано"
-                    } else {
-                        "${state.unlockedCount}/${state.analytics.allAchievements.size} unlocked"
-                    },
+                    localizedString(isUk, R.string.achievements_unlocked_ratio_uk, R.string.achievements_unlocked_ratio_en, state.unlockedCount, state.analytics.allAchievements.size),
                     color = TextSecondary
                 )
             }
@@ -116,8 +115,8 @@ fun AchievementsScreen(
                 .padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            StatHeadCard(t(isUk, "Досягнень", "Achievements"), state.unlockedCount.toString(), Modifier.weight(1f))
-            StatHeadCard(t(isUk, "XP зароблено", "XP earned"), state.analytics.allAchievements.filter { it.unlocked }.sumOf { it.xpReward }.toString(), Modifier.weight(1f))
+            StatHeadCard(localizedString(isUk, R.string.achievements_count_label_uk, R.string.achievements_count_label_en), state.unlockedCount.toString(), Modifier.weight(1f))
+            StatHeadCard(localizedString(isUk, R.string.achievements_xp_earned_uk, R.string.achievements_xp_earned_en), state.analytics.allAchievements.filter { it.unlocked }.sumOf { it.xpReward }.toString(), Modifier.weight(1f))
         }
 
         LazyColumn(
@@ -165,18 +164,18 @@ fun AchievementsScreen(
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         AlertDialog(
             onDismissRequest = { selected = null },
-            confirmButton = { TextButton(onClick = { selected = null }) { Text(t(isUk, "Закрити", "Close")) } },
+            confirmButton = { TextButton(onClick = { selected = null }) { Text(localizedString(isUk, R.string.common_close_uk, R.string.common_close_en)) } },
             title = { Text(title) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(description)
-                    Text(t(isUk, "Прогрес: ${achievement.progressPercent}%", "Progress: ${achievement.progressPercent}%"))
-                    Text(t(isUk, "Нагорода: +${achievement.xpReward} XP", "Reward: +${achievement.xpReward} XP"))
+                    Text(localizedString(isUk, R.string.achievements_progress_line_uk, R.string.achievements_progress_line_en, achievement.progressPercent))
+                    Text(localizedString(isUk, R.string.achievements_reward_line_uk, R.string.achievements_reward_line_en, achievement.xpReward))
                     Text(
                         if (achievement.unlocked) {
-                            t(isUk, "Отримано ${achievement.unlockedDate?.format(formatter).orEmpty()}", "Unlocked ${achievement.unlockedDate?.format(formatter).orEmpty()}")
+                            localizedString(isUk, R.string.achievements_unlocked_on_uk, R.string.achievements_unlocked_on_en, achievement.unlockedDate?.format(formatter).orEmpty())
                         } else {
-                            t(isUk, "Ще трохи і ви відкриєте це досягнення", "A bit more to unlock this achievement")
+                            localizedString(isUk, R.string.achievements_unlock_hint_uk, R.string.achievements_unlock_hint_en)
                         },
                         color = if (achievement.unlocked) MaterialTheme.colorScheme.primary else TextSecondary
                     )
@@ -324,7 +323,19 @@ private fun achievementColor(colorKey: String): Color {
     }
 }
 
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
+@Composable
+private fun localizedString(
+    isUk: Boolean,
+    @StringRes ukResId: Int,
+    @StringRes enResId: Int,
+    vararg formatArgs: Any
+): String {
+    return if (isUk) {
+        stringResource(ukResId, *formatArgs)
+    } else {
+        stringResource(enResId, *formatArgs)
+    }
+}
 
 private fun localizedCategoryLabel(categoryKey: String, isUk: Boolean): String {
     if (isUk) return categoryKey

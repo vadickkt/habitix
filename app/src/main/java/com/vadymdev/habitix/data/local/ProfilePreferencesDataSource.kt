@@ -23,11 +23,13 @@ class ProfilePreferencesDataSource(private val context: Context) {
         return context.profilePrefsDataStore.data.map { prefs ->
             val displayName = prefs[nameKey] ?: "Користувач"
             val bio = prefs[bioKey] ?: "Будую кращу версію себе"
+            val storedAvatarUri = prefs[avatarUriKey]
+            val resolvedAvatarUri = storedAvatarUri?.takeIf { isAvatarUriAvailable(it) }
             ProfileIdentity(
                 displayName = displayName,
                 bio = bio,
                 avatarInitials = initialsFor(displayName),
-                avatarUri = prefs[avatarUriKey],
+                avatarUri = resolvedAvatarUri,
                 updatedAtMillis = prefs[updatedAtKey] ?: 0L
             )
         }
@@ -103,5 +105,20 @@ class ProfilePreferencesDataSource(private val context: Context) {
             parts.size == 1 -> parts.first().take(2).uppercase()
             else -> "${parts[0].first()}${parts[1].first()}".uppercase()
         }
+    }
+
+    private fun isAvatarUriAvailable(value: String): Boolean {
+        if (
+            value.startsWith("content://") ||
+            value.startsWith("file://") ||
+            value.startsWith("http://") ||
+            value.startsWith("https://") ||
+            value.startsWith("android.resource://")
+        ) {
+            return true
+        }
+
+        val local = java.io.File(value)
+        return local.exists() && local.isFile
     }
 }

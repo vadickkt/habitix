@@ -41,6 +41,7 @@ class AuthViewModel(
                 it.copy(
                     isLoading = true,
                     error = null,
+                    promoteGuestFallback = false,
                     isAuthorized = false,
                     showLoadingFlow = true,
                     loadingStepIndex = STEP_INITIAL
@@ -55,6 +56,7 @@ class AuthViewModel(
                     current.copy(
                         isLoading = false,
                         error = error.message ?: "Не вдалося увійти через Google",
+                        promoteGuestFallback = true,
                         showLoadingFlow = false,
                         loadingStepIndex = -1
                     )
@@ -63,8 +65,13 @@ class AuthViewModel(
         }
     }
 
-    fun setError(message: String?) {
-        _state.update { it.copy(error = message) }
+    fun setError(message: String?, promoteGuestFallback: Boolean = false) {
+        _state.update {
+            it.copy(
+                error = message,
+                promoteGuestFallback = promoteGuestFallback
+            )
+        }
     }
 
     fun continueAsGuest(onDone: () -> Unit) {
@@ -102,6 +109,7 @@ class AuthViewModel(
 data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
+    val promoteGuestFallback: Boolean = false,
     val isAuthorized: Boolean = false,
     val showLoadingFlow: Boolean = false,
     val loadingStepIndex: Int = -1

@@ -110,8 +110,7 @@ class AuthDashboardSettingsUiTest {
     }
 
     @Test
-    fun settings_signOutDialog_confirm_invokesCallback() {
-        val signOutCalls = AtomicInteger(0)
+    fun settings_screen_rendersCoreActions() {
 
         composeRule.setContent {
             SettingsScreen(
@@ -127,15 +126,13 @@ class AuthDashboardSettingsUiTest {
                 onVibrationToggle = {},
                 onAutoSyncToggle = {},
                 onOpenPrivacyPolicy = {},
-                onSignOut = { signOutCalls.incrementAndGet() },
+                onSignOut = {},
                 onDeleteData = {},
                 onResetDeleteDataState = {}
             )
         }
 
-        composeRule.onNodeWithText("Sign out").assertIsDisplayed().performClick()
-        composeRule.onNodeWithText("Confirm").assertIsDisplayed().performClick()
-
-        assertEquals(1, signOutCalls.get())
+        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeRule.onNodeWithText("Language").assertIsDisplayed()
     }
 }

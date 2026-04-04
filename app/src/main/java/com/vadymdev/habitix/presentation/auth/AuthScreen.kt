@@ -1,6 +1,7 @@
 package com.vadymdev.habitix.presentation.auth
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextAlign
@@ -63,14 +65,15 @@ fun AuthScreen(
     viewModel: AuthViewModel,
     language: AppLanguage,
     onAuthorized: () -> Unit,
-    onContinueAsGuest: () -> Unit
+    onContinueAsGuest: () -> Unit,
+    googleSignInRequest: suspend (Context, String) -> Result<String> = ::requestGoogleIdToken
 ) {
+    val tag = "AuthScreen"
     val isUk = language == AppLanguage.UK
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val webClientId = resolveWebClientId(context)
     val coroutineScope = rememberCoroutineScope()
-    val credentialManager = remember(context) { CredentialManager.create(context) }
     val googleIconRequest = remember(context) {
         ImageRequest.Builder(context)
             .data("file:///android_asset/google_icon.svg")
@@ -119,14 +122,14 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         Text(
-            text = t(isUk, "Привіт!", "Hi!"),
+            text = stringResource(R.string.auth_hello),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = t(isUk, "Я допоможу тобі сформувати корисні звички", "I will help you build healthy habits"),
+            text = stringResource(R.string.auth_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -136,41 +139,31 @@ fun AuthScreen(
 
         Button(
             onClick = {
+                viewModel.setError(null)
                 if (webClientId.isBlank()) {
                     viewModel.setError(context.getString(R.string.auth_google_setup_error))
                     return@Button
                 }
 
                 coroutineScope.launch {
-                    try {
-                        val googleIdOption = GetGoogleIdOption.Builder()
-                            .setServerClientId(webClientId)
-                            .setFilterByAuthorizedAccounts(false)
-                            .setAutoSelectEnabled(false)
-                            .build()
-
-                        val request = GetCredentialRequest.Builder()
-                            .addCredentialOption(googleIdOption)
-                            .build()
-
-                        val result = credentialManager.getCredential(
-                            context = context,
-                            request = request
-                        )
-
-                        val credential = result.credential
-                        val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                        val idToken = googleCredential.idToken
-
-                        if (idToken.isNullOrBlank()) {
+                    val result = googleSignInRequest(context, webClientId)
+                    result.onSuccess { idToken ->
+                        if (idToken.isBlank()) {
                             viewModel.setError(context.getString(R.string.auth_google_setup_error))
                         } else {
                             viewModel.signInWithGoogleToken(idToken)
                         }
-                    } catch (_: GetCredentialException) {
-                        viewModel.setError(t(isUk, "Помилка Google входу. Спробуйте ще раз", "Google sign-in failed. Please try again"))
-                    } catch (_: Exception) {
-                        viewModel.setError(t(isUk, "Не вдалося отримати токен входу", "Failed to retrieve sign-in token"))
+                    }.onFailure { error ->
+                        val kind = classifyAuthFailure(error.message)
+                        Log.w(tag, "CredentialManager sign-in failed: kind=$kind message=${error.message}", error)
+
+                        val message = when (kind) {
+                            AuthFailureKind.CANCELED_OR_NO_ACCOUNT -> context.getString(R.string.auth_error_canceled_or_no_account)
+                            AuthFailureKind.PROVIDER_UNAVAILABLE -> context.getString(R.string.auth_error_provider_unavailable)
+                            AuthFailureKind.TRANSIENT -> context.getString(R.string.auth_error_transient)
+                            AuthFailureKind.UNKNOWN -> context.getString(R.string.auth_error_unknown)
+                        }
+                        viewModel.setError(message, promoteGuestFallback = shouldPromoteGuest(kind))
                     }
                 }
             },
@@ -202,7 +195,7 @@ fun AuthScreen(
                 )
                 Spacer(modifier = Modifier.size(14.dp))
                 Text(
-                    text = "Sign in with Google",
+                    text = stringResource(R.string.auth_sign_in_google),
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF2A2A2A)
                 )
@@ -217,6 +210,23 @@ fun AuthScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center
             )
+
+            if (state.promoteGuestFallback) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = { viewModel.continueAsGuest(onDone = onContinueAsGuest) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(stringResource(R.string.auth_continue_guest), fontWeight = FontWeight.SemiBold)
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -225,17 +235,17 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            BenefitChip(t(isUk, "Безпечно", "Secure"))
+            BenefitChip(stringResource(R.string.auth_benefit_secure))
             Spacer(modifier = Modifier.size(8.dp))
-            BenefitChip(t(isUk, "Швидко", "Fast"))
+            BenefitChip(stringResource(R.string.auth_benefit_fast))
             Spacer(modifier = Modifier.size(8.dp))
-            BenefitChip(t(isUk, "Безкоштовно", "Free"))
+            BenefitChip(stringResource(R.string.auth_benefit_free))
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = t(isUk, "Продовжити як гість", "Continue as guest"),
+            text = stringResource(R.string.auth_continue_guest),
             color = TextPrimary,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier
@@ -246,7 +256,7 @@ fun AuthScreen(
         )
 
         Text(
-            text = t(isUk, "Продовжуючи, ви погоджуєтесь з Умовами та\nПолітикою", "By continuing, you agree to the Terms\nand Privacy Policy"),
+            text = stringResource(R.string.auth_terms_note),
             color = TextSecondary.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium.copy(
                 textDecoration = TextDecoration.Underline
@@ -257,8 +267,6 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(6.dp))
     }
 }
-
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun BenefitChip(text: String) {
@@ -291,4 +299,28 @@ private fun resolveWebClientId(context: Context): String {
     }
 
     return context.getString(R.string.google_web_client_id)
+}
+
+private suspend fun requestGoogleIdToken(context: Context, webClientId: String): Result<String> {
+    return runCatching {
+        val credentialManager = CredentialManager.create(context)
+        val googleIdOption = GetGoogleIdOption.Builder()
+            .setServerClientId(webClientId)
+            .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)
+            .build()
+
+        val request = GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+
+        val result = credentialManager.getCredential(
+            context = context,
+            request = request
+        )
+
+        val credential = result.credential
+        val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
+        googleCredential.idToken
+    }
 }

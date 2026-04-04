@@ -18,7 +18,9 @@ class SyncOrchestratorUseCase(
     private val syncProfileUseCase: SyncProfileUseCase,
     private val syncUserHabitsUseCase: SyncUserHabitsUseCase,
     private val syncAchievementsUseCase: SyncAchievementsUseCase,
-    private val maxRetryAttempts: Int = 2
+    private val maxRetryAttempts: Int = 2,
+    private val isNetworkAvailable: suspend () -> Boolean = { true },
+    private val onDeferredSyncRequested: suspend () -> Unit = {}
 ) {
     private val mutex = Mutex()
 
@@ -31,6 +33,11 @@ class SyncOrchestratorUseCase(
                     message = "User id must not be blank"
                 )
             )
+        }
+
+        if (!isNetworkAvailable()) {
+            onDeferredSyncRequested()
+            return Result.success(Unit)
         }
 
         val attempts = maxRetryAttempts.coerceAtLeast(1)

@@ -16,7 +16,6 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Shader
-import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -77,6 +76,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,12 +89,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 import com.vadymdev.habitix.ui.theme.AppBackground
@@ -123,6 +126,8 @@ fun ProfileScreen(
     var nameValidationError by remember { mutableStateOf<String?>(null) }
     var showAvatarActions by remember { mutableStateOf(false) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingAvatarSourceUri by remember { mutableStateOf<Uri?>(null) }
+    var showAvatarEditor by remember { mutableStateOf(false) }
     var draftName by remember(state.identity.displayName) { mutableStateOf(state.identity.displayName) }
     var draftBio by remember(state.identity.bio) { mutableStateOf(state.identity.bio) }
 
@@ -131,8 +136,8 @@ fun ProfileScreen(
     ) { uri ->
         if (uri != null) {
             persistReadPermissionIfPossible(context, uri)
-            val localPath = createCircularAvatarPath(context, uri)
-            onUpdateAvatar(localPath)
+            pendingAvatarSourceUri = uri
+            showAvatarEditor = true
         }
     }
 
@@ -141,8 +146,10 @@ fun ProfileScreen(
     ) { success ->
         if (success) {
             val sourceUri = pendingCameraUri
-            val localPath = sourceUri?.let { createCircularAvatarPath(context, it) }
-            onUpdateAvatar(localPath)
+            if (sourceUri != null) {
+                pendingAvatarSourceUri = sourceUri
+                showAvatarEditor = true
+            }
         }
     }
 
@@ -154,7 +161,7 @@ fun ProfileScreen(
             pendingCameraUri = uri
             cameraLauncher.launch(uri)
         } else {
-            Toast.makeText(context, t(isUk, "Потрібен дозвіл на камеру", "Camera permission is required"), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, t(context, isUk, R.string.profile_camera_permission_required_uk, R.string.profile_camera_permission_required_en), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -171,7 +178,7 @@ fun ProfileScreen(
         ) {
             item {
                 Text(
-                    text = t(isUk, "Профіль", "Profile"),
+                    text = t(isUk, R.string.nav_profile_uk, R.string.nav_profile_en),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.fillMaxWidth(),
@@ -185,7 +192,8 @@ fun ProfileScreen(
                     isUk = isUk,
                     onEditAvatar = { showAvatarActions = true },
                     onEditName = { editName = true },
-                    onEditBio = { editBio = true }
+                    onEditBio = { editBio = true },
+                    onAvatarBroken = { onUpdateAvatar(null) }
                 )
             }
 
@@ -197,9 +205,9 @@ fun ProfileScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(t(isUk, "Досягнення", "Achievements"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(t(isUk, R.string.achievements_title_uk, R.string.achievements_title_en), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(
-                        text = t(isUk, "Всі", "All"),
+                        text = t(isUk, R.string.profile_all_uk, R.string.profile_all_en),
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.clickable(onClick = onOpenAllAchievements)
@@ -226,7 +234,7 @@ fun ProfileScreen(
                         .padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(t(isUk, "Поділитися прогресом", "Share progress"), color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(t(isUk, R.string.profile_share_progress_uk, R.string.profile_share_progress_en), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -253,7 +261,7 @@ fun ProfileScreen(
                     galleryLauncher.launch("image/*")
                     showAvatarActions = false
                 }) {
-                    Text(t(isUk, "Галерея", "Gallery"))
+                    Text(t(isUk, R.string.profile_gallery_uk, R.string.profile_gallery_en))
                 }
             },
             dismissButton = {
@@ -268,36 +276,64 @@ fun ProfileScreen(
                     }
                     showAvatarActions = false
                 }) {
-                    Text(t(isUk, "Камера", "Camera"))
+                    Text(t(isUk, R.string.profile_camera_uk, R.string.profile_camera_en))
                 }
             },
-            title = { Text(t(isUk, "Оберіть аватар", "Choose avatar")) },
+            title = { Text(t(isUk, R.string.profile_choose_avatar_uk, R.string.profile_choose_avatar_en)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(t(isUk, "Фото зберігається локально на пристрої.", "Photo is stored locally on the device."))
+                    Text(t(isUk, R.string.profile_avatar_local_note_uk, R.string.profile_avatar_local_note_en))
+                    Text(t(isUk, R.string.profile_avatar_edit_note_uk, R.string.profile_avatar_edit_note_en))
                     TextButton(onClick = {
                         onUpdateAvatar(null)
                         showAvatarActions = false
                     }) {
-                        Text(t(isUk, "Скинути аватар", "Reset avatar"))
+                        Text(t(isUk, R.string.profile_reset_avatar_uk, R.string.profile_reset_avatar_en))
                     }
                 }
             }
         )
     }
 
+    val editorUri = pendingAvatarSourceUri
+    if (showAvatarEditor && editorUri != null) {
+        AvatarEditorSheet(
+            sourceUri = editorUri,
+            isUk = isUk,
+            onDismiss = {
+                showAvatarEditor = false
+                pendingAvatarSourceUri = null
+            },
+            onConfirm = { transform ->
+                val localPath = saveAvatarWithTransform(context, editorUri, transform)
+                if (localPath == null) {
+                    Toast.makeText(context, t(context, isUk, R.string.profile_image_process_failed_uk, R.string.profile_image_process_failed_en), Toast.LENGTH_SHORT).show()
+                } else {
+                    onUpdateAvatar(localPath)
+                    Toast.makeText(context, t(context, isUk, R.string.profile_avatar_updated_uk, R.string.profile_avatar_updated_en), Toast.LENGTH_SHORT).show()
+                }
+                showAvatarEditor = false
+                pendingAvatarSourceUri = null
+            }
+        )
+    }
+
     if (editName) {
+        val emptyNameError = t(isUk, R.string.profile_name_empty_error_uk, R.string.profile_name_empty_error_en)
+        val shortNameError = t(isUk, R.string.profile_name_short_error_uk, R.string.profile_name_short_error_en)
         EditTextDialog(
-            title = t(isUk, "Ім'я", "Name"),
+            title = t(isUk, R.string.profile_name_uk, R.string.profile_name_en),
             value = draftName,
             onValueChange = { draftName = it },
             error = nameValidationError,
+            confirmText = t(isUk, R.string.common_save_uk, R.string.common_save_en),
+            dismissText = t(isUk, R.string.common_cancel_uk, R.string.common_cancel_en),
             onDismiss = { editName = false },
             onConfirm = {
                 val trimmed = draftName.trim()
                 when {
-                    trimmed.isBlank() -> nameValidationError = t(isUk, "Ім'я не може бути порожнім", "Name cannot be empty")
-                    trimmed.length < 2 -> nameValidationError = t(isUk, "Ім'я має містити щонайменше 2 символи", "Name must have at least 2 characters")
+                    trimmed.isBlank() -> nameValidationError = emptyNameError
+                    trimmed.length < 2 -> nameValidationError = shortNameError
                     else -> {
                         nameValidationError = null
                         onUpdateName(trimmed)
@@ -310,9 +346,11 @@ fun ProfileScreen(
 
     if (editBio) {
         EditTextDialog(
-            title = t(isUk, "Опис", "Bio"),
+            title = t(isUk, R.string.profile_bio_uk, R.string.profile_bio_en),
             value = draftBio,
             onValueChange = { draftBio = it },
+            confirmText = t(isUk, R.string.common_save_uk, R.string.common_save_en),
+            dismissText = t(isUk, R.string.common_cancel_uk, R.string.common_cancel_en),
             onDismiss = { editBio = false },
             onConfirm = {
                 onUpdateBio(draftBio)
@@ -328,19 +366,26 @@ private fun ProfileHeader(
     isUk: Boolean,
     onEditAvatar: () -> Unit,
     onEditName: () -> Unit,
-    onEditBio: () -> Unit
+    onEditBio: () -> Unit,
+    onAvatarBroken: () -> Unit
 ) {
     var avatarLoadFailed by remember(state.identity.avatarUri) { mutableStateOf(false) }
     val avatarModel = remember(state.identity.avatarUri) {
         resolveAvatarModel(state.identity.avatarUri)
     }
     val avatarStatusText = when {
-        state.isAvatarUpdating -> t(isUk, "Оновлюємо аватар...", "Updating avatar...")
-        avatarLoadFailed -> t(isUk, "Помилка завантаження фото", "Failed to load avatar")
-        state.identity.avatarUri.isNullOrBlank() -> t(isUk, "Аватар не встановлено", "Avatar not set")
-        else -> t(isUk, "Аватар збережено локально", "Avatar saved locally")
+        state.isAvatarUpdating -> t(isUk, R.string.profile_avatar_updating_uk, R.string.profile_avatar_updating_en)
+        avatarLoadFailed -> t(isUk, R.string.profile_avatar_corrupted_uk, R.string.profile_avatar_corrupted_en)
+        state.identity.avatarUri.isNullOrBlank() -> t(isUk, R.string.profile_avatar_tap_to_add_uk, R.string.profile_avatar_tap_to_add_en)
+        else -> t(isUk, R.string.profile_avatar_saved_local_uk, R.string.profile_avatar_saved_local_en)
     }
     val primary = MaterialTheme.colorScheme.primary
+
+    LaunchedEffect(avatarLoadFailed, state.identity.avatarUri) {
+        if (avatarLoadFailed && !state.identity.avatarUri.isNullOrBlank()) {
+            onAvatarBroken()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -361,7 +406,7 @@ private fun ProfileHeader(
             if (avatarModel != null && !avatarLoadFailed) {
                 AsyncImage(
                     model = avatarModel,
-                    contentDescription = t(isUk, "Аватар", "Avatar"),
+                    contentDescription = t(isUk, R.string.profile_avatar_uk, R.string.profile_avatar_en),
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(CircleShape),
@@ -370,15 +415,6 @@ private fun ProfileHeader(
                         avatarLoadFailed = true
                     }
                 )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .size(28.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-                }
                 if (state.isAvatarUpdating) {
                     Box(
                         modifier = Modifier
@@ -396,13 +432,23 @@ private fun ProfileHeader(
             } else {
                 Text(state.identity.avatarInitials, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(28.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Rounded.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+            }
         }
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(state.identity.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Icon(
                 imageVector = Icons.Rounded.Create,
-                contentDescription = t(isUk, "Редагувати ім'я", "Edit name"),
+                contentDescription = t(isUk, R.string.profile_edit_name_uk, R.string.profile_edit_name_en),
                 tint = TextSecondary,
                 modifier = Modifier.size(16.dp).clickable(onClick = onEditName)
             )
@@ -428,7 +474,7 @@ private fun ProfileHeader(
         ) {
             Icon(Icons.Rounded.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             Spacer(modifier = Modifier.width(6.dp))
-            Text(t(isUk, "Рівень ${state.analytics.level}", "Level ${state.analytics.level}"), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Text(t(isUk, R.string.profile_level_uk, R.string.profile_level_en, state.analytics.level), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier
@@ -455,17 +501,17 @@ private fun ProfileHeader(
 private fun ProfileStatsGrid(state: ProfileUiState, isUk: Boolean) {
     val cards = listOf(
         Triple(
-            t(isUk, "Поточна серія", "Current streak"),
-            if (isUk) "${state.analytics.currentStreakDays} днів" else "${state.analytics.currentStreakDays} days",
+            t(isUk, R.string.profile_current_streak_uk, R.string.profile_current_streak_en),
+            t(isUk, R.string.profile_days_count_uk, R.string.profile_days_count_en, state.analytics.currentStreakDays),
             Icons.Rounded.EmojiEvents
         ),
         Triple(
-            t(isUk, "Найкраща серія", "Best streak"),
-            if (isUk) "${state.analytics.bestStreakDays} днів" else "${state.analytics.bestStreakDays} days",
+            t(isUk, R.string.profile_best_streak_uk, R.string.profile_best_streak_en),
+            t(isUk, R.string.profile_days_count_uk, R.string.profile_days_count_en, state.analytics.bestStreakDays),
             Icons.Rounded.EmojiEvents
         ),
-        Triple(t(isUk, "Загалом виконано", "Total completed"), state.analytics.totalCompleted.toString(), Icons.Rounded.Star),
-        Triple(t(isUk, "Днів з нами", "Days with us"), state.analytics.daysWithUs.toString(), Icons.Rounded.CalendarToday)
+        Triple(t(isUk, R.string.profile_total_completed_uk, R.string.profile_total_completed_en), state.analytics.totalCompleted.toString(), Icons.Rounded.Star),
+        Triple(t(isUk, R.string.profile_days_with_us_uk, R.string.profile_days_with_us_en), state.analytics.daysWithUs.toString(), Icons.Rounded.CalendarToday)
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -522,7 +568,7 @@ private fun AchievementCard(achievement: ProfileAchievement, compact: Boolean, i
                     Text(title, fontWeight = FontWeight.SemiBold)
                     if (achievement.unlocked) {
                         Text(
-                            t(isUk, "Отримано", "Unlocked"),
+                            t(isUk, R.string.profile_unlocked_uk, R.string.profile_unlocked_en),
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier
@@ -572,7 +618,7 @@ private fun MonthActivityCard(state: ProfileUiState, isUk: Boolean) {
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(t(isUk, "Активність цього місяця", "This month activity"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(t(isUk, R.string.profile_month_activity_uk, R.string.profile_month_activity_en), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(Icons.Rounded.Star, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
             Text(
@@ -580,7 +626,7 @@ private fun MonthActivityCard(state: ProfileUiState, isUk: Boolean) {
                 color = TextPrimary,
                 fontWeight = FontWeight.Bold
             )
-            Text(t(isUk, "порівняно з минулим місяцем", "compared to last month"), color = TextSecondary)
+            Text(t(isUk, R.string.profile_compared_last_month_uk, R.string.profile_compared_last_month_en), color = TextSecondary)
         }
 
         Row(
@@ -602,10 +648,10 @@ private fun MonthActivityCard(state: ProfileUiState, isUk: Boolean) {
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(if (isUk) "Тиж 1" else "Week 1", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-            Text(if (isUk) "Тиж 2" else "Week 2", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-            Text(if (isUk) "Тиж 3" else "Week 3", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
-            Text(if (isUk) "Тиж 4" else "Week 4", color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Text(t(isUk, R.string.profile_week_1_uk, R.string.profile_week_1_en), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Text(t(isUk, R.string.profile_week_2_uk, R.string.profile_week_2_en), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Text(t(isUk, R.string.profile_week_3_uk, R.string.profile_week_3_en), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Text(t(isUk, R.string.profile_week_4_uk, R.string.profile_week_4_en), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -623,11 +669,11 @@ private fun ShareProgressDialog(state: ProfileUiState, isUk: Boolean, onDismiss:
             modifier = Modifier.padding(horizontal = 18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(t(isUk, "Поділитися прогресом", "Share progress"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(t(isUk, R.string.profile_share_progress_uk, R.string.profile_share_progress_en), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
 
             SharePreviewCard(state = state, style = style, isUk = isUk)
 
-            Text(t(isUk, "Стиль", "Style"), color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+            Text(t(isUk, R.string.profile_style_uk, R.string.profile_style_en), color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ShareStyle.entries.forEach { entry ->
                     Box(
@@ -646,7 +692,7 @@ private fun ShareProgressDialog(state: ProfileUiState, isUk: Boolean, onDismiss:
                 }
             }
 
-            Text(t(isUk, "Поділитися в", "Share to"), color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+            Text(t(isUk, R.string.profile_share_to_uk, R.string.profile_share_to_en), color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -655,13 +701,13 @@ private fun ShareProgressDialog(state: ProfileUiState, isUk: Boolean, onDismiss:
                 SocialItem("IG", "Instagram", Color(0xFFE642A0)) { shareToInstagram(context, state, style, isUk) }
                 SocialItem("X", "Twitter", Color(0xFF1D9BF0)) { shareToTwitter(context, state, style, isUk) }
                 SocialItem("TG", "Telegram", Color(0xFF2AABEE)) { shareToTelegram(context, state, style, isUk) }
-                SocialItem("...", t(isUk, "Інше", "Other"), Color(0xFFD9D6D2)) { shareImageToAny(context, state, style, isUk) }
+                SocialItem("...", t(isUk, R.string.profile_other_uk, R.string.profile_other_en), Color(0xFFD9D6D2)) { shareImageToAny(context, state, style, isUk) }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 ShareButton("PNG") { saveShareCardToGallery(context, state, style, isUk) }
-                ShareButton(t(isUk, "Скопіювати", "Copy")) { copyLink(context, state, isUk) }
-                ShareButton(t(isUk, "Поділитися", "Share")) { shareText(context, state, isUk) }
+                ShareButton(t(isUk, R.string.profile_copy_uk, R.string.profile_copy_en)) { copyLink(context, state, isUk) }
+                ShareButton(t(isUk, R.string.profile_share_uk, R.string.profile_share_en)) { shareText(context, state, isUk) }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -705,17 +751,17 @@ private fun SharePreviewCard(state: ProfileUiState, style: ShareStyle, isUk: Boo
             }
             Column {
                 Text(state.identity.displayName, color = Color.White, fontWeight = FontWeight.Bold)
-                Text(t(isUk, "Рівень ${state.analytics.level}", "Level ${state.analytics.level}"), color = Color.White.copy(alpha = 0.86f))
+                Text(t(isUk, R.string.profile_level_uk, R.string.profile_level_en, state.analytics.level), color = Color.White.copy(alpha = 0.86f))
             }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            ShareStatCard("${state.analytics.currentStreakDays}", t(isUk, "днів поспіль", "days in a row"), Modifier.weight(1f))
-            ShareStatCard("${state.analytics.bestStreakDays}", t(isUk, "найкраща серія", "best streak"), Modifier.weight(1f))
+            ShareStatCard("${state.analytics.currentStreakDays}", t(isUk, R.string.profile_days_in_row_uk, R.string.profile_days_in_row_en), Modifier.weight(1f))
+            ShareStatCard("${state.analytics.bestStreakDays}", t(isUk, R.string.profile_best_streak_short_uk, R.string.profile_best_streak_short_en), Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            ShareStatCard("${state.analytics.totalCompleted}", t(isUk, "виконано", "completed"), Modifier.weight(1f))
-            ShareStatCard("${state.analytics.daysWithUs}", t(isUk, "днів з Habitix", "days with Habitix"), Modifier.weight(1f))
+            ShareStatCard("${state.analytics.totalCompleted}", t(isUk, R.string.profile_completed_short_uk, R.string.profile_completed_short_en), Modifier.weight(1f))
+            ShareStatCard("${state.analytics.daysWithUs}", t(isUk, R.string.profile_days_with_habitix_uk, R.string.profile_days_with_habitix_en), Modifier.weight(1f))
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -787,10 +833,10 @@ private fun ProfileBottomBar(
                 .padding(vertical = 8.dp, horizontal = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            BottomItem(Icons.Rounded.Home, t(isUk, "Головна", "Home"), activeTab == "home", onHome)
-            BottomItem(Icons.Rounded.Analytics, t(isUk, "Статистика", "Stats"), activeTab == "stats", onStats)
-            BottomItem(Icons.Rounded.Person, t(isUk, "Профіль", "Profile"), activeTab == "profile", onProfile)
-            BottomItem(Icons.Rounded.Settings, t(isUk, "Налаштування", "Settings"), activeTab == "settings", onSettings)
+            BottomItem(Icons.Rounded.Home, t(isUk, R.string.nav_home_uk, R.string.nav_home_en), activeTab == "home", onHome)
+            BottomItem(Icons.Rounded.Analytics, t(isUk, R.string.nav_stats_uk, R.string.nav_stats_en), activeTab == "stats", onStats)
+            BottomItem(Icons.Rounded.Person, t(isUk, R.string.nav_profile_uk, R.string.nav_profile_en), activeTab == "profile", onProfile)
+            BottomItem(Icons.Rounded.Settings, t(isUk, R.string.nav_settings_uk, R.string.nav_settings_en), activeTab == "settings", onSettings)
         }
     }
 }
@@ -810,21 +856,34 @@ private fun BottomItem(icon: ImageVector, label: String, active: Boolean, onClic
     }
 }
 
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
+@Composable
+private fun t(isUk: Boolean, @StringRes ukResId: Int, @StringRes enResId: Int, vararg formatArgs: Any): String {
+    return if (isUk) {
+        stringResource(ukResId, *formatArgs)
+    } else {
+        stringResource(enResId, *formatArgs)
+    }
+}
+
+private fun t(context: Context, isUk: Boolean, @StringRes ukResId: Int, @StringRes enResId: Int, vararg formatArgs: Any): String {
+    return context.getString(if (isUk) ukResId else enResId, *formatArgs)
+}
 
 @Composable
 private fun EditTextDialog(
     title: String,
     value: String,
     onValueChange: (String) -> Unit,
+    confirmText: String,
+    dismissText: String,
     error: String? = null,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Зберегти") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Скасувати") } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(confirmText) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(dismissText) } },
         title = { Text(title) },
         text = {
             OutlinedTextField(
@@ -922,18 +981,18 @@ private fun localizedAchievementDescription(achievement: ProfileAchievement, isU
 }
 
 private fun copyLink(context: Context, state: ProfileUiState, isUk: Boolean) {
-    val text = buildShareText(state, isUk)
+    val text = buildShareText(context, state, isUk)
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("progress", text))
-    Toast.makeText(context, t(isUk, "Скопійовано", "Copied"), Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, t(context, isUk, R.string.profile_copied_uk, R.string.profile_copied_en), Toast.LENGTH_SHORT).show()
 }
 
 private fun shareText(context: Context, state: ProfileUiState, isUk: Boolean) {
     val shareIntent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, buildShareText(state, isUk))
+        putExtra(Intent.EXTRA_TEXT, buildShareText(context, state, isUk))
     }
-    context.startActivity(Intent.createChooser(shareIntent, t(isUk, "Поділитися прогресом", "Share progress")))
+    context.startActivity(Intent.createChooser(shareIntent, t(context, isUk, R.string.profile_share_progress_uk, R.string.profile_share_progress_en)))
 }
 
 private fun shareToInstagram(context: Context, state: ProfileUiState, style: ShareStyle, isUk: Boolean) {
@@ -972,18 +1031,18 @@ private fun shareToTelegram(context: Context, state: ProfileUiState, style: Shar
 private fun shareImageToAny(context: Context, state: ProfileUiState, style: ShareStyle, isUk: Boolean) {
     val uri = createShareImageUri(context, state, style, isUk)
     if (uri == null) {
-        Toast.makeText(context, t(isUk, "Не вдалося підготувати зображення", "Failed to prepare image"), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, t(context, isUk, R.string.profile_prepare_image_failed_uk, R.string.profile_prepare_image_failed_en), Toast.LENGTH_SHORT).show()
         return
     }
 
-    val text = buildShareText(state, isUk)
+    val text = buildShareText(context, state, isUk)
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "image/png"
         putExtra(Intent.EXTRA_STREAM, uri)
         putExtra(Intent.EXTRA_TEXT, text)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    context.startActivity(Intent.createChooser(intent, t(isUk, "Поділитися прогресом", "Share progress")))
+    context.startActivity(Intent.createChooser(intent, t(context, isUk, R.string.profile_share_progress_uk, R.string.profile_share_progress_en)))
 }
 
 private fun shareToPackage(
@@ -996,11 +1055,11 @@ private fun shareToPackage(
 ) {
     val uri = createShareImageUri(context, state, style, isUk)
     if (uri == null) {
-        Toast.makeText(context, t(isUk, "Не вдалося підготувати зображення", "Failed to prepare image"), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, t(context, isUk, R.string.profile_prepare_image_failed_uk, R.string.profile_prepare_image_failed_en), Toast.LENGTH_SHORT).show()
         return
     }
 
-    val text = buildShareText(state, isUk)
+    val text = buildShareText(context, state, isUk)
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "image/png"
         putExtra(Intent.EXTRA_STREAM, uri)
@@ -1022,7 +1081,7 @@ private fun createShareImageUri(context: Context, state: ProfileUiState, style: 
     return runCatching {
         val shareDir = File(context.cacheDir, "share").apply { mkdirs() }
         val shareFile = File(shareDir, "share_${System.currentTimeMillis()}.png")
-        val bitmap = renderShareBitmap(state, style, isUk)
+        val bitmap = renderShareBitmap(context, state, style, isUk)
         FileOutputStream(shareFile).use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
         }
@@ -1049,41 +1108,6 @@ private fun createTempImageUri(context: Context): Uri {
     )
 }
 
-private fun createCircularAvatarPath(context: Context, sourceUri: Uri): String? {
-    return runCatching {
-        val sourceBitmap = decodeBitmapFromUri(context, sourceUri) ?: return null
-        val size = minOf(sourceBitmap.width, sourceBitmap.height)
-        val left = (sourceBitmap.width - size) / 2
-        val top = (sourceBitmap.height - size) / 2
-
-        val squared = Bitmap.createBitmap(sourceBitmap, left, top, size, size)
-        val result = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(result)
-
-        val maskPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.WHITE
-        }
-        val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-        }
-
-        canvas.drawOval(RectF(0f, 0f, size.toFloat(), size.toFloat()), maskPaint)
-        canvas.drawBitmap(squared, Rect(0, 0, size, size), Rect(0, 0, size, size), imagePaint)
-
-        val avatarsDir = File(context.filesDir, "avatars").apply { mkdirs() }
-        val avatarFile = File(avatarsDir, "avatar_${System.currentTimeMillis()}.png")
-        FileOutputStream(avatarFile).use { output ->
-            result.compress(Bitmap.CompressFormat.PNG, 100, output)
-        }
-
-        sourceBitmap.recycle()
-        squared.recycle()
-        result.recycle()
-
-        avatarFile.absolutePath
-    }.getOrNull()
-}
-
 private fun resolveAvatarModel(value: String?): Any? {
     if (value.isNullOrBlank()) return null
     return if (
@@ -1099,22 +1123,9 @@ private fun resolveAvatarModel(value: String?): Any? {
     }
 }
 
-private fun decodeBitmapFromUri(context: Context, uri: Uri): Bitmap? {
-    return runCatching {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            val source = ImageDecoder.createSource(context.contentResolver, uri)
-            ImageDecoder.decodeBitmap(source)
-        } else {
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                BitmapFactory.decodeStream(input)
-            }
-        }
-    }.getOrNull()
-}
-
 private fun saveShareCardToGallery(context: Context, state: ProfileUiState, style: ShareStyle, isUk: Boolean) {
     runCatching {
-        val bitmap = renderShareBitmap(state, style, isUk)
+        val bitmap = renderShareBitmap(context, state, style, isUk)
         val fileName = "habitix_share_${System.currentTimeMillis()}.png"
         val resolver = context.contentResolver
 
@@ -1128,11 +1139,11 @@ private fun saveShareCardToGallery(context: Context, state: ProfileUiState, styl
         }
 
         val collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val uri = resolver.insert(collection, values) ?: error(t(isUk, "Не вдалося створити файл", "Failed to create file"))
+    val uri = resolver.insert(collection, values) ?: error(t(context, isUk, R.string.profile_create_file_failed_uk, R.string.profile_create_file_failed_en))
 
         resolver.openOutputStream(uri)?.use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-        } ?: error(t(isUk, "Не вдалося записати PNG", "Failed to write PNG"))
+        } ?: error(t(context, isUk, R.string.profile_write_png_failed_uk, R.string.profile_write_png_failed_en))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             values.clear()
@@ -1140,13 +1151,13 @@ private fun saveShareCardToGallery(context: Context, state: ProfileUiState, styl
             resolver.update(uri, values, null, null)
         }
     }.onSuccess {
-        Toast.makeText(context, t(isUk, "PNG збережено у Галерею", "PNG saved to Gallery"), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, t(context, isUk, R.string.profile_png_saved_uk, R.string.profile_png_saved_en), Toast.LENGTH_SHORT).show()
     }.onFailure {
-        Toast.makeText(context, it.message ?: t(isUk, "Помилка збереження PNG", "Failed to save PNG"), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, it.message ?: t(context, isUk, R.string.profile_save_png_failed_uk, R.string.profile_save_png_failed_en), Toast.LENGTH_SHORT).show()
     }
 }
 
-private fun renderShareBitmap(state: ProfileUiState, style: ShareStyle, isUk: Boolean): Bitmap {
+private fun renderShareBitmap(context: Context, state: ProfileUiState, style: ShareStyle, isUk: Boolean): Bitmap {
     val width = 1080
     val height = 1350
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -1175,12 +1186,12 @@ private fun renderShareBitmap(state: ProfileUiState, style: ShareStyle, isUk: Bo
         textSize = 34f
     }
     canvas.drawText(state.identity.displayName, 88f, 130f, titlePaint)
-    canvas.drawText(t(isUk, "Рівень ${state.analytics.level}", "Level ${state.analytics.level}"), 88f, 180f, subtitlePaint)
+    canvas.drawText(t(context, isUk, R.string.profile_level_uk, R.string.profile_level_en, state.analytics.level), 88f, 180f, subtitlePaint)
 
-    drawStatBlock(canvas, 80f, 250f, 430f, 240f, "${state.analytics.currentStreakDays}", t(isUk, "днів поспіль", "days in a row"))
-    drawStatBlock(canvas, 570f, 250f, 430f, 240f, "${state.analytics.bestStreakDays}", t(isUk, "найкраща серія", "best streak"))
-    drawStatBlock(canvas, 80f, 540f, 430f, 240f, "${state.analytics.totalCompleted}", t(isUk, "виконано", "completed"))
-    drawStatBlock(canvas, 570f, 540f, 430f, 240f, "${state.analytics.daysWithUs}", t(isUk, "днів з Habitix", "days with Habitix"))
+    drawStatBlock(canvas, 80f, 250f, 430f, 240f, "${state.analytics.currentStreakDays}", t(context, isUk, R.string.profile_days_in_row_uk, R.string.profile_days_in_row_en))
+    drawStatBlock(canvas, 570f, 250f, 430f, 240f, "${state.analytics.bestStreakDays}", t(context, isUk, R.string.profile_best_streak_short_uk, R.string.profile_best_streak_short_en))
+    drawStatBlock(canvas, 80f, 540f, 430f, 240f, "${state.analytics.totalCompleted}", t(context, isUk, R.string.profile_completed_short_uk, R.string.profile_completed_short_en))
+    drawStatBlock(canvas, 570f, 540f, 430f, 240f, "${state.analytics.daysWithUs}", t(context, isUk, R.string.profile_days_with_habitix_uk, R.string.profile_days_with_habitix_en))
 
     val footerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = android.graphics.Color.WHITE
@@ -1228,22 +1239,17 @@ private fun ShareStyle.gradientColors(): IntArray {
     }
 }
 
-private fun buildShareText(state: ProfileUiState, isUk: Boolean): String {
-    return if (isUk) {
-        """
-            Мій прогрес у Habitix:
-            Рівень ${state.analytics.level} (${state.analytics.xpCurrent}/${state.analytics.xpTarget} XP)
-            Поточна серія: ${state.analytics.currentStreakDays} днів
-            Найкраща серія: ${state.analytics.bestStreakDays} днів
-            Всього виконано: ${state.analytics.totalCompleted}
-        """.trimIndent()
-    } else {
-        """
-            My Habitix progress:
-            Level ${state.analytics.level} (${state.analytics.xpCurrent}/${state.analytics.xpTarget} XP)
-            Current streak: ${state.analytics.currentStreakDays} days
-            Best streak: ${state.analytics.bestStreakDays} days
-            Total completed: ${state.analytics.totalCompleted}
-        """.trimIndent()
-    }
+private fun buildShareText(context: Context, state: ProfileUiState, isUk: Boolean): String {
+    return t(
+        context,
+        isUk,
+        R.string.profile_share_text_uk,
+        R.string.profile_share_text_en,
+        state.analytics.level,
+        state.analytics.xpCurrent,
+        state.analytics.xpTarget,
+        state.analytics.currentStreakDays,
+        state.analytics.bestStreakDays,
+        state.analytics.totalCompleted
+    )
 }

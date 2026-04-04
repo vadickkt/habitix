@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -137,12 +138,14 @@ private enum class LoadingStepStatus {
     PENDING
 }
 
+@Composable
 private fun authLoadingSteps(currentStepIndex: Int, isUk: Boolean): List<LoadingStepModel> {
+    val _unused = isUk
     val titles = listOf(
-        t(isUk, "Підключення до Google...", "Connecting to Google..."),
-        t(isUk, "Отримання даних профілю...", "Fetching profile data..."),
-        t(isUk, "Налаштування акаунту...", "Setting up account..."),
-        t(isUk, "Майже готово!", "Almost done!")
+        stringResource(R.string.auth_loading_connecting_google),
+        stringResource(R.string.auth_loading_fetching_profile),
+        stringResource(R.string.auth_loading_setting_up_account),
+        stringResource(R.string.auth_loading_almost_done)
     )
 
     return titles.mapIndexed { index, title ->
@@ -156,8 +159,6 @@ private fun authLoadingSteps(currentStepIndex: Int, isUk: Boolean): List<Loading
         LoadingStepModel(text = title, status = status)
     }
 }
-
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
 
 @Composable
 private fun LoadingStepRow(text: String, status: LoadingStepStatus, isMutedRow: Boolean) {

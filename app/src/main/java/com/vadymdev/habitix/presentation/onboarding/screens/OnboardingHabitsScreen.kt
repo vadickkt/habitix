@@ -32,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.HabitTemplate
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
@@ -67,14 +69,14 @@ fun OnboardingHabitsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = t(isUk, "Оберіть перші звички", "Choose your first habits"),
+            text = stringResource(R.string.onboarding_habits_title),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = t(isUk, "Можете обрати декілька для початку", "You can pick several to get started"),
+            text = stringResource(R.string.onboarding_habits_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )
@@ -103,7 +105,7 @@ fun OnboardingHabitsScreen(
                     )
                     Spacer(modifier = Modifier.size(14.dp))
                     Text(
-                        text = localizedHabitTitle(habit, isUk),
+                        text = localizedHabitTitle(habit.key, isUk),
                         modifier = Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
@@ -117,7 +119,7 @@ fun OnboardingHabitsScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = t(isUk, "Завершити", "Finish"),
+            text = stringResource(R.string.onboarding_finish),
             enabled = selected.isNotEmpty(),
             onClick = onComplete,
             modifier = Modifier.fillMaxWidth()
@@ -125,18 +127,16 @@ fun OnboardingHabitsScreen(
     }
 }
 
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
-
-private fun localizedHabitTitle(item: HabitTemplate, isUk: Boolean): String {
-    if (isUk) return item.title
-    return when (item.key) {
-        "water" -> "Drink water"
-        "meditation" -> "Meditation"
-        "morning" -> "Morning workout"
-        "reading" -> "Reading"
-        "sleep" -> "Sleep by 11 PM"
-        "gratitude" -> "Gratitude"
-        else -> item.title
+@Composable
+private fun localizedHabitTitle(key: String, isUk: Boolean): String {
+    return when (key) {
+        "water" -> stringResource(if (isUk) R.string.habit_template_water_uk else R.string.habit_template_water_en)
+        "meditation" -> stringResource(if (isUk) R.string.habit_template_meditation_uk else R.string.habit_template_meditation_en)
+        "morning" -> stringResource(if (isUk) R.string.habit_template_morning_uk else R.string.habit_template_morning_en)
+        "reading" -> stringResource(if (isUk) R.string.habit_template_reading_uk else R.string.habit_template_reading_en)
+        "sleep" -> stringResource(if (isUk) R.string.habit_template_sleep_uk else R.string.habit_template_sleep_en)
+        "gratitude" -> stringResource(if (isUk) R.string.habit_template_gratitude_uk else R.string.habit_template_gratitude_en)
+        else -> key
     }
 }
 

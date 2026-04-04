@@ -21,9 +21,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.presentation.components.PrimaryGreenButton
 import com.vadymdev.habitix.presentation.components.StepIndicator
@@ -37,7 +39,7 @@ fun OnboardingIntroScreen(
     language: AppLanguage,
     onContinue: () -> Unit
 ) {
-    val isUk = language == AppLanguage.UK
+    val _unusedLanguage = language
 
     Column(
         modifier = Modifier
@@ -68,7 +70,7 @@ fun OnboardingIntroScreen(
         Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = t(isUk, "Маленькі кроки\n— великі зміни", "Small steps\n- big changes"),
+            text = stringResource(R.string.onboarding_intro_title),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             textAlign = TextAlign.Center,
@@ -78,7 +80,7 @@ fun OnboardingIntroScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = t(isUk, "Створюй корисні звички та відстежуй\nсвій прогрес кожного дня", "Build healthy habits and track\nyour progress every day"),
+            text = stringResource(R.string.onboarding_intro_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -87,12 +89,10 @@ fun OnboardingIntroScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = t(isUk, "Почати", "Start"),
+            text = stringResource(R.string.onboarding_intro_start),
             enabled = true,
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
-
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en

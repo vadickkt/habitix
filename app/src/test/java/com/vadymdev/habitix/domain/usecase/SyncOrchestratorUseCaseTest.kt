@@ -213,9 +213,29 @@ class SyncOrchestratorUseCaseTest {
         assertEquals(1, attempts.get())
     }
 
+    @Test
+    fun offline_shortCircuitsSync_andRequestsDeferredSync() = runBlocking {
+        val recorder = CallRecorder()
+        val deferredCalls = AtomicInteger(0)
+
+        val orchestrator = buildOrchestrator(
+            recorder = recorder,
+            networkAvailable = { false },
+            onDeferredSyncRequested = { deferredCalls.incrementAndGet() }
+        )
+
+        val result = orchestrator("uid-1", SyncScope.FULL)
+
+        assertTrue(result.isSuccess)
+        assertTrue(recorder.calls.isEmpty())
+        assertEquals(1, deferredCalls.get())
+    }
+
     private fun buildOrchestrator(
         recorder: CallRecorder = CallRecorder(),
         maxRetries: Int = 2,
+        networkAvailable: suspend () -> Boolean = { true },
+        onDeferredSyncRequested: suspend () -> Unit = {},
         onSettingsSync: suspend () -> Unit = {},
         onProfileSync: suspend () -> Unit = {},
         onHabitsSync: suspend () -> Unit = {},
@@ -263,7 +283,9 @@ class SyncOrchestratorUseCaseTest {
             syncProfileUseCase = SyncProfileUseCase(profileSyncRepository, settingsRepository),
             syncUserHabitsUseCase = SyncUserHabitsUseCase(habitSyncRepository, settingsRepository),
             syncAchievementsUseCase = SyncAchievementsUseCase(achievementSyncRepository, settingsRepository),
-            maxRetryAttempts = maxRetries
+            maxRetryAttempts = maxRetries,
+            isNetworkAvailable = networkAvailable,
+            onDeferredSyncRequested = onDeferredSyncRequested
         )
     }
 

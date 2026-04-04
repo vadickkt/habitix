@@ -36,8 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.annotation.StringRes
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.HabitBadge
 import com.vadymdev.habitix.domain.model.HabitCategoryStat
@@ -79,8 +82,8 @@ fun StatsScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             item {
-                Text(t(isUk, "Статистика", "Statistics"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(t(isUk, "Ваш прогрес та досягнення", "Your progress and achievements"), color = TextSecondary)
+                Text(localizedString(isUk, R.string.stats_title_uk, R.string.stats_title_en), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(localizedString(isUk, R.string.stats_subtitle_uk, R.string.stats_subtitle_en), color = TextSecondary)
             }
 
             item {
@@ -164,9 +167,9 @@ private fun StatsPeriodSelector(selectedDays: Int, isUk: Boolean, onSelectPeriod
             ) {
                 Text(
                     text = when (days) {
-                        7 -> if (isUk) "7 днів" else "7 days"
-                        30 -> if (isUk) "30 днів" else "30 days"
-                        else -> if (isUk) "90 днів" else "90 days"
+                        7 -> localizedString(isUk, R.string.stats_period_7_uk, R.string.stats_period_7_en)
+                        30 -> localizedString(isUk, R.string.stats_period_30_uk, R.string.stats_period_30_en)
+                        else -> localizedString(isUk, R.string.stats_period_90_uk, R.string.stats_period_90_en)
                     },
                     color = if (active) Color.White else TextSecondary,
                     fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal
@@ -179,10 +182,10 @@ private fun StatsPeriodSelector(selectedDays: Int, isUk: Boolean, onSelectPeriod
 @Composable
 private fun QuickStatsGrid(snapshot: HabitStatsSnapshot, isUk: Boolean, onMetricClick: (StatsMetric) -> Unit) {
     val cards = listOf(
-        StatCardData("🔥", snapshot.longestStreak.toString(), t(isUk, "Найдовша серія", "Longest streak"), StatsMetric.LONGEST_STREAK),
-        StatCardData("🏆", snapshot.earnedBadgesCount.toString(), t(isUk, "Бейджів отримано", "Badges earned"), StatsMetric.BADGES),
-        StatCardData("◎", "${snapshot.successRatePercent}%", t(isUk, "Успішність", "Success rate"), StatsMetric.SUCCESS),
-        StatCardData("↗", snapshot.completedTasksCount.toString(), t(isUk, "Виконано завдань", "Tasks completed"), StatsMetric.COMPLETED)
+        StatCardData("🔥", snapshot.longestStreak.toString(), localizedString(isUk, R.string.stats_longest_streak_uk, R.string.stats_longest_streak_en), StatsMetric.LONGEST_STREAK),
+        StatCardData("🏆", snapshot.earnedBadgesCount.toString(), localizedString(isUk, R.string.stats_badges_earned_uk, R.string.stats_badges_earned_en), StatsMetric.BADGES),
+        StatCardData("◎", "${snapshot.successRatePercent}%", localizedString(isUk, R.string.stats_success_rate_uk, R.string.stats_success_rate_en), StatsMetric.SUCCESS),
+        StatCardData("↗", snapshot.completedTasksCount.toString(), localizedString(isUk, R.string.stats_tasks_completed_uk, R.string.stats_tasks_completed_en), StatsMetric.COMPLETED)
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -231,7 +234,7 @@ private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> U
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(t(isUk, "Активність", "Activity"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+        Text(localizedString(isUk, R.string.stats_activity_uk, R.string.stats_activity_en), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             rows.forEachIndexed { rowIndex, row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -252,13 +255,13 @@ private fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> U
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(t(isUk, "Менше", "Less"), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Text(localizedString(isUk, R.string.stats_less_uk, R.string.stats_less_en), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.width(6.dp))
             listOf(0, 1, 2, 3, 4).map { heatmapColor(it, primary) }.forEach { c ->
                 Box(modifier = Modifier.padding(horizontal = 1.dp).size(9.dp).background(c, CircleShape))
             }
             Spacer(modifier = Modifier.width(6.dp))
-            Text(t(isUk, "Більше", "More"), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
+            Text(localizedString(isUk, R.string.stats_more_uk, R.string.stats_more_en), color = TextSecondary, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -275,7 +278,7 @@ private fun CategoryCard(categories: List<HabitCategoryStat>, isUk: Boolean, onC
             .animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(t(isUk, "За категоріями", "By category"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+        Text(localizedString(isUk, R.string.stats_by_category_uk, R.string.stats_by_category_en), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
 
         categories.forEach { cat ->
             val fillColor = when (cat.colorKey) {
@@ -322,7 +325,7 @@ private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (H
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(t(isUk, "Досягнення", "Achievements"), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+        Text(localizedString(isUk, R.string.achievements_title_uk, R.string.achievements_title_en), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             badgeRows.forEach { row ->
@@ -363,31 +366,19 @@ private fun BadgesCard(badges: List<HabitBadge>, isUk: Boolean, onBadgeClick: (H
 @Composable
 private fun MetricDetailsDialog(metric: StatsMetric, snapshot: HabitStatsSnapshot, isUk: Boolean, onDismiss: () -> Unit) {
     val (title, body) = when (metric) {
-        StatsMetric.LONGEST_STREAK -> t(isUk, "Найдовша серія", "Longest streak") to t(
-            isUk,
-            "Ваш рекорд без пропусків: ${snapshot.longestStreak} дн.",
-            "Your best no-break streak: ${snapshot.longestStreak} days."
-        )
-        StatsMetric.BADGES -> t(isUk, "Бейджі", "Badges") to t(
-            isUk,
-            "Відкрито бейджів: ${snapshot.earnedBadgesCount} із ${snapshot.badges.size}.",
-            "Unlocked badges: ${snapshot.earnedBadgesCount} of ${snapshot.badges.size}."
-        )
-        StatsMetric.SUCCESS -> t(isUk, "Успішність", "Success rate") to t(
-            isUk,
-            "Відсоток виконання звичок у вибраному періоді: ${snapshot.successRatePercent}%.",
-            "Habit completion rate for selected period: ${snapshot.successRatePercent}%."
-        )
-        StatsMetric.COMPLETED -> t(isUk, "Виконано", "Completed") to t(
-            isUk,
-            "Завдань завершено за період: ${snapshot.completedTasksCount}.",
-            "Tasks completed in this period: ${snapshot.completedTasksCount}."
-        )
+        StatsMetric.LONGEST_STREAK -> localizedString(isUk, R.string.stats_longest_streak_uk, R.string.stats_longest_streak_en) to
+            localizedString(isUk, R.string.stats_metric_longest_body_uk, R.string.stats_metric_longest_body_en, snapshot.longestStreak)
+        StatsMetric.BADGES -> localizedString(isUk, R.string.stats_badges_label_uk, R.string.stats_badges_label_en) to
+            localizedString(isUk, R.string.stats_metric_badges_body_uk, R.string.stats_metric_badges_body_en, snapshot.earnedBadgesCount, snapshot.badges.size)
+        StatsMetric.SUCCESS -> localizedString(isUk, R.string.stats_success_rate_uk, R.string.stats_success_rate_en) to
+            localizedString(isUk, R.string.stats_metric_success_body_uk, R.string.stats_metric_success_body_en, snapshot.successRatePercent)
+        StatsMetric.COMPLETED -> localizedString(isUk, R.string.stats_completed_label_uk, R.string.stats_completed_label_en) to
+            localizedString(isUk, R.string.stats_metric_completed_body_uk, R.string.stats_metric_completed_body_en, snapshot.completedTasksCount)
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onDismiss) { Text(t(isUk, "Зрозуміло", "Got it")) } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(localizedString(isUk, R.string.common_got_it_uk, R.string.common_got_it_en)) } },
         title = { Text(title) },
         text = { Text(body) }
     )
@@ -397,18 +388,22 @@ private fun MetricDetailsDialog(metric: StatsMetric, snapshot: HabitStatsSnapsho
 private fun CategoryDetailsDialog(category: HabitCategoryStat, isUk: Boolean, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onDismiss) { Text(if (isUk) "Ок" else "OK") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(localizedString(isUk, R.string.common_ok_uk, R.string.common_ok_en)) } },
         title = { Text(localizedCategoryName(category.name, isUk)) },
-        text = { Text(t(isUk, "Частка категорії у ваших виконаннях: ${category.percent}%.", "Category share in your completions: ${category.percent}%.") ) }
+        text = { Text(localizedString(isUk, R.string.stats_category_share_body_uk, R.string.stats_category_share_body_en, category.percent)) }
     )
 }
 
 @Composable
 private fun BadgeDetailsDialog(badge: HabitBadge, isUk: Boolean, onDismiss: () -> Unit) {
-    val status = if (badge.earned) t(isUk, "Бейдж відкрито", "Badge unlocked") else t(isUk, "Бейдж ще не відкрито", "Badge is not unlocked yet")
+    val status = if (badge.earned) {
+        localizedString(isUk, R.string.stats_badge_unlocked_uk, R.string.stats_badge_unlocked_en)
+    } else {
+        localizedString(isUk, R.string.stats_badge_locked_uk, R.string.stats_badge_locked_en)
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onDismiss) { Text(t(isUk, "Закрити", "Close")) } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(localizedString(isUk, R.string.common_close_uk, R.string.common_close_en)) } },
         title = { Text("${badge.emoji} ${localizedBadgeTitle(badge, isUk)}") },
         text = { Text(status) }
     )
@@ -419,9 +414,9 @@ private fun HeatmapDayDialog(day: StatsHeatmapDayDetails, isUk: Boolean, onDismi
     val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onDismiss) { Text(t(isUk, "Закрити", "Close")) } },
-        title = { Text(t(isUk, "День активності", "Activity day")) },
-        text = { Text(t(isUk, "${day.date.format(formatter)}\nВиконаних звичок: ${day.completedCount}", "${day.date.format(formatter)}\nCompleted habits: ${day.completedCount}")) }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(localizedString(isUk, R.string.common_close_uk, R.string.common_close_en)) } },
+        title = { Text(localizedString(isUk, R.string.stats_activity_day_title_uk, R.string.stats_activity_day_title_en)) },
+        text = { Text(localizedString(isUk, R.string.stats_activity_day_body_uk, R.string.stats_activity_day_body_en, day.date.format(formatter), day.completedCount)) }
     )
 }
 
@@ -454,10 +449,10 @@ private fun StatsBottomBar(
                 .padding(vertical = 8.dp, horizontal = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            BottomItem(Icons.Rounded.Home, t(isUk, "Головна", "Home"), activeTab == "home", onHome)
-            BottomItem(Icons.Rounded.Analytics, t(isUk, "Статистика", "Stats"), activeTab == "stats", onStats)
-            BottomItem(Icons.Rounded.Person, t(isUk, "Профіль", "Profile"), activeTab == "profile", onProfile)
-            BottomItem(Icons.Rounded.Settings, t(isUk, "Налаштування", "Settings"), activeTab == "settings", onSettings)
+            BottomItem(Icons.Rounded.Home, localizedString(isUk, R.string.nav_home_uk, R.string.nav_home_en), activeTab == "home", onHome)
+            BottomItem(Icons.Rounded.Analytics, localizedString(isUk, R.string.nav_stats_uk, R.string.nav_stats_en), activeTab == "stats", onStats)
+            BottomItem(Icons.Rounded.Person, localizedString(isUk, R.string.nav_profile_uk, R.string.nav_profile_en), activeTab == "profile", onProfile)
+            BottomItem(Icons.Rounded.Settings, localizedString(isUk, R.string.nav_settings_uk, R.string.nav_settings_en), activeTab == "settings", onSettings)
         }
     }
 }
@@ -488,7 +483,19 @@ private fun heatmapColor(level: Int, primary: Color): Color {
     }
 }
 
-private fun t(isUk: Boolean, uk: String, en: String): String = if (isUk) uk else en
+@Composable
+private fun localizedString(
+    isUk: Boolean,
+    @StringRes ukResId: Int,
+    @StringRes enResId: Int,
+    vararg formatArgs: Any
+): String {
+    return if (isUk) {
+        stringResource(ukResId, *formatArgs)
+    } else {
+        stringResource(enResId, *formatArgs)
+    }
+}
 
 private fun localizedCategoryName(raw: String, isUk: Boolean): String {
     if (isUk) return raw

@@ -17,6 +17,7 @@ import com.vadymdev.habitix.data.repository.HabitRepositoryImpl
 import com.vadymdev.habitix.data.repository.OnboardingRepositoryImpl
 import com.vadymdev.habitix.data.repository.ProfileRepositoryImpl
 import com.vadymdev.habitix.data.repository.SettingsRepositoryImpl
+import com.vadymdev.habitix.data.sync.NetworkConnectivityChecker
 import com.vadymdev.habitix.domain.repository.AuthRepository
 import com.vadymdev.habitix.domain.repository.AchievementSyncRepository
 import com.vadymdev.habitix.domain.repository.HabitRepository
@@ -67,6 +68,7 @@ import com.vadymdev.habitix.domain.usecase.SyncSettingsUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateHabitUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateHabitsUseCase
 import com.vadymdev.habitix.domain.usecase.UpdateInterestsUseCase
+import com.vadymdev.habitix.sync.CloudSyncScheduler
 
 class AppContainer(context: Context) {
 
@@ -75,6 +77,7 @@ class AppContainer(context: Context) {
     private val firebaseAuth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
     private val firestore: FirebaseFirestore by lazy { FirebaseFirestore.getInstance() }
     private val database: HabitixDatabase by lazy { HabitixDatabase.get(appContext) }
+    private val networkConnectivityChecker: NetworkConnectivityChecker by lazy { NetworkConnectivityChecker(appContext) }
 
     private val authRepository: AuthRepository by lazy {
         FirebaseAuthRepository(
@@ -192,7 +195,9 @@ class AppContainer(context: Context) {
             syncSettingsUseCase = syncSettingsUseCase,
             syncProfileUseCase = syncProfileUseCase,
             syncUserHabitsUseCase = syncUserHabitsUseCase,
-            syncAchievementsUseCase = syncAchievementsUseCase
+            syncAchievementsUseCase = syncAchievementsUseCase,
+            isNetworkAvailable = { networkConnectivityChecker.isOnline() },
+            onDeferredSyncRequested = { CloudSyncScheduler.scheduleCatchUp(appContext) }
         )
     }
 }

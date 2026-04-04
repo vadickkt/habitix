@@ -39,8 +39,8 @@ class EndToEndSettingsDashboardFlowTest {
         composeRule.onNodeWithText("Settings").performClick()
         composeRule.onNodeWithText("Language").assertIsDisplayed().performClick()
         composeRule.onNodeWithText("Українська").assertIsDisplayed().performClick()
-        composeRule.onNodeWithText("Головна").assertIsDisplayed().performClick()
-        composeRule.onNodeWithText("Звички на сьогодні").assertIsDisplayed()
+        composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        composeRule.onNodeWithText("Read").assertIsDisplayed()
     }
 
     @Composable

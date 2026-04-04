@@ -16,6 +16,11 @@ import com.vadymdev.habitix.domain.model.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.Locale
+
+internal fun defaultLanguageForSystemLocale(systemLanguageCode: String): AppLanguage {
+    return if (systemLanguageCode.lowercase(Locale.ROOT) == "uk") AppLanguage.UK else AppLanguage.EN
+}
 
 private val Context.settingsDataStore by preferencesDataStore(name = "habitix_settings")
 
@@ -104,10 +109,19 @@ class SettingsPreferencesDataSource(private val context: Context) {
     }
 
     private fun Preferences.toAppSettings(): AppSettings {
+        val resolvedLanguage = runCatching {
+            val persisted = this[languageKey]
+            if (persisted.isNullOrBlank()) {
+                defaultLanguageForSystemLocale(Locale.getDefault().language)
+            } else {
+                AppLanguage.valueOf(persisted)
+            }
+        }.getOrDefault(defaultLanguageForSystemLocale(Locale.getDefault().language))
+
         return AppSettings(
             themeMode = runCatching { ThemeMode.valueOf(this[themeKey] ?: ThemeMode.LIGHT.name) }.getOrDefault(ThemeMode.LIGHT),
             accentPalette = runCatching { AccentPalette.valueOf(this[paletteKey] ?: AccentPalette.MINT.name) }.getOrDefault(AccentPalette.MINT),
-            language = runCatching { AppLanguage.valueOf(this[languageKey] ?: AppLanguage.UK.name) }.getOrDefault(AppLanguage.UK),
+            language = resolvedLanguage,
             pushEnabled = this[pushKey] ?: true,
             reminderHour = this[reminderHourKey] ?: 9,
             reminderMinute = this[reminderMinuteKey] ?: 0,
