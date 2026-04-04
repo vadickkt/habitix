@@ -11,6 +11,57 @@ import org.junit.Test
 class HabitSyncContractTest {
 
     @Test
+    fun guestLocalAndCloudHabits_mergeWithoutDataLoss() = runBlocking {
+        val localStore = FakeHabitLocalStore(
+            habits = mutableListOf(
+                HabitEntity(
+                    id = 1,
+                    cloudId = "",
+                    title = "Read",
+                    iconKey = "book",
+                    colorKey = "mint",
+                    frequencyType = "DAILY",
+                    customDaysCsv = "",
+                    reminderEnabled = true,
+                    reminderHour = 8,
+                    reminderMinute = 0,
+                    createdAt = 1L,
+                    startEpochDay = 1L,
+                    activeUntilEpochDay = null,
+                    isArchived = false,
+                    source = "guest"
+                )
+            )
+        )
+        val cloudStore = FakeHabitCloudStore().apply {
+            habits.add(
+                HabitCloudRecord(
+                    cloudId = "remote-1",
+                    title = "Workout",
+                    iconKey = "sport",
+                    colorKey = "sky",
+                    frequencyType = "DAILY",
+                    customDaysCsv = "",
+                    reminderEnabled = true,
+                    reminderHour = 9,
+                    reminderMinute = 0,
+                    startEpochDay = 2L,
+                    activeUntilEpochDay = null,
+                    isArchived = false,
+                    source = "cloud"
+                )
+            )
+        }
+
+        HabitSyncContract(localStore, cloudStore, cloudIdGenerator = { "generated-read" }).syncUserHabits("uid")
+
+        assertTrue(localStore.habits.any { it.title == "Read" })
+        assertTrue(localStore.habits.any { it.title == "Workout" })
+        assertTrue(localStore.habits.any { it.title == "Read" && it.cloudId == "generated-read" })
+        assertTrue(cloudStore.habits.any { it.cloudId == "generated-read" && it.title == "Read" })
+    }
+
+    @Test
     fun localHabitWithoutCloudId_getsGeneratedAndUploaded() = runBlocking {
         val localStore = FakeHabitLocalStore(
             habits = mutableListOf(

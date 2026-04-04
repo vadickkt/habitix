@@ -16,8 +16,10 @@ import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.TrackChanges
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material.icons.rounded.WorkspacePremium
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.ProfileAchievement
 
 internal fun achievementIcon(iconKey: String): ImageVector {
@@ -51,50 +53,50 @@ internal fun achievementColor(colorKey: String): Color {
     }
 }
 
+@Composable
 internal fun localizedAchievementTitle(achievement: ProfileAchievement, isUk: Boolean): String {
-    if (isUk) return achievement.title
     return when (achievement.id) {
-        "week_7" -> "7-day streak"
-        "week_14" -> "14-day streak"
-        "week_30" -> "Marathoner"
-        "week_100" -> "Legend"
-        "early_8" -> "Early bird"
-        "early_7" -> "Dawn warrior"
-        "late_owl" -> "Night owl"
-        "month_perfect" -> "Monthly champion"
-        "perfect_week" -> "Perfectionist"
-        "first" -> "First win"
-        "five" -> "Collector"
-        "ten" -> "Ambitious"
-        "health" -> "Healthy lifestyle"
-        "sport" -> "Athlete"
-        "mind" -> "Sage"
-        "book" -> "Book lover"
-        "prod" -> "Productive"
+        "week_7" -> localizedString(isUk, R.string.achievement_week_7_title_uk, R.string.achievement_week_7_title_en)
+        "week_14" -> localizedString(isUk, R.string.achievement_week_14_title_uk, R.string.achievement_week_14_title_en)
+        "week_30" -> localizedString(isUk, R.string.achievement_week_30_title_uk, R.string.achievement_week_30_title_en)
+        "week_100" -> localizedString(isUk, R.string.achievement_week_100_title_uk, R.string.achievement_week_100_title_en)
+        "early_8" -> localizedString(isUk, R.string.achievement_early_8_title_uk, R.string.achievement_early_8_title_en)
+        "early_7" -> localizedString(isUk, R.string.achievement_early_7_title_uk, R.string.achievement_early_7_title_en)
+        "late_owl" -> localizedString(isUk, R.string.achievement_late_owl_title_uk, R.string.achievement_late_owl_title_en)
+        "month_perfect" -> localizedString(isUk, R.string.achievement_month_perfect_title_uk, R.string.achievement_month_perfect_title_en)
+        "perfect_week" -> localizedString(isUk, R.string.achievement_perfect_week_title_uk, R.string.achievement_perfect_week_title_en)
+        "first" -> localizedString(isUk, R.string.achievement_first_title_uk, R.string.achievement_first_title_en)
+        "five" -> localizedString(isUk, R.string.achievement_five_title_uk, R.string.achievement_five_title_en)
+        "ten" -> localizedString(isUk, R.string.achievement_ten_title_uk, R.string.achievement_ten_title_en)
+        "health" -> localizedString(isUk, R.string.achievement_health_title_uk, R.string.achievement_health_title_en)
+        "sport" -> localizedString(isUk, R.string.achievement_sport_title_uk, R.string.achievement_sport_title_en)
+        "mind" -> localizedString(isUk, R.string.achievement_mind_title_uk, R.string.achievement_mind_title_en)
+        "book" -> localizedString(isUk, R.string.achievement_book_title_uk, R.string.achievement_book_title_en)
+        "prod" -> localizedString(isUk, R.string.achievement_prod_title_uk, R.string.achievement_prod_title_en)
         else -> achievement.title
     }
 }
 
+@Composable
 internal fun localizedAchievementDescription(achievement: ProfileAchievement, isUk: Boolean): String {
-    if (isUk) return achievement.description
     return when (achievement.id) {
-        "week_7" -> "Complete a habit for 7 days in a row"
-        "week_14" -> "Complete a habit for 14 days in a row"
-        "week_30" -> "30-day streak"
-        "week_100" -> "100-day streak"
-        "early_8" -> "Complete 5 habits before 8:00"
-        "early_7" -> "Complete 20 habits before 7:00"
-        "late_owl" -> "Complete 10 habits after 22:00"
-        "month_perfect" -> "100% completion for a month"
-        "perfect_week" -> "Perfect week"
-        "first" -> "Create your first habit"
-        "five" -> "Create 5 different habits"
-        "ten" -> "Create 10 habits"
-        "health" -> "Complete 50 Health category habits"
-        "sport" -> "Complete 30 Sport category habits"
-        "mind" -> "Complete 50 Mindfulness category habits"
-        "book" -> "Read for 30 days in a row"
-        "prod" -> "Complete 100 Productivity category habits"
+        "week_7" -> localizedString(isUk, R.string.achievement_week_7_desc_uk, R.string.achievement_week_7_desc_en)
+        "week_14" -> localizedString(isUk, R.string.achievement_week_14_desc_uk, R.string.achievement_week_14_desc_en)
+        "week_30" -> localizedString(isUk, R.string.achievement_week_30_desc_uk, R.string.achievement_week_30_desc_en)
+        "week_100" -> localizedString(isUk, R.string.achievement_week_100_desc_uk, R.string.achievement_week_100_desc_en)
+        "early_8" -> localizedString(isUk, R.string.achievement_early_8_desc_uk, R.string.achievement_early_8_desc_en)
+        "early_7" -> localizedString(isUk, R.string.achievement_early_7_desc_uk, R.string.achievement_early_7_desc_en)
+        "late_owl" -> localizedString(isUk, R.string.achievement_late_owl_desc_uk, R.string.achievement_late_owl_desc_en)
+        "month_perfect" -> localizedString(isUk, R.string.achievement_month_perfect_desc_uk, R.string.achievement_month_perfect_desc_en)
+        "perfect_week" -> localizedString(isUk, R.string.achievement_perfect_week_desc_uk, R.string.achievement_perfect_week_desc_en)
+        "first" -> localizedString(isUk, R.string.achievement_first_desc_uk, R.string.achievement_first_desc_en)
+        "five" -> localizedString(isUk, R.string.achievement_five_desc_uk, R.string.achievement_five_desc_en)
+        "ten" -> localizedString(isUk, R.string.achievement_ten_desc_uk, R.string.achievement_ten_desc_en)
+        "health" -> localizedString(isUk, R.string.achievement_health_desc_uk, R.string.achievement_health_desc_en)
+        "sport" -> localizedString(isUk, R.string.achievement_sport_desc_uk, R.string.achievement_sport_desc_en)
+        "mind" -> localizedString(isUk, R.string.achievement_mind_desc_uk, R.string.achievement_mind_desc_en)
+        "book" -> localizedString(isUk, R.string.achievement_book_desc_uk, R.string.achievement_book_desc_en)
+        "prod" -> localizedString(isUk, R.string.achievement_prod_desc_uk, R.string.achievement_prod_desc_en)
         else -> achievement.description
     }
 }

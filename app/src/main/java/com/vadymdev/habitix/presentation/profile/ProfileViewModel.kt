@@ -36,7 +36,7 @@ class ProfileViewModel(
         private const val TAG = "ProfileViewModel"
     }
 
-    private val selectedCategory = MutableStateFlow("Всі")
+    private val selectedCategory = MutableStateFlow(ACHIEVEMENTS_CATEGORY_ALL)
     private val currentUserId = MutableStateFlow<String?>(null)
     private val avatarUpdating = MutableStateFlow(false)
 
@@ -70,7 +70,7 @@ class ProfileViewModel(
             avatarInitials = initialsFor(resolvedName)
         )
 
-        val filteredAchievements = if (category == "Всі") {
+        val filteredAchievements = if (category == ACHIEVEMENTS_CATEGORY_ALL) {
             analytics.allAchievements
         } else {
             analytics.allAchievements.filter { it.category == category }
@@ -160,7 +160,7 @@ data class ProfileUiState(
         topAchievements = emptyList(),
         allAchievements = emptyList()
     ),
-    val selectedCategory: String = "Всі",
+    val selectedCategory: String = ACHIEVEMENTS_CATEGORY_ALL,
     val achievements: List<ProfileAchievement> = emptyList(),
     val unlockedCount: Int = 0,
     val isAvatarUpdating: Boolean = false

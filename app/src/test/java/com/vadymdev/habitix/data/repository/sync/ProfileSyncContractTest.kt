@@ -12,6 +12,20 @@ import org.junit.Test
 class ProfileSyncContractTest {
 
     @Test
+    fun guestLocalProfile_whenCloudEmpty_uploadsLocalIdentity() = runBlocking {
+        val local = ProfileIdentity("Guest User", "Guest bio", "GU", null, updatedAtMillis = 55L)
+        val localRepo = FakeProfileRepository(local)
+        val cloudStore = FakeProfileCloudStore(remote = null)
+
+        ProfileSyncContract(localRepo, cloudStore).sync("uid")
+
+        assertEquals(local.displayName, cloudStore.lastSet?.displayName)
+        assertEquals(local.bio, cloudStore.lastSet?.bio)
+        assertEquals(local.updatedAtMillis, cloudStore.lastSet?.updatedAtMillis)
+        assertEquals(local.displayName, localRepo.current.displayName)
+    }
+
+    @Test
     fun remoteNewer_replacesLocalWithFallbackBioWhenBlank() = runBlocking {
         val localRepo = FakeProfileRepository(
             ProfileIdentity("Local", "Local bio", "L", null, updatedAtMillis = 10L)

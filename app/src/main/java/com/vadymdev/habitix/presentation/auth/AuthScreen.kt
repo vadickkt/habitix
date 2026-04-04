@@ -60,7 +60,8 @@ fun AuthScreen(
     language: AppLanguage,
     onAuthorized: () -> Unit,
     onContinueAsGuest: () -> Unit,
-    googleSignInRequest: suspend (Context, String) -> Result<String> = ::requestGoogleIdToken
+    onOpenPrivacyPolicy: () -> Unit,
+    googleSignInRequest: suspend (Context, String) -> GoogleSignInOutcome = ::requestGoogleIdToken
 ) {
     val tag = "AuthScreen"
     val isUk = language == AppLanguage.UK
@@ -140,24 +141,34 @@ fun AuthScreen(
                 }
 
                 coroutineScope.launch {
-                    val result = googleSignInRequest(context, webClientId)
-                    result.onSuccess { idToken ->
-                        if (idToken.isBlank()) {
-                            viewModel.setError(context.getString(R.string.auth_google_setup_error))
-                        } else {
-                            viewModel.signInWithGoogleToken(idToken)
+                    when (val result = googleSignInRequest(context, webClientId)) {
+                        is GoogleSignInOutcome.Success -> {
+                            if (result.idToken.isBlank()) {
+                                viewModel.setError(context.getString(R.string.auth_google_setup_error))
+                            } else {
+                                viewModel.signInWithGoogleToken(result.idToken)
+                            }
                         }
-                    }.onFailure { error ->
-                        val kind = classifyAuthFailure(error.message)
-                        Log.w(tag, "CredentialManager sign-in failed: kind=$kind message=${error.message}", error)
 
-                        val message = when (kind) {
-                            AuthFailureKind.CANCELED_OR_NO_ACCOUNT -> context.getString(R.string.auth_error_canceled_or_no_account)
-                            AuthFailureKind.PROVIDER_UNAVAILABLE -> context.getString(R.string.auth_error_provider_unavailable)
-                            AuthFailureKind.TRANSIENT -> context.getString(R.string.auth_error_transient)
-                            AuthFailureKind.UNKNOWN -> context.getString(R.string.auth_error_unknown)
+                        GoogleSignInOutcome.Canceled -> {
+                            // User canceled account chooser intentionally: keep screen silent.
+                            viewModel.setError(null, promoteGuestFallback = false)
                         }
-                        viewModel.setError(message, promoteGuestFallback = shouldPromoteGuest(kind))
+
+                        is GoogleSignInOutcome.Failure -> {
+                            val error = result.error
+                            val kind = classifyAuthFailure(error)
+                            Log.w(tag, "CredentialManager sign-in failed: kind=$kind message=${error.message}", error)
+
+                            val message = when (kind) {
+                                AuthFailureKind.USER_CANCELED -> null
+                                AuthFailureKind.NO_ACCOUNT -> context.getString(R.string.auth_error_canceled_or_no_account)
+                                AuthFailureKind.PROVIDER_UNAVAILABLE -> context.getString(R.string.auth_error_provider_unavailable)
+                                AuthFailureKind.TRANSIENT -> context.getString(R.string.auth_error_transient)
+                                AuthFailureKind.UNKNOWN -> context.getString(R.string.auth_error_unknown)
+                            }
+                            viewModel.setError(message, promoteGuestFallback = message != null && shouldPromoteGuest(kind))
+                        }
                     }
                 }
             },
@@ -255,7 +266,8 @@ fun AuthScreen(
             style = MaterialTheme.typography.bodyMedium.copy(
                 textDecoration = TextDecoration.Underline
             ),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.clickable(onClick = onOpenPrivacyPolicy)
         )
 
         Spacer(modifier = Modifier.height(6.dp))

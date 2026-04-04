@@ -62,6 +62,7 @@ fun SettingsScreen(
     onAutoSyncToggle: (Boolean) -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
     onSignOut: () -> Unit,
+    onReturnToAuth: () -> Unit,
     onDeleteData: () -> Unit,
     onResetDeleteDataState: () -> Unit
 ) {
@@ -143,10 +144,12 @@ fun SettingsScreen(
             }
         }
 
-        item {
-            DividerTitle(t("АКАУНТ ТА БЕЗПЕКА", "ACCOUNT & SECURITY"))
-            SettingsCard {
-                SwitchRow(t("Синхронізація", "Sync"), t("Автоматично синхронізувати", "Sync automatically"), Icons.Rounded.Sync, settings.autoSyncEnabled, onAutoSyncToggle)
+        if (state.userId != null) {
+            item {
+                DividerTitle(t("АКАУНТ ТА БЕЗПЕКА", "ACCOUNT & SECURITY"))
+                SettingsCard {
+                    SwitchRow(t("Синхронізація", "Sync"), t("Автоматично синхронізувати", "Sync automatically"), Icons.Rounded.Sync, settings.autoSyncEnabled, onAutoSyncToggle)
+                }
             }
         }
 
@@ -168,7 +171,17 @@ fun SettingsScreen(
         item {
             DividerTitle(t("НЕБЕЗПЕЧНА ЗОНА", "DANGER ZONE"))
             SettingsCard {
-                ClickRow(t("Вийти", "Sign out"), "", Icons.Rounded.Logout, titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
+                if (state.userId == null) {
+                    ClickRow(
+                        t("Повернутися до аутентифікації", "Return to authentication"),
+                        t("Увійдіть, щоб синхронізувати дані гостя", "Sign in to sync guest data"),
+                        Icons.Rounded.Logout,
+                        titleColor = MaterialTheme.colorScheme.primary,
+                        onClick = onReturnToAuth
+                    )
+                } else {
+                    ClickRow(t("Вийти", "Sign out"), "", Icons.Rounded.Logout, titleColor = Color(0xFFE24949)) { showDangerDialog = "logout" }
+                }
                 ClickRow(t("Видалити дані", "Delete data"), t("Очистити локальні та хмарні дані", "Clear local and cloud data"), Icons.Rounded.DeleteForever, titleColor = Color(0xFFE24949)) { showDangerDialog = "delete" }
             }
             Spacer(modifier = Modifier.height(8.dp))

@@ -15,6 +15,29 @@ import org.junit.Test
 class SettingsSyncContractTest {
 
     @Test
+    fun guestLocalSettings_whenCloudEmpty_uploadsLocalWithoutOverwrite() = runBlocking {
+        val local = AppSettings(
+            themeMode = ThemeMode.DARK,
+            accentPalette = AccentPalette.PEACH,
+            language = AppLanguage.EN,
+            pushEnabled = false,
+            reminderHour = 6,
+            reminderMinute = 45,
+            updatedAtMillis = 44L
+        )
+        val localRepo = FakeSettingsRepository(local)
+        val cloudStore = FakeSettingsCloudStore(remote = null)
+
+        SettingsSyncContract(localRepo, cloudStore).sync("uid")
+
+        assertEquals(local.updatedAtMillis, cloudStore.lastSet?.updatedAtMillis)
+        assertEquals(local.themeMode.name, cloudStore.lastSet?.themeMode)
+        assertEquals(local.accentPalette.name, cloudStore.lastSet?.accentPalette)
+        assertEquals(local.language.name, cloudStore.lastSet?.language)
+        assertEquals(local.updatedAtMillis, localRepo.current.updatedAtMillis)
+    }
+
+    @Test
     fun remoteNewer_replacesLocal() = runBlocking {
         val localRepo = FakeSettingsRepository(
             AppSettings(

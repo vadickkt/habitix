@@ -56,8 +56,14 @@ internal fun resolveWebClientId(context: Context): String {
     return context.getString(R.string.google_web_client_id)
 }
 
-internal suspend fun requestGoogleIdToken(context: Context, webClientId: String): Result<String> {
-    return runCatching {
+sealed interface GoogleSignInOutcome {
+    data class Success(val idToken: String) : GoogleSignInOutcome
+    data object Canceled : GoogleSignInOutcome
+    data class Failure(val error: Throwable) : GoogleSignInOutcome
+}
+
+internal suspend fun requestGoogleIdToken(context: Context, webClientId: String): GoogleSignInOutcome {
+    return try {
         val credentialManager = CredentialManager.create(context)
         val googleIdOption = GetGoogleIdOption.Builder()
             .setServerClientId(webClientId)
@@ -76,6 +82,23 @@ internal suspend fun requestGoogleIdToken(context: Context, webClientId: String)
 
         val credential = result.credential
         val googleCredential = GoogleIdTokenCredential.createFrom(credential.data)
-        googleCredential.idToken
+        GoogleSignInOutcome.Success(googleCredential.idToken)
+    } catch (error: Throwable) {
+        if (isUserCancellation(error)) {
+            GoogleSignInOutcome.Canceled
+        } else {
+            GoogleSignInOutcome.Failure(error)
+        }
     }
+}
+
+private fun isUserCancellation(error: Throwable): Boolean {
+    val raw = error.message?.lowercase().orEmpty()
+    val type = error.javaClass.simpleName.lowercase()
+    return raw.contains("canceled") ||
+        raw.contains("cancelled") ||
+        raw.contains("dismiss") ||
+        raw.contains("aborted") ||
+        type.contains("cancel") ||
+        type.contains("abort")
 }

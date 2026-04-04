@@ -78,6 +78,87 @@ class SettingsViewModelIntegrationTest {
     }
 
     @Test
+    fun enablingAutoSync_withGuestSession_doesNotTriggerServerSync() = runTest {
+        val authRepo = FakeAuthRepository(null)
+        val settingsRepo = FakeSettingsRepository(AppSettings(autoSyncEnabled = false))
+        val settingsSyncCalls = AtomicInteger(0)
+
+        val orchestrator = buildOrchestrator(
+            settingsRepository = settingsRepo,
+            onSettingsSync = { settingsSyncCalls.incrementAndGet() }
+        )
+
+        val viewModel = buildViewModel(authRepo, settingsRepo, orchestrator)
+
+        viewModel.setAutoSyncEnabled(true)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.settings.autoSyncEnabled)
+        assertEquals(0, settingsSyncCalls.get())
+    }
+
+    @Test
+    fun changingLanguage_withGuestSession_doesNotTriggerServerSync() = runTest {
+        val authRepo = FakeAuthRepository(null)
+        val settingsRepo = FakeSettingsRepository(AppSettings(autoSyncEnabled = true))
+        val settingsSyncCalls = AtomicInteger(0)
+
+        val orchestrator = buildOrchestrator(
+            settingsRepository = settingsRepo,
+            onSettingsSync = { settingsSyncCalls.incrementAndGet() }
+        )
+
+        val viewModel = buildViewModel(authRepo, settingsRepo, orchestrator)
+
+        viewModel.setLanguage(AppLanguage.EN)
+        advanceUntilIdle()
+
+        assertEquals(AppLanguage.EN, viewModel.state.value.settings.language)
+        assertEquals(0, settingsSyncCalls.get())
+    }
+
+    @Test
+    fun changingPushSetting_withGuestSession_doesNotTriggerServerSync() = runTest {
+        val authRepo = FakeAuthRepository(null)
+        val settingsRepo = FakeSettingsRepository(AppSettings(autoSyncEnabled = true, pushEnabled = true))
+        val settingsSyncCalls = AtomicInteger(0)
+
+        val orchestrator = buildOrchestrator(
+            settingsRepository = settingsRepo,
+            onSettingsSync = { settingsSyncCalls.incrementAndGet() }
+        )
+
+        val viewModel = buildViewModel(authRepo, settingsRepo, orchestrator)
+
+        viewModel.setPushEnabled(false)
+        advanceUntilIdle()
+
+        assertTrue(!viewModel.state.value.settings.pushEnabled)
+        assertEquals(0, settingsSyncCalls.get())
+    }
+
+    @Test
+    fun changingReminderTime_withGuestSession_doesNotTriggerServerSync() = runTest {
+        val authRepo = FakeAuthRepository(null)
+        val settingsRepo = FakeSettingsRepository(AppSettings(autoSyncEnabled = true, reminderHour = 9, reminderMinute = 0))
+        val settingsSyncCalls = AtomicInteger(0)
+
+        val orchestrator = buildOrchestrator(
+            settingsRepository = settingsRepo,
+            onSettingsSync = { settingsSyncCalls.incrementAndGet() }
+        )
+
+        val viewModel = buildViewModel(authRepo, settingsRepo, orchestrator)
+
+        viewModel.setReminderTime(7, 45)
+        advanceUntilIdle()
+
+        assertEquals(7, viewModel.state.value.settings.reminderHour)
+        assertEquals(45, viewModel.state.value.settings.reminderMinute)
+        assertEquals(0, settingsSyncCalls.get())
+    }
+
+    @Test
     fun deleteData_success_transitionsToSuccessPhase() = runTest {
         val authRepo = FakeAuthRepository(UserSession("uid-2", null, null, null))
         val settingsRepo = FakeSettingsRepository(AppSettings(autoSyncEnabled = true))

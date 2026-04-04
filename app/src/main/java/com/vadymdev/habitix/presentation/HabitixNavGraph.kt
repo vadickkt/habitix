@@ -109,7 +109,8 @@ internal fun HabitixNavGraph(
                     navController.navigate(AppRoute.Dashboard) {
                         popUpTo(AppRoute.Auth) { inclusive = true }
                     }
-                }
+                },
+                onOpenPrivacyPolicy = { navController.navigate(AppRoute.PrivacyPolicy) }
             )
         }
 
@@ -218,6 +219,11 @@ internal fun HabitixNavGraph(
                         navController.navigate(AppRoute.Auth) {
                             popUpTo(AppRoute.Dashboard) { inclusive = true }
                         }
+                    }
+                },
+                onReturnToAuth = {
+                    navController.navigate(AppRoute.Auth) {
+                        popUpTo(AppRoute.Dashboard) { inclusive = true }
                     }
                 },
                 onDeleteData = settingsViewModel::deleteData,

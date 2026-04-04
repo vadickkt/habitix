@@ -36,6 +36,17 @@ class CloudSyncExecutionPolicyTest {
     }
 
     @Test
+    fun nullUserId_returnsSuccessWithoutSyncCall() = runBlocking {
+        val calls = AtomicInteger(0)
+        val policy = buildPolicy { calls.incrementAndGet() }
+
+        val result = policy.execute(runAttemptCount = 0, userId = null, log = { _, _, _ -> })
+
+        assertTrue(result is ListenableWorker.Result.Success)
+        assertEquals(0, calls.get())
+    }
+
+    @Test
     fun syncSuccess_returnsSuccess() = runBlocking {
         val calls = AtomicInteger(0)
         val policy = buildPolicy { calls.incrementAndGet() }

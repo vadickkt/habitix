@@ -8,10 +8,18 @@ import org.junit.Test
 class AuthFailureClassifierTest {
 
     @Test
-    fun classifyAuthFailure_canceled_mapsToNoAccountKind() {
+    fun classifyAuthFailure_canceled_mapsToUserCanceledKind() {
         val kind = classifyAuthFailure("GetGoogleIdOperation failed with status CANCELED")
 
-        assertEquals(AuthFailureKind.CANCELED_OR_NO_ACCOUNT, kind)
+        assertEquals(AuthFailureKind.USER_CANCELED, kind)
+        assertFalse(shouldPromoteGuest(kind))
+    }
+
+    @Test
+    fun classifyAuthFailure_noAccount_mapsToNoAccountKind() {
+        val kind = classifyAuthFailure("No account found on this device")
+
+        assertEquals(AuthFailureKind.NO_ACCOUNT, kind)
         assertTrue(shouldPromoteGuest(kind))
     }
 

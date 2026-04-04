@@ -22,4 +22,15 @@ class SyncOrchestratorValidationTest {
         assertEquals(SyncFailureKind.PERMANENT, (error as SyncDomainException).kind)
         assertEquals(SyncTarget.ORCHESTRATOR, error.target)
     }
+
+    @Test
+    fun blankUserId_doesNotInvokeAnySyncStage() = runBlocking {
+        val recorder = CallRecorder()
+        val orchestrator = buildSyncOrchestrator(recorder = recorder)
+
+        val result = orchestrator("", SyncScope.FULL)
+
+        assertTrue(result.isFailure)
+        assertTrue(recorder.calls.isEmpty())
+    }
 }

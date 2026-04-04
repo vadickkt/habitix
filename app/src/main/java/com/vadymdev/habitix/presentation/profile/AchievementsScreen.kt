@@ -46,7 +46,7 @@ import com.vadymdev.habitix.ui.theme.AppBackground
 import com.vadymdev.habitix.ui.theme.TextSecondary
 import java.time.format.DateTimeFormatter
 
-private val categories = listOf("Всі", "Серії", "Час", "Досконалість", "Початок", "Категорії")
+private val categories = achievementCategoryKeys
 
 @Composable
 fun AchievementsScreen(
