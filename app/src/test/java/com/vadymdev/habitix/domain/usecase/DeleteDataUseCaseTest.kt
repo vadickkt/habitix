@@ -179,7 +179,7 @@ class DeleteDataUseCaseTest {
     ): DeleteDataUseCase {
         val habitRepository = object : HabitRepository {
             override fun observeHabitsForDate(date: LocalDate) = emptyFlow<List<Habit>>()
-            override fun observeStats(periodDays: Int) = emptyFlow<HabitStatsSnapshot>()
+            override fun observeStats(periodDays: Int, heatmapPeriodDays: Int) = emptyFlow<HabitStatsSnapshot>()
             override fun observeProfileAnalytics() = emptyFlow<ProfileAnalytics>()
             override suspend fun toggleHabitCompletion(habitId: Long, date: LocalDate, completed: Boolean) = Unit
             override suspend fun updateHabit(habitId: Long, draft: HabitCreateDraft) = Unit

@@ -9,7 +9,7 @@ import java.time.LocalDate
 
 interface HabitRepository {
     fun observeHabitsForDate(date: LocalDate): Flow<List<Habit>>
-    fun observeStats(periodDays: Int): Flow<HabitStatsSnapshot>
+    fun observeStats(periodDays: Int, heatmapPeriodDays: Int = periodDays): Flow<HabitStatsSnapshot>
     fun observeProfileAnalytics(): Flow<ProfileAnalytics>
     suspend fun toggleHabitCompletion(habitId: Long, date: LocalDate, completed: Boolean)
     suspend fun updateHabit(habitId: Long, draft: HabitCreateDraft)

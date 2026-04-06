@@ -12,7 +12,8 @@ class ObserveHabitsForDateUseCase(private val repository: HabitRepository) {
 }
 
 class ObserveStatsUseCase(private val repository: HabitRepository) {
-    operator fun invoke(periodDays: Int): Flow<HabitStatsSnapshot> = repository.observeStats(periodDays)
+    operator fun invoke(periodDays: Int, heatmapPeriodDays: Int = periodDays): Flow<HabitStatsSnapshot> =
+        repository.observeStats(periodDays, heatmapPeriodDays)
 }
 
 class ToggleHabitCompletionUseCase(private val repository: HabitRepository) {

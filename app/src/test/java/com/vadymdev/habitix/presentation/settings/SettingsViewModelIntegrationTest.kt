@@ -181,7 +181,7 @@ class SettingsViewModelIntegrationTest {
     ): SettingsViewModel {
         val habitRepo = object : HabitRepository {
             override fun observeHabitsForDate(date: LocalDate): Flow<List<Habit>> = emptyFlow()
-            override fun observeStats(periodDays: Int): Flow<HabitStatsSnapshot> = emptyFlow()
+            override fun observeStats(periodDays: Int, heatmapPeriodDays: Int): Flow<HabitStatsSnapshot> = emptyFlow()
             override fun observeProfileAnalytics(): Flow<ProfileAnalytics> = emptyFlow()
             override suspend fun toggleHabitCompletion(habitId: Long, date: LocalDate, completed: Boolean) = Unit
             override suspend fun updateHabit(habitId: Long, draft: HabitCreateDraft) = Unit

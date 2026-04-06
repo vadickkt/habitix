@@ -27,10 +27,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.ui.theme.AppBackground
@@ -55,6 +57,7 @@ fun DashboardScreen(
     onOpenProfile: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val anchorWeekStart = remember { LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)) }
     val initialPage = 10_000
@@ -77,11 +80,11 @@ fun DashboardScreen(
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
         snackbarHostState.showSnackbar(
-            if (isUk) {
-                "Досягнення відкрито: ${event.title} (+${event.xpReward} XP)"
-            } else {
-                "Achievement unlocked: ${event.title} (+${event.xpReward} XP)"
-            }
+            context.getString(
+                if (isUk) R.string.dashboard_achievement_unlocked_uk else R.string.dashboard_achievement_unlocked_en,
+                event.title,
+                event.xpReward
+            )
         )
         onConsumeAchievementEvent(event.id)
     }

@@ -20,6 +20,10 @@ class StatsViewModel(
     observeStatsUseCase: ObserveStatsUseCase
 ) : ViewModel() {
 
+    private companion object {
+        const val HEATMAP_PERIOD_DAYS = 90
+    }
+
     private val selectedPeriodDays = MutableStateFlow(30)
     private val selectedMetric = MutableStateFlow<StatsMetric?>(null)
     private val selectedCategory = MutableStateFlow<HabitCategoryStat?>(null)
@@ -27,7 +31,7 @@ class StatsViewModel(
     private val selectedHeatmapIndex = MutableStateFlow<Int?>(null)
 
     private val snapshotFlow = selectedPeriodDays
-        .flatMapLatest { days -> observeStatsUseCase(days) }
+        .flatMapLatest { days -> observeStatsUseCase(days, HEATMAP_PERIOD_DAYS) }
 
     val state: StateFlow<StatsUiState> = combine(
         snapshotFlow,
@@ -113,9 +117,9 @@ data class StatsUiState(
         earnedBadgesCount = 0,
         successRatePercent = 0,
         completedTasksCount = 0,
-        heatmapLevels = List(30) { 0 },
-        heatmapCounts = List(30) { 0 },
-        heatmapStartEpochDay = LocalDate.now().minusDays(29L).toEpochDay(),
+        heatmapLevels = List(90) { 0 },
+        heatmapCounts = List(90) { 0 },
+        heatmapStartEpochDay = LocalDate.now().minusDays(89L).toEpochDay(),
         categoryStats = emptyList(),
         badges = emptyList()
     )

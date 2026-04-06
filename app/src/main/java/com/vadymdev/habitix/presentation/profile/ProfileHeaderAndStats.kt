@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -120,8 +121,11 @@ internal fun ProfileHeader(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .size(28.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape),
+                    .offset(x = (-2).dp, y = (-2).dp)
+                    .size(26.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .padding(1.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Rounded.CameraAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))

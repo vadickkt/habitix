@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.rememberScrollState
 import com.vadymdev.habitix.R
 import com.vadymdev.habitix.domain.model.HabitBadge
 import com.vadymdev.habitix.domain.model.HabitCategoryStat
@@ -115,7 +117,8 @@ private fun StatCard(modifier: Modifier, card: StatCardData, onClick: () -> Unit
 @Composable
 internal fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> Unit) {
     val primary = MaterialTheme.colorScheme.primary
-    val rows = levels.chunked(7)
+    val columns = levels.chunked(7)
+    val heatmapScrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -125,17 +128,27 @@ internal fun HeatmapCard(levels: List<Int>, isUk: Boolean, onDayClick: (Int) -> 
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(localizedString(isUk, R.string.stats_activity_uk, R.string.stats_activity_en), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            rows.forEachIndexed { rowIndex, row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    row.forEachIndexed { dayIndex, level ->
-                        val index = rowIndex * 7 + dayIndex
-                        Box(
-                            modifier = Modifier
-                                .size(13.dp)
-                                .background(heatmapColor(level, primary), CircleShape)
-                                .clickable { onDayClick(index) }
-                        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(heatmapScrollState),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            columns.forEachIndexed { columnIndex, weekColumn ->
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    repeat(7) { rowIndex ->
+                        val index = columnIndex * 7 + rowIndex
+                        val level = weekColumn.getOrNull(rowIndex)
+                        if (level == null) {
+                            Spacer(modifier = Modifier.size(13.dp))
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(13.dp)
+                                    .background(heatmapColor(level, primary), CircleShape)
+                                    .clickable { onDayClick(index) }
+                            )
+                        }
                     }
                 }
             }

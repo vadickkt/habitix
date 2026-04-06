@@ -42,7 +42,7 @@ class HabitRepositoryImpl(
         }
     }
 
-    override fun observeStats(periodDays: Int): Flow<HabitStatsSnapshot> {
+    override fun observeStats(periodDays: Int, heatmapPeriodDays: Int): Flow<HabitStatsSnapshot> {
         return combine(
             habitDao.observeAllHabits(),
             completionDao.observeAllCompletions()
@@ -50,7 +50,8 @@ class HabitRepositoryImpl(
             insightsCalculator.buildStatsSnapshot(
                 habits = habits,
                 completions = completions,
-                periodDays = periodDays
+                periodDays = periodDays,
+                heatmapPeriodDays = heatmapPeriodDays
             )
         }
     }

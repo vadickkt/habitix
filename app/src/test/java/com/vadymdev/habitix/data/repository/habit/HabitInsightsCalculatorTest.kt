@@ -128,6 +128,24 @@ class HabitInsightsCalculatorTest {
         assertEquals(today.minusDays(89).toEpochDay(), snapshot.heatmapStartEpochDay)
     }
 
+    @Test
+    fun buildStatsSnapshot_decouplesSummaryPeriodFromHeatmapPeriod() {
+        val today = LocalDate.of(2026, 4, 4)
+        val habit = testHabit(id = 1, createdAtMillis = today.atStartOfDay().toEpochSecond(ZoneOffset.UTC) * 1000)
+
+        val snapshot = calculator.buildStatsSnapshot(
+            habits = listOf(habit),
+            completions = emptyList(),
+            periodDays = 7,
+            heatmapPeriodDays = 90,
+            today = today
+        )
+
+        assertEquals(90, snapshot.heatmapLevels.size)
+        assertEquals(90, snapshot.heatmapCounts.size)
+        assertEquals(today.minusDays(89).toEpochDay(), snapshot.heatmapStartEpochDay)
+    }
+
     private fun testHabit(id: Long, createdAtMillis: Long): HabitEntity = HabitEntity(
         id = id,
         cloudId = "c$id",

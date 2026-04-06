@@ -12,6 +12,7 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -50,8 +51,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import kotlin.math.max
 import kotlin.math.roundToInt
+
+private const val AVATAR_EDITOR_TAG = "AvatarEditor"
 
 data class AvatarEditorTransform(
     val zoom: Float,
@@ -175,8 +179,9 @@ fun saveAvatarWithTransform(
     sourceUri: Uri,
     transform: AvatarEditorTransform
 ): String? {
-    return runCatching {
-        val sourceBitmap = decodeBitmapFromUri(context, sourceUri) ?: return null
+    val transformedPath = runCatching {
+        val sourceBitmap = decodeBitmapFromUri(context, sourceUri)
+            ?: throw IllegalStateException("Unable to decode avatar source bitmap")
         val srcWidth = sourceBitmap.width.toFloat()
         val srcHeight = sourceBitmap.height.toFloat()
         val viewport = transform.viewportSizePx.toFloat().coerceAtLeast(1f)
@@ -221,7 +226,10 @@ fun saveAvatarWithTransform(
         val avatarsDir = File(context.filesDir, "avatars").apply { mkdirs() }
         val avatarFile = File(avatarsDir, "avatar_${System.currentTimeMillis()}.png")
         FileOutputStream(avatarFile).use { output ->
-            circular.compress(Bitmap.CompressFormat.PNG, 100, output)
+            val compressed = circular.compress(Bitmap.CompressFormat.PNG, 100, output)
+            if (!compressed) {
+                throw IOException("Failed to compress transformed avatar bitmap")
+            }
         }
 
         sourceBitmap.recycle()
@@ -229,7 +237,33 @@ fun saveAvatarWithTransform(
         circular.recycle()
 
         avatarFile.absolutePath
-    }.getOrNull()
+    }
+        .onFailure { error ->
+            Log.w(AVATAR_EDITOR_TAG, "Transformed avatar save failed, will fallback to original copy", error)
+        }
+        .getOrNull()
+
+    if (transformedPath != null) {
+        return transformedPath
+    }
+
+    return runCatching {
+        val avatarsDir = File(context.filesDir, "avatars")
+        if (!avatarsDir.exists() && !avatarsDir.mkdirs()) {
+            throw IOException("Unable to create avatar directory")
+        }
+        val avatarFile = File(avatarsDir, "avatar_fallback_${System.currentTimeMillis()}.img")
+        context.contentResolver.openInputStream(sourceUri)?.use { input ->
+            FileOutputStream(avatarFile).use { output ->
+                input.copyTo(output)
+            }
+        } ?: throw IOException("Unable to open avatar input stream")
+        avatarFile.absolutePath
+    }
+        .onFailure { error ->
+            Log.e(AVATAR_EDITOR_TAG, "Fallback avatar save failed", error)
+        }
+        .getOrNull()
 }
 
 private fun decodeBitmapFromUri(context: Context, uri: Uri): Bitmap? {
@@ -242,5 +276,9 @@ private fun decodeBitmapFromUri(context: Context, uri: Uri): Bitmap? {
                 BitmapFactory.decodeStream(input)
             }
         }
-    }.getOrNull()
+    }
+        .onFailure { error ->
+            Log.w(AVATAR_EDITOR_TAG, "Avatar decode failed", error)
+        }
+        .getOrNull()
 }
