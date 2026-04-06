@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class SettingsViewModel(
     observeSettingsUseCase: ObserveSettingsUseCase,
@@ -196,7 +197,13 @@ class SettingsViewModel(
 }
 
 data class SettingsUiState(
-    val settings: AppSettings = AppSettings(),
+    val settings: AppSettings = AppSettings(
+        language = if (Locale.getDefault().language.equals("uk", ignoreCase = true)) {
+            AppLanguage.UK
+        } else {
+            AppLanguage.EN
+        }
+    ),
     val userId: String? = null,
     val deleteData: DeleteDataUiState = DeleteDataUiState()
 )

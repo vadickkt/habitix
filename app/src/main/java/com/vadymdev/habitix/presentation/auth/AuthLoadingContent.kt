@@ -139,12 +139,11 @@ private enum class LoadingStepStatus {
 
 @Composable
 private fun authLoadingSteps(currentStepIndex: Int, isUk: Boolean): List<LoadingStepModel> {
-    val _unused = isUk
     val titles = listOf(
-        stringResource(R.string.auth_loading_connecting_google),
-        stringResource(R.string.auth_loading_fetching_profile),
-        stringResource(R.string.auth_loading_setting_up_account),
-        stringResource(R.string.auth_loading_almost_done)
+        stringResource(if (isUk) R.string.auth_loading_connecting_google_uk else R.string.auth_loading_connecting_google_en),
+        stringResource(if (isUk) R.string.auth_loading_fetching_profile_uk else R.string.auth_loading_fetching_profile_en),
+        stringResource(if (isUk) R.string.auth_loading_setting_up_account_uk else R.string.auth_loading_setting_up_account_en),
+        stringResource(if (isUk) R.string.auth_loading_almost_done_uk else R.string.auth_loading_almost_done_en)
     )
 
     return titles.mapIndexed { index, title ->

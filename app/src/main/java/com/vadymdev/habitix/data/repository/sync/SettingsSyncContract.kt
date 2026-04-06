@@ -7,6 +7,11 @@ import com.vadymdev.habitix.domain.model.AppSettings
 import com.vadymdev.habitix.domain.model.ThemeMode
 import com.vadymdev.habitix.domain.repository.SettingsRepository
 import kotlinx.coroutines.tasks.await
+import java.util.Locale
+
+private fun systemDefaultLanguage(): AppLanguage {
+    return if (Locale.getDefault().language.equals("uk", ignoreCase = true)) AppLanguage.UK else AppLanguage.EN
+}
 
 internal data class SettingsCloudRecord(
     val themeMode: String,
@@ -44,7 +49,7 @@ internal class FirestoreSettingsCloudStore(
         return SettingsCloudRecord(
             themeMode = doc.getString("themeMode") ?: ThemeMode.LIGHT.name,
             accentPalette = doc.getString("accentPalette") ?: AccentPalette.MINT.name,
-            language = doc.getString("language") ?: AppLanguage.UK.name,
+            language = doc.getString("language") ?: systemDefaultLanguage().name,
             pushEnabled = doc.getBoolean("pushEnabled") ?: true,
             reminderHour = (doc.getLong("reminderHour") ?: 9L).toInt(),
             reminderMinute = (doc.getLong("reminderMinute") ?: 0L).toInt(),
@@ -133,7 +138,7 @@ internal class SettingsSyncContract(
         return AppSettings(
             themeMode = runCatching { ThemeMode.valueOf(themeMode) }.getOrDefault(ThemeMode.LIGHT),
             accentPalette = runCatching { AccentPalette.valueOf(accentPalette) }.getOrDefault(AccentPalette.MINT),
-            language = runCatching { AppLanguage.valueOf(language) }.getOrDefault(AppLanguage.UK),
+            language = runCatching { AppLanguage.valueOf(language) }.getOrDefault(systemDefaultLanguage()),
             pushEnabled = pushEnabled,
             reminderHour = reminderHour,
             reminderMinute = reminderMinute,

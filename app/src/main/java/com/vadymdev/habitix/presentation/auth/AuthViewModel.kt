@@ -54,7 +54,7 @@ class AuthViewModel(
                 _state.update { current ->
                     current.copy(
                         isLoading = false,
-                        error = error.message ?: "Не вдалося увійти через Google",
+                        error = error.message ?: "Google sign-in failed",
                         promoteGuestFallback = true,
                         showLoadingFlow = false,
                         loadingStepIndex = -1

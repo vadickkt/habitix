@@ -76,7 +76,7 @@ fun AuthScreen(
 
     LaunchedEffect(webClientId) {
         if (webClientId.isBlank()) {
-            viewModel.setError(context.getString(R.string.auth_google_setup_error))
+            viewModel.setError(context.getString(if (isUk) R.string.auth_google_setup_error_uk else R.string.auth_google_setup_error_en))
         }
     }
 
@@ -115,14 +115,14 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(18.dp))
 
         Text(
-            text = stringResource(R.string.auth_hello),
+            text = stringResource(if (isUk) R.string.auth_hello_uk else R.string.auth_hello_en),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.auth_subtitle),
+            text = stringResource(if (isUk) R.string.auth_subtitle_uk else R.string.auth_subtitle_en),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -134,7 +134,7 @@ fun AuthScreen(
             onClick = {
                 viewModel.setError(null)
                 if (webClientId.isBlank()) {
-                    viewModel.setError(context.getString(R.string.auth_google_setup_error))
+                    viewModel.setError(context.getString(if (isUk) R.string.auth_google_setup_error_uk else R.string.auth_google_setup_error_en))
                     return@Button
                 }
 
@@ -142,7 +142,7 @@ fun AuthScreen(
                     when (val result = googleSignInRequest(context, webClientId)) {
                         is GoogleSignInOutcome.Success -> {
                             if (result.idToken.isBlank()) {
-                                viewModel.setError(context.getString(R.string.auth_google_setup_error))
+                                viewModel.setError(context.getString(if (isUk) R.string.auth_google_setup_error_uk else R.string.auth_google_setup_error_en))
                             } else {
                                 viewModel.signInWithGoogleToken(result.idToken)
                             }
@@ -160,10 +160,10 @@ fun AuthScreen(
 
                             val message = when (kind) {
                                 AuthFailureKind.USER_CANCELED -> null
-                                AuthFailureKind.NO_ACCOUNT -> context.getString(R.string.auth_error_canceled_or_no_account)
-                                AuthFailureKind.PROVIDER_UNAVAILABLE -> context.getString(R.string.auth_error_provider_unavailable)
-                                AuthFailureKind.TRANSIENT -> context.getString(R.string.auth_error_transient)
-                                AuthFailureKind.UNKNOWN -> context.getString(R.string.auth_error_unknown)
+                                AuthFailureKind.NO_ACCOUNT -> context.getString(if (isUk) R.string.auth_error_canceled_or_no_account_uk else R.string.auth_error_canceled_or_no_account_en)
+                                AuthFailureKind.PROVIDER_UNAVAILABLE -> context.getString(if (isUk) R.string.auth_error_provider_unavailable_uk else R.string.auth_error_provider_unavailable_en)
+                                AuthFailureKind.TRANSIENT -> context.getString(if (isUk) R.string.auth_error_transient_uk else R.string.auth_error_transient_en)
+                                AuthFailureKind.UNKNOWN -> context.getString(if (isUk) R.string.auth_error_unknown_uk else R.string.auth_error_unknown_en)
                             }
                             viewModel.setError(message, promoteGuestFallback = message != null && shouldPromoteGuest(kind))
                         }
@@ -198,7 +198,7 @@ fun AuthScreen(
                 )
                 Spacer(modifier = Modifier.size(14.dp))
                 Text(
-                    text = stringResource(R.string.auth_sign_in_google),
+                    text = stringResource(if (isUk) R.string.auth_sign_in_google_uk else R.string.auth_sign_in_google_en),
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF2A2A2A)
                 )
@@ -227,7 +227,7 @@ fun AuthScreen(
                         contentColor = Color.White
                     )
                 ) {
-                    Text(stringResource(R.string.auth_continue_guest), fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(if (isUk) R.string.auth_continue_guest_uk else R.string.auth_continue_guest_en), fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -238,17 +238,17 @@ fun AuthScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            BenefitChip(stringResource(R.string.auth_benefit_secure))
+            BenefitChip(stringResource(if (isUk) R.string.auth_benefit_secure_uk else R.string.auth_benefit_secure_en))
             Spacer(modifier = Modifier.size(8.dp))
-            BenefitChip(stringResource(R.string.auth_benefit_fast))
+            BenefitChip(stringResource(if (isUk) R.string.auth_benefit_fast_uk else R.string.auth_benefit_fast_en))
             Spacer(modifier = Modifier.size(8.dp))
-            BenefitChip(stringResource(R.string.auth_benefit_free))
+            BenefitChip(stringResource(if (isUk) R.string.auth_benefit_free_uk else R.string.auth_benefit_free_en))
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = stringResource(R.string.auth_continue_guest),
+            text = stringResource(if (isUk) R.string.auth_continue_guest_uk else R.string.auth_continue_guest_en),
             color = TextPrimary,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
             modifier = Modifier
@@ -259,7 +259,7 @@ fun AuthScreen(
         )
 
         Text(
-            text = stringResource(R.string.auth_terms_note),
+            text = stringResource(if (isUk) R.string.auth_terms_note_uk else R.string.auth_terms_note_en),
             color = TextSecondary.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium.copy(
                 textDecoration = TextDecoration.Underline
