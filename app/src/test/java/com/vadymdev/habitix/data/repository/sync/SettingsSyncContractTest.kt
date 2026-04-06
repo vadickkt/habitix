@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class SettingsSyncContractTest {
 
@@ -176,9 +177,15 @@ class SettingsSyncContractTest {
 
         SettingsSyncContract(localRepo, cloudStore).sync("uid")
 
+        val expectedFallbackLanguage = if (Locale.getDefault().language.equals("uk", ignoreCase = true)) {
+            AppLanguage.UK
+        } else {
+            AppLanguage.EN
+        }
+
         assertEquals(ThemeMode.LIGHT, localRepo.current.themeMode)
         assertEquals(AccentPalette.MINT, localRepo.current.accentPalette)
-        assertEquals(AppLanguage.UK, localRepo.current.language)
+        assertEquals(expectedFallbackLanguage, localRepo.current.language)
         assertEquals(false, localRepo.current.pushEnabled)
         assertEquals(7, localRepo.current.reminderHour)
         assertEquals(40, localRepo.current.reminderMinute)

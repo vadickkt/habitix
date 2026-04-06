@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -31,8 +32,10 @@ class EndToEndSettingsDashboardFlowTest {
 
     @Test
     fun changeLanguageInSettings_andReturnToDashboard_persistsUiState() {
+        val initialSettings = AppSettings(language = AppLanguage.EN)
+
         composeRule.setContent {
-            FlowHost()
+            FlowHost(initialSettings = initialSettings)
         }
 
         composeRule.onNodeWithText("Habits for today").assertIsDisplayed()
@@ -44,9 +47,9 @@ class EndToEndSettingsDashboardFlowTest {
     }
 
     @Composable
-    private fun FlowHost() {
+    private fun FlowHost(initialSettings: AppSettings) {
         val navController = rememberNavController()
-        var settings by mutableStateOf(AppSettings(language = AppLanguage.EN))
+        var settings by remember { mutableStateOf(initialSettings) }
         val dashboardState = DashboardUiState(
             selectedDate = LocalDate.of(2026, 4, 4),
             habits = listOf(
