@@ -9,6 +9,7 @@ import com.vadymdev.habitix.data.local.room.HiddenHabitDayDao
 import com.vadymdev.habitix.data.local.room.HiddenHabitDayEntity
 import com.vadymdev.habitix.data.repository.habit.HabitInsightsCalculator
 import com.vadymdev.habitix.domain.model.DuplicateActiveHabitException
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.domain.model.Habit
 import com.vadymdev.habitix.domain.model.HabitCreateDraft
 import com.vadymdev.habitix.domain.model.HabitFrequencyType
@@ -18,6 +19,7 @@ import com.vadymdev.habitix.domain.repository.HabitRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import java.time.LocalDate
+import java.util.Locale
 import java.util.UUID
 
 class HabitRepositoryImpl(
@@ -174,11 +176,16 @@ class HabitRepositoryImpl(
     }
 
     override suspend fun seedOnboardingHabits(habitKeys: Set<String>) {
-        val defaults = onboardingDefaults().filter { habitKeys.contains(it.key) }
+        val language = if (Locale.getDefault().language.equals("uk", ignoreCase = true)) {
+            AppLanguage.UK
+        } else {
+            AppLanguage.EN
+        }
+        val defaults = onboardingDefaults(language).filter { habitKeys.contains(it.key) }
         if (defaults.isEmpty()) return
 
         val entities = defaults.mapNotNull { model ->
-            val exists = habitDao.countOnboardingHabitByTitle(model.title) > 0
+            val exists = habitDao.countOnboardingHabitByIconKey(model.iconKey) > 0
             if (exists) {
                 null
             } else {
@@ -241,15 +248,26 @@ class HabitRepositoryImpl(
             .lowercase()
     }
 
-    private fun onboardingDefaults(): List<OnboardingHabitDefault> {
-        return listOf(
-            OnboardingHabitDefault("water", "Випити 8 склянок води", "water", "blue"),
-            OnboardingHabitDefault("meditation", "Медитація 10 хв", "mind", "pink"),
-            OnboardingHabitDefault("morning", "Тренування", "fitness", "mint"),
-            OnboardingHabitDefault("reading", "Читати 20 хвилин", "book", "orange"),
-            OnboardingHabitDefault("sleep", "Сон до 23:00", "moon", "purple"),
-            OnboardingHabitDefault("gratitude", "Вдячність", "heart", "pink")
-        )
+    private fun onboardingDefaults(language: AppLanguage): List<OnboardingHabitDefault> {
+        return when (language) {
+            AppLanguage.UK -> listOf(
+                OnboardingHabitDefault("water", "Випити 8 склянок води", "water", "blue"),
+                OnboardingHabitDefault("meditation", "Медитація 10 хв", "mind", "pink"),
+                OnboardingHabitDefault("morning", "Тренування", "fitness", "mint"),
+                OnboardingHabitDefault("reading", "Читати 20 хвилин", "book", "orange"),
+                OnboardingHabitDefault("sleep", "Сон до 23:00", "moon", "purple"),
+                OnboardingHabitDefault("gratitude", "Вдячність", "heart", "pink")
+            )
+
+            AppLanguage.EN -> listOf(
+                OnboardingHabitDefault("water", "Drink 8 glasses of water", "water", "blue"),
+                OnboardingHabitDefault("meditation", "Meditation 10 min", "mind", "pink"),
+                OnboardingHabitDefault("morning", "Workout", "fitness", "mint"),
+                OnboardingHabitDefault("reading", "Read 20 minutes", "book", "orange"),
+                OnboardingHabitDefault("sleep", "Sleep by 11:00 PM", "moon", "purple"),
+                OnboardingHabitDefault("gratitude", "Gratitude", "heart", "pink")
+            )
+        }
     }
 
     private suspend fun refreshAchievementUnlockLog() {

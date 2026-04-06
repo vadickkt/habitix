@@ -100,6 +100,9 @@ interface HabitDao {
     @Query("SELECT COUNT(*) FROM habits WHERE title = :title AND source = 'onboarding'")
     suspend fun countOnboardingHabitByTitle(title: String): Int
 
+    @Query("SELECT COUNT(*) FROM habits WHERE iconKey = :iconKey AND source = 'onboarding'")
+    suspend fun countOnboardingHabitByIconKey(iconKey: String): Int
+
     @Query("SELECT COUNT(*) FROM habit_completions WHERE habitId = :habitId")
     suspend fun getCompletionCountByHabit(habitId: Long): Int
 }
