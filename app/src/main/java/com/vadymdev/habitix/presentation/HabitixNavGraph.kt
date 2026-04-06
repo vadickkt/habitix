@@ -14,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.vadymdev.habitix.data.local.SettingsPreferencesDataSource
+import com.vadymdev.habitix.domain.model.AppLanguage
 import com.vadymdev.habitix.presentation.auth.AuthScreen
 import com.vadymdev.habitix.presentation.auth.AuthViewModel
 import com.vadymdev.habitix.presentation.dashboard.DashboardScreen
@@ -40,6 +41,7 @@ import com.vadymdev.habitix.presentation.settings.SettingsViewModel
 import com.vadymdev.habitix.presentation.stats.StatsScreen
 import com.vadymdev.habitix.presentation.stats.StatsUiState
 import com.vadymdev.habitix.presentation.stats.StatsViewModel
+import java.util.Locale
 
 @Composable
 internal fun HabitixNavGraph(
@@ -59,20 +61,26 @@ internal fun HabitixNavGraph(
     statsViewModel: StatsViewModel,
     profileViewModel: ProfileViewModel
 ) {
+    val onboardingLanguage = if (Locale.getDefault().language.equals("uk", ignoreCase = true)) {
+        AppLanguage.UK
+    } else {
+        AppLanguage.EN
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
         composable(AppRoute.OnboardingIntro) {
             OnboardingIntroScreen(
-                language = settingsState.settings.language,
+                language = onboardingLanguage,
                 onContinue = { navController.navigate(AppRoute.OnboardingInterests) }
             )
         }
 
         composable(AppRoute.OnboardingInterests) {
             OnboardingInterestsScreen(
-                language = settingsState.settings.language,
+                language = onboardingLanguage,
                 interests = onboardingState.interests,
                 selectedKeys = onboardingState.selectedInterestKeys,
                 onToggle = onboardingViewModel::toggleInterest,
@@ -82,7 +90,7 @@ internal fun HabitixNavGraph(
 
         composable(AppRoute.OnboardingHabits) {
             OnboardingHabitsScreen(
-                language = settingsState.settings.language,
+                language = onboardingLanguage,
                 habits = onboardingState.habits,
                 selected = onboardingState.selectedHabitKeys,
                 onToggle = onboardingViewModel::toggleHabit,

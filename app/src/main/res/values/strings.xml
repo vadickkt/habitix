@@ -31,6 +31,28 @@
     <string name="onboarding_habits_subtitle">Можете обрати декілька для початку</string>
     <string name="onboarding_next">Далі</string>
     <string name="onboarding_finish">Завершити</string>
+    <string name="onboarding_intro_title_uk">Маленькі кроки
+— великі зміни</string>
+    <string name="onboarding_intro_title_en">Small steps
+- big changes</string>
+    <string name="onboarding_intro_subtitle_uk">Створюй корисні звички та відстежуй
+свій прогрес кожного дня</string>
+    <string name="onboarding_intro_subtitle_en">Build healthy habits and track
+your progress every day</string>
+    <string name="onboarding_intro_start_uk">Почати</string>
+    <string name="onboarding_intro_start_en">Start</string>
+    <string name="onboarding_interests_title_uk">Оберіть сфери інтересів</string>
+    <string name="onboarding_interests_title_en">Choose your interests</string>
+    <string name="onboarding_interests_subtitle_uk">Що ви хочете покращити?</string>
+    <string name="onboarding_interests_subtitle_en">What do you want to improve?</string>
+    <string name="onboarding_habits_title_uk">Оберіть перші звички</string>
+    <string name="onboarding_habits_title_en">Choose your first habits</string>
+    <string name="onboarding_habits_subtitle_uk">Можете обрати декілька для початку</string>
+    <string name="onboarding_habits_subtitle_en">You can pick several to get started</string>
+    <string name="onboarding_next_uk">Далі</string>
+    <string name="onboarding_next_en">Next</string>
+    <string name="onboarding_finish_uk">Завершити</string>
+    <string name="onboarding_finish_en">Finish</string>
 
     <string name="interest_health_uk">Здоровя</string>
     <string name="interest_productivity_uk">Продуктивність</string>

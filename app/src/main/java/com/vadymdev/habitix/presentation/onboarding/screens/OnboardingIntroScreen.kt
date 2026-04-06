@@ -38,7 +38,7 @@ fun OnboardingIntroScreen(
     language: AppLanguage,
     onContinue: () -> Unit
 ) {
-    val _unusedLanguage = language
+    val isUk = language == AppLanguage.UK
 
     Column(
         modifier = Modifier
@@ -69,7 +69,7 @@ fun OnboardingIntroScreen(
         Spacer(modifier = Modifier.height(30.dp))
 
         Text(
-            text = stringResource(R.string.onboarding_intro_title),
+            text = stringResource(if (isUk) R.string.onboarding_intro_title_uk else R.string.onboarding_intro_title_en),
             style = MaterialTheme.typography.titleLarge,
             color = TextPrimary,
             textAlign = TextAlign.Center,
@@ -79,7 +79,7 @@ fun OnboardingIntroScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = stringResource(R.string.onboarding_intro_subtitle),
+            text = stringResource(if (isUk) R.string.onboarding_intro_subtitle_uk else R.string.onboarding_intro_subtitle_en),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center
@@ -88,7 +88,7 @@ fun OnboardingIntroScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = stringResource(R.string.onboarding_intro_start),
+            text = stringResource(if (isUk) R.string.onboarding_intro_start_uk else R.string.onboarding_intro_start_en),
             enabled = true,
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth()

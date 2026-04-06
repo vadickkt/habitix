@@ -70,14 +70,14 @@ fun OnboardingInterestsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.onboarding_interests_title),
+            text = stringResource(if (isUk) R.string.onboarding_interests_title_uk else R.string.onboarding_interests_title_en),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = stringResource(R.string.onboarding_interests_subtitle),
+            text = stringResource(if (isUk) R.string.onboarding_interests_subtitle_uk else R.string.onboarding_interests_subtitle_en),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )
@@ -156,7 +156,7 @@ fun OnboardingInterestsScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = stringResource(R.string.onboarding_next),
+            text = stringResource(if (isUk) R.string.onboarding_next_uk else R.string.onboarding_next_en),
             enabled = selectedKeys.isNotEmpty(),
             onClick = onContinue,
             modifier = Modifier.fillMaxWidth()

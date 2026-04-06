@@ -68,14 +68,14 @@ fun OnboardingHabitsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.onboarding_habits_title),
+            text = stringResource(if (isUk) R.string.onboarding_habits_title_uk else R.string.onboarding_habits_title_en),
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimary,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = stringResource(R.string.onboarding_habits_subtitle),
+            text = stringResource(if (isUk) R.string.onboarding_habits_subtitle_uk else R.string.onboarding_habits_subtitle_en),
             style = MaterialTheme.typography.bodyLarge,
             color = TextSecondary
         )
@@ -118,7 +118,7 @@ fun OnboardingHabitsScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         PrimaryGreenButton(
-            text = stringResource(R.string.onboarding_finish),
+            text = stringResource(if (isUk) R.string.onboarding_finish_uk else R.string.onboarding_finish_en),
             enabled = selected.isNotEmpty(),
             onClick = onComplete,
             modifier = Modifier.fillMaxWidth()

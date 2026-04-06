@@ -23,6 +23,7 @@ class OnboardingViewModel(
 
     private val _state = MutableStateFlow(OnboardingUiState())
     val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
+    private var completionInProgress: Boolean = false
 
     init {
         viewModelScope.launch {
@@ -69,9 +70,17 @@ class OnboardingViewModel(
     }
 
     fun completeOnboarding(onDone: () -> Unit) {
+        if (completionInProgress) return
+        completionInProgress = true
+
         viewModelScope.launch {
-            completeOnboardingUseCase(_state.value.selectedHabitKeys)
-            onDone()
+            runCatching {
+                completeOnboardingUseCase(_state.value.selectedHabitKeys)
+            }.onSuccess {
+                onDone()
+            }.also {
+                completionInProgress = false
+            }
         }
     }
 }

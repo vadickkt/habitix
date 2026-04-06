@@ -4,11 +4,16 @@ import com.vadymdev.habitix.data.local.OnboardingPreferencesDataSource
 import com.vadymdev.habitix.domain.repository.HabitRepository
 import com.vadymdev.habitix.domain.repository.OnboardingRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class OnboardingRepositoryImpl(
     private val local: OnboardingPreferencesDataSource,
     private val habitRepository: HabitRepository
 ) : OnboardingRepository {
+
+    private val completionMutex = Mutex()
 
     override fun observeOnboardingState(): Flow<com.vadymdev.habitix.domain.model.OnboardingState> {
         return local.observeOnboardingState()
@@ -23,7 +28,12 @@ class OnboardingRepositoryImpl(
     }
 
     override suspend fun completeOnboarding(selectedHabitKeys: Set<String>) {
-        habitRepository.seedOnboardingHabits(selectedHabitKeys)
-        local.setCompleted()
+        completionMutex.withLock {
+            val current = local.observeOnboardingState().first()
+            if (current.completed) return
+
+            habitRepository.seedOnboardingHabits(selectedHabitKeys)
+            local.setCompleted()
+        }
     }
 }
