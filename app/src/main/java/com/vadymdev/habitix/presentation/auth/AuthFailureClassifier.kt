@@ -14,11 +14,11 @@ internal fun classifyAuthFailure(error: Throwable?): AuthFailureKind {
 
     return when {
         raw.contains("canceled") || raw.contains("cancelled") || raw.contains("dismiss") || type.contains("cancel") -> AuthFailureKind.USER_CANCELED
-        raw.contains("no account") || raw.contains("account") && raw.contains("missing") -> AuthFailureKind.NO_ACCOUNT
+        raw.contains("no credentials available") || raw.contains("no account") || raw.contains("account") && raw.contains("missing") -> AuthFailureKind.NO_ACCOUNT
         raw.contains("provider") || raw.contains("credential provider") || raw.contains("play services") || raw.contains("not available") -> {
             AuthFailureKind.PROVIDER_UNAVAILABLE
         }
-        raw.contains("network") || raw.contains("timeout") || raw.contains("tempor") || raw.contains("unavailable") -> {
+        raw.contains("network") || raw.contains("timeout") || raw.contains("tempor") -> {
             AuthFailureKind.TRANSIENT
         }
         else -> AuthFailureKind.UNKNOWN
